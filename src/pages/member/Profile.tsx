@@ -7,8 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Menu, Save, Edit2, X } from "lucide-react";
 import { toast } from "sonner";
-import Sidebar from "@/components/Sidebar";
-import MobileMenu from "@/components/MobileMenu";
+import MemberSidebar from "./MemberSidebar";
 import { INDIA_DISTRICTS } from "@/data/india-districts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -127,7 +126,7 @@ export default function MemberProfile() {
           block: data.block,
           address: data.address,
         }),
-      }).catch(() => {/* ignore backend errors */});
+      }).catch(() => {/* ignore backend errors */ });
     }
 
     setIsEditing(false);
@@ -253,11 +252,7 @@ export default function MemberProfile() {
 
   return (
     <div className="min-h-screen flex">
-      <div className="hidden md:block w-16 lg:w-56">
-        <Sidebar />
-      </div>
-
-      <MobileMenu isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <MemberSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col">
         <div className="md:hidden flex items-center justify-between p-4 bg-white border-b">
@@ -422,7 +417,7 @@ export default function MemberProfile() {
                           <div>
                             <Label>Type of Business</Label>
                             <div className="grid grid-cols-2 gap-2 mt-2">
-                              {['Agriculture','Manufacturing','Trader','Retailer','Service Provider','Others'].map((b) => (
+                              {['Agriculture', 'Manufacturing', 'Trader', 'Retailer', 'Service Provider', 'Others'].map((b) => (
                                 <label key={b} className="flex items-center gap-2"><input type="checkbox" name="businessType" value={b} checked={(extra.businessType || []).includes(b)} onChange={(e) => {
                                   const checked = e.target.checked;
                                   setExtra(prev => {
@@ -440,7 +435,7 @@ export default function MemberProfile() {
                               <Label>Business Commencement Year</Label>
                               <select name="businessYear" value={extra.businessYear || ''} onChange={handleExtraChange} className="w-full border rounded p-2">
                                 <option value="">Select year</option>
-                                {Array.from({length: 50}).map((_,i) => (
+                                {Array.from({ length: 50 }).map((_, i) => (
                                   <option key={i} value={`${1980 + i}`}>{1980 + i}</option>
                                 ))}
                               </select>
@@ -459,7 +454,7 @@ export default function MemberProfile() {
                           <div>
                             <Label>Registered with Govt. Organization</Label>
                             <div className="grid grid-cols-3 gap-2 mt-2">
-                              {['MSME','KVIC','NABARD','None','Others'].map(x => (
+                              {['MSME', 'KVIC', 'NABARD', 'None', 'Others'].map(x => (
                                 <label key={x} className="flex items-center gap-2"><input type="checkbox" name="govtOrg" value={x} onChange={(e) => {
                                   const checked = e.target.checked;
                                   setExtra(prev => {

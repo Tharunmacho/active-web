@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Menu } from "lucide-react";
 import { useState, useEffect } from "react";
-import Sidebar from "@/components/Sidebar";
-import MobileMenu from "@/components/MobileMenu";
+import MemberSidebar from "./MemberSidebar";
 import { useNavigate } from "react-router-dom";
 
 const MemberDashboard = () => {
@@ -146,21 +145,16 @@ const MemberDashboard = () => {
 
   return (
     <div className="min-h-screen flex">
-      {/* Sidebar for desktop */}
-      <div className="hidden md:block w-16 lg:w-56">
-        <Sidebar />
-      </div>
-
-      {/* Mobile menu */}
-      <MobileMenu isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      {/* Sidebar menu for all screen sizes */}
+      <MemberSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main content */}
       <div className="flex-1 flex flex-col">
-        {/* Mobile header with menu button */}
+        {/* Header with menu button - Only visible on mobile */}
         <div className="md:hidden flex items-center justify-between p-4 bg-white border-b">
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setSidebarOpen(true)}
             className="p-2"
           >
@@ -177,9 +171,7 @@ const MemberDashboard = () => {
           <div className="w-full max-w-6xl mx-auto">
             {/* Welcome section - adjusted for mobile */}
             <div className="mb-6">
-              <h1 className="text-2xl font-bold hidden md:block">
-                {isFirstVisit ? "Welcome" : "Welcome back"}, {userName || "Member"}
-              </h1>
+
               <div className="flex items-center gap-4 mt-4">
                 <Avatar className="w-16 h-16">
                   <AvatarImage src="/placeholder.svg" />
@@ -196,39 +188,50 @@ const MemberDashboard = () => {
               </div>
             </div>
 
-            {/* Search bar - improved mobile responsiveness */}
-            <div className="mb-6">
-              <div className="w-full">
-                <input
-                  aria-label="Search by location"
-                  placeholder="Search by location..."
-                  className="w-full border border-gray-200 rounded-full px-4 py-2 shadow-sm bg-white"
-                />
-              </div>
-            </div>
-
-            {/* Profile completion card - optimized spacing */}
-            <Card className="shadow-medium border-0 w-full mb-6">
+            {/* Complete Your Profile Card - First */}
+            <Card className="shadow-medium border-0 w-full mb-6 bg-gray-50">
               <CardContent className="p-4 md:p-6">
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold">Create Your Business Account</h3>
-                    <div className="mt-2">
-                      <span className="inline-block text-xs font-semibold bg-yellow-100 text-yellow-700 rounded-full px-2 py-0.5">Start setup</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-2">Set up your business account to unlock team features and payments.</p>
+                    <h3 className="text-xl md:text-2xl font-bold mb-2">Complete Your Profile</h3>
+                    <p className="text-base text-gray-600 mb-3">{completionPercentage}% completed</p>
+                    <p className="text-sm text-muted-foreground mb-4">Unlock all features by completing your profile.</p>
                     <div className="mt-4">
-                      <Button className="bg-blue-600 text-white w-full md:w-auto" onClick={() => navigate('/member/business-profile')}>
-                        Create Account
+                      <Button className="bg-blue-600 hover:bg-blue-700 text-white w-full md:w-auto px-6" onClick={() => navigate('/member/profile')}>
+                        Complete Profile
                       </Button>
                     </div>
                   </div>
-                  <div className="w-24 h-24 md:w-32 md:h-32 bg-blue-50 rounded-lg flex items-center justify-center">
-                    <img src="/assets/placeholder.svg" alt="briefcase" className="w-20 h-20 md:w-24 md:h-24" />
+                  <div className="w-24 h-24 md:w-32 md:h-32 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <span className="text-5xl">🔍</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
+
+            {/* Your Business Account Card - Second */}
+            <Card className="shadow-medium border-0 w-full mb-6 bg-gray-50">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                  <div className="flex-1">
+                    <h3 className="text-xl md:text-2xl font-bold mb-2">Your Business Account</h3>
+                    <div className="mb-3">
+                      <span className="inline-block text-sm font-semibold bg-yellow-100 text-yellow-700 rounded-full px-3 py-1">Pending</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-4">View and manage your business profile and settings</p>
+                    <div className="mt-4">
+                      <Button className="bg-blue-600 hover:bg-blue-700 text-white w-full md:w-auto px-6" onClick={() => navigate('/member/business-profile')}>
+                        Create Account
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="w-24 h-24 md:w-32 md:h-32 bg-gray-200 rounded-lg flex items-center justify-center">
+                    <span className="text-5xl">💼</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
 
             {/* Profile Status Card */}            {/* Membership card and documents after membership */}
             {latestApplication?.payment?.status === 'Completed' && (
@@ -288,7 +291,7 @@ const MemberDashboard = () => {
 
             {/* Quick actions grid - mobile optimized (single set, clickable) */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  {/* Removed ADF Form, Certificate, Help Center, Events cards */}
+              {/* Removed ADF Form, Certificate, Help Center, Events cards */}
             </div>
           </div>
         </div>

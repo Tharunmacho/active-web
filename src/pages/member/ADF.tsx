@@ -8,8 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Menu, FileText, CheckCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
-import Sidebar from "@/components/Sidebar";
-import MobileMenu from "@/components/MobileMenu";
+import MemberSidebar from "./MemberSidebar";
 import { INDIA_DISTRICTS } from "@/data/india-districts";
 
 interface ADFFormData {
@@ -198,13 +197,9 @@ const ADFForm = () => {
 
   return (
     <div className="min-h-screen flex">
-      {/* Sidebar for desktop */}
-      <div className="hidden md:block w-16 lg:w-56">
-        <Sidebar />
-      </div>
 
       {/* Mobile menu */}
-      <MobileMenu isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <MemberSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main content */}
       <div className="flex-1 flex flex-col">

@@ -14,7 +14,6 @@ import StateLogin from "./pages/admin/StateLogin";
 import SuperAdminLogin from "./pages/admin/SuperAdminLogin";
 import MemberRegister from "./pages/member/Register";
 import MemberDashboard from "./pages/member/Dashboard";
-import SidebarPage from "./pages/member/SidebarPage";
 import Explore from "./pages/member/Explore";
 import Notifications from "./pages/member/Notifications";
 import ADFForm from "./pages/member/ADF";
@@ -26,13 +25,20 @@ import PaymentPage from "./pages/member/Payment";
 import PaymentSuccess from "./pages/member/PaymentSuccess";
 import MemberHelp from "./pages/member/Help";
 import MemberEvents from "./pages/member/Events";
+import BusinessProfile from "./pages/member/BusinessProfile";
+import BusinessDashboard from "./pages/business/Dashboard";
+import Products from "./pages/business/Products";
+import AddProduct from "./pages/business/AddProduct";
+import Discover from "./pages/business/Discover";
+import Analytics from "./pages/business/Analytics";
+import Settings from "./pages/business/Settings";
 import Account from "./pages/member/Account";
 import PaymentHistory from "./pages/member/PaymentHistory";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminSidebarPage from "./pages/admin/SidebarPage";
 import Approvals from "./pages/admin/Approvals";
 import Members from "./pages/admin/Members";
-import Settings from "./pages/admin/Settings";
+import AdminSettings from "./pages/admin/Settings";
 import ApplicationView from "./pages/admin/ApplicationView";
 import SuperAdminGenerate from "./pages/admin/SuperAdminGenerate";
 
@@ -61,21 +67,29 @@ const App = () => (
 
           {/* Member Routes */}
           <Route path="/member/dashboard" element={<MemberDashboard />} />
-          <Route path="/member/sidebar" element={<SidebarPage />} />
           <Route path="/explore" element={<Explore />} />
           <Route path="/notifications" element={<Notifications />} />
-            <Route path="/member/adf" element={<ADFForm />} />
-            <Route path="/member/certificate" element={<MemberCertificate />} />
-            <Route path="/member/profile" element={<MemberProfile />} />
-            <Route path="/member/account" element={<Account />} />
-            <Route path="/member/payment-history" element={<PaymentHistory />} />
-            <Route path="/member/application-submitted" element={<ApplicationSubmitted />} />
-            <Route path="/member/application-status" element={<ApplicationStatus />} />
-            <Route path="/member/payment" element={<PaymentPage />} />
-            <Route path="/member/payment-success" element={<PaymentSuccess />} />
-            <Route path="/member/help" element={<MemberHelp />} />
-            <Route path="/member/events" element={<MemberEvents />} />
-          
+          <Route path="/member/adf" element={<ADFForm />} />
+          <Route path="/member/certificate" element={<MemberCertificate />} />
+          <Route path="/member/profile" element={<MemberProfile />} />
+          <Route path="/member/business-profile" element={<BusinessProfile />} />
+          <Route path="/member/account" element={<Account />} />
+          <Route path="/member/payment-history" element={<PaymentHistory />} />
+          <Route path="/member/application-submitted" element={<ApplicationSubmitted />} />
+          <Route path="/member/application-status" element={<ApplicationStatus />} />
+          <Route path="/member/payment" element={<PaymentPage />} />
+          <Route path="/member/payment-success" element={<PaymentSuccess />} />
+          <Route path="/member/help" element={<MemberHelp />} />
+          <Route path="/member/events" element={<MemberEvents />} />
+
+          {/* Business Routes */}
+          <Route path="/business/dashboard" element={<BusinessDashboard />} />
+          <Route path="/business/products" element={<Products />} />
+          <Route path="/business/add-product" element={<AddProduct />} />
+          <Route path="/business/discover" element={<Discover />} />
+          <Route path="/business/analytics" element={<Analytics />} />
+          <Route path="/business/settings" element={<Settings />} />
+
           {/* Admin Routes */}
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/block/dashboard" element={<AdminDashboard />} />
@@ -85,10 +99,10 @@ const App = () => (
           <Route path="/admin/members" element={<Members />} />
           <Route path="/admin/settings" element={<Settings />} />
           <Route path="/admin/application/:id" element={<ApplicationView />} />
-          
+
           {/* Super Admin Routes */}
           <Route path="/admin/super/generate" element={<SuperAdminGenerate />} />
-          
+
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

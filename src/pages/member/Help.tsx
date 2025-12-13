@@ -7,8 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Menu, Send, HelpCircle, Mail } from "lucide-react";
 import { toast } from "sonner";
-import Sidebar from "@/components/Sidebar";
-import MobileMenu from "@/components/MobileMenu";
+import MemberSidebar from "./MemberSidebar";
 
 const MemberHelp = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -117,12 +116,9 @@ const MemberHelp = () => {
   return (
     <div className="min-h-screen flex">
       {/* Sidebar for desktop */}
-      <div className="hidden md:block w-16 lg:w-56">
-        <Sidebar />
-      </div>
 
       {/* Mobile menu */}
-      <MobileMenu isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <MemberSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main content */}
       <div className="flex-1 flex flex-col">

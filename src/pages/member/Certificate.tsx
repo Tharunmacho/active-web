@@ -3,8 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Menu, Download, Printer, FileText } from "lucide-react";
-import Sidebar from "@/components/Sidebar";
-import MobileMenu from "@/components/MobileMenu";
+import MemberSidebar from "./MemberSidebar";
 
 interface Certificate {
   id: string;
@@ -135,12 +134,9 @@ const MemberCertificate = () => {
   return (
     <div className="min-h-screen flex">
       {/* Sidebar for desktop */}
-      <div className="hidden md:block w-16 lg:w-56">
-        <Sidebar />
-      </div>
 
       {/* Mobile menu */}
-      <MobileMenu isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <MemberSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main content */}
       <div className="flex-1 flex flex-col">

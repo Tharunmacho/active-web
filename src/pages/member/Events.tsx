@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Menu, Calendar, MapPin, Users, Clock } from "lucide-react";
 import { toast } from "sonner";
-import Sidebar from "@/components/Sidebar";
-import MobileMenu from "@/components/MobileMenu";
+import MemberSidebar from "./MemberSidebar";
 
 interface Event {
   id: string;
@@ -188,12 +187,9 @@ const MemberEvents = () => {
   return (
     <div className="min-h-screen flex">
       {/* Sidebar for desktop */}
-      <div className="hidden md:block w-16 lg:w-56">
-        <Sidebar />
-      </div>
 
       {/* Mobile menu */}
-      <MobileMenu isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <MemberSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main content */}
       <div className="flex-1 flex flex-col">
@@ -286,11 +282,10 @@ const MemberEvents = () => {
                       {/* Register Button */}
                       <Button
                         onClick={() => handleRegister(event.id)}
-                        className={`w-full ${
-                          event.registered
-                            ? "bg-red-600 hover:bg-red-700 text-white"
-                            : "bg-blue-600 hover:bg-blue-700 text-white"
-                        }`}
+                        className={`w-full ${event.registered
+                          ? "bg-red-600 hover:bg-red-700 text-white"
+                          : "bg-blue-600 hover:bg-blue-700 text-white"
+                          }`}
                         disabled={!event.registered && event.attendees >= event.capacity}
                       >
                         {event.registered ? "Unregister" : "Register"}
