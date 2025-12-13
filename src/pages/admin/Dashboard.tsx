@@ -5,8 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { 
   FileText, Users, CheckCircle, XCircle, 
-  Clock, Home, List, User,
-  Menu
+  Clock
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
@@ -22,13 +21,31 @@ const AdminDashboard = () => {
 
   const role = (typeof window !== 'undefined' ? localStorage.getItem('role') : '') || '';
   const userName = (typeof window !== 'undefined' ? localStorage.getItem('userName') : '') || 'Admin';
+  
   const roleLabel = useMemo(() => {
     if (role === 'block_admin') return 'Block Admin';
     if (role === 'district_admin') return 'District Admin';
     if (role === 'state_admin') return 'State Admin';
     if (role === 'super_admin') return 'Super Admin';
-    return 'Member';
+    return 'Admin';
   }, [role]);
+  
+  const dashboardTitle = useMemo(() => {
+    if (role === 'block_admin') return 'Block Admin Dashboard';
+    if (role === 'district_admin') return 'District Admin Dashboard';
+    if (role === 'state_admin') return 'State Admin Dashboard';
+    if (role === 'super_admin') return 'Super Admin Dashboard';
+    return 'Admin Dashboard';
+  }, [role]);
+  
+  const dashboardSubtitle = useMemo(() => {
+    if (role === 'block_admin') return 'Manage Block Level';
+    if (role === 'district_admin') return 'Manage District Level';
+    if (role === 'state_admin') return 'Manage State Level';
+    if (role === 'super_admin') return 'Manage All Levels';
+    return 'Manage your dashboard';
+  }, [role]);
+  
   const avatarInitials = useMemo(() => {
     if (role === 'block_admin') return 'BA';
     if (role === 'district_admin') return 'DA';
@@ -38,47 +55,36 @@ const AdminDashboard = () => {
     return parts.map(p => p[0]).join('').slice(0,2).toUpperCase();
   }, [role, userName]);
 
+  // Stats data - can be fetched from API
+  const stats = {
+    totalMembers: 0,
+    pending: 0,
+    approved: 0,
+    rejected: 0
+  };
+
   return (
-    <div className="min-h-screen flex">
-      {/* Sidebar for desktop */}
-      <div className="hidden md:block w-16 lg:w-56">
+    <div className="min-h-screen flex bg-gray-50">
+      {/* Sidebar - always visible */}
+      <div className="w-16 lg:w-64 border-r bg-white">
         <AdminSidebar />
       </div>
 
-      {/* Mobile menu */}
-      <AdminMobileMenu isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
       {/* Main content */}
       <div className="flex-1 flex flex-col">
-        {/* Mobile header with menu button */}
-        <div className="md:hidden flex items-center justify-between p-4 bg-white border-b">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => setSidebarOpen(true)}
-            className="p-2"
-          >
-            <Menu className="h-6 w-6" />
-          </Button>
-          <h1 className="text-xl font-bold">Admin Dashboard</h1>
-          <Avatar className="w-10 h-10">
-            <AvatarFallback className="bg-primary text-primary-foreground">AU</AvatarFallback>
-          </Avatar>
-        </div>
-
         <div className="flex-1 p-4 md:p-6 overflow-auto bg-background">
           <div className="w-full max-w-6xl mx-auto space-y-6">
             {/* Header */}
             <div className="bg-card shadow-soft p-4 rounded-lg">
               <div className="flex items-center gap-3">
                 <Avatar className="w-12 h-12">
-                  <AvatarFallback className="bg-secondary text-secondary-foreground">
-                    BA
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {avatarInitials}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h1 className="text-xl font-bold">Hello, {userName}</h1>
-                  <p className="text-sm text-muted-foreground">{roleLabel}</p>
+                  <h1 className="text-xl font-bold">{dashboardTitle}</h1>
+                  <p className="text-sm text-muted-foreground">{dashboardSubtitle}</p>
                 </div>
               </div>
             </div>
@@ -89,39 +95,11 @@ const AdminDashboard = () => {
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-muted-foreground">Total ADF</p>
-                      <p className="text-3xl font-bold">248</p>
+                      <p className="text-sm text-muted-foreground">Total Members</p>
+                      <p className="text-3xl font-bold">{stats.totalMembers}</p>
                     </div>
-                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                      <FileText className="w-6 h-6 text-primary" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-medium border-0">
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Approved</p>
-                      <p className="text-3xl font-bold text-success">187</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center">
-                      <CheckCircle className="w-6 h-6 text-success" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-medium border-0">
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Rejected</p>
-                      <p className="text-3xl font-bold text-destructive">23</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
-                      <XCircle className="w-6 h-6 text-destructive" />
+                    <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                      <Users className="w-6 h-6 text-blue-600" />
                     </div>
                   </div>
                 </CardContent>
@@ -132,10 +110,38 @@ const AdminDashboard = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Pending</p>
-                      <p className="text-3xl font-bold text-amber-600">38</p>
+                      <p className="text-3xl font-bold text-amber-600">{stats.pending}</p>
                     </div>
                     <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
                       <Clock className="w-6 h-6 text-amber-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-medium border-0">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Approved</p>
+                      <p className="text-3xl font-bold text-green-600">{stats.approved}</p>
+                    </div>
+                    <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                      <CheckCircle className="w-6 h-6 text-green-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-medium border-0">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Rejected</p>
+                      <p className="text-3xl font-bold text-red-600">{stats.rejected}</p>
+                    </div>
+                    <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                      <XCircle className="w-6 h-6 text-red-600" />
                     </div>
                   </div>
                 </CardContent>

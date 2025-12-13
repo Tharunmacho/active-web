@@ -2,13 +2,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { CheckCircle, XCircle, Clock, Menu } from "lucide-react";
+import { CheckCircle, XCircle, Clock, FileText } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
-import AdminMobileMenu from "@/components/AdminMobileMenu";
 import ApprovalCard from "@/components/ui/approval-card";
 import { Toaster } from "@/components/ui/toaster";
 import { toast } from "sonner";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 // Backend application types
 type StageKey = 'block' | 'district' | 'state' | 'payment';
@@ -24,7 +24,6 @@ interface ApplicationRec {
 }
 
 const Approvals = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [applications, setApplications] = useState<ApplicationRec[]>([]);
   const [tab, setTab] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending');
   const role = (localStorage.getItem('role') || 'block_admin') as string;
@@ -119,144 +118,130 @@ const Approvals = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Sidebar for desktop */}
-      <div className="hidden md:block w-16 lg:w-56">
+    <div className="min-h-screen flex bg-gray-50">
+      {/* Sidebar - always visible */}
+      <div className="w-16 lg:w-64 border-r bg-white">
         <AdminSidebar />
       </div>
 
-      {/* Mobile menu */}
-      <AdminMobileMenu isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
       {/* Main content */}
       <div className="flex-1 flex flex-col">
-        {/* Mobile header with menu button */}
-        <div className="md:hidden flex items-center justify-between p-4 bg-white border-b">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => setSidebarOpen(true)}
-            className="p-2"
-          >
-            <Menu className="h-6 w-6" />
-          </Button>
-          <h1 className="text-xl font-bold">Approvals</h1>
-          <Avatar className="w-10 h-10">
-            <AvatarFallback className="bg-primary text-primary-foreground">AU</AvatarFallback>
-          </Avatar>
-        </div>
-
         <div className="flex-1 p-4 md:p-6 overflow-auto bg-background">
-          <div className="w-full max-w-6xl mx-auto">
-            <h1 className="text-2xl font-bold mb-6">Approvals</h1>
-            {/* Top statistics */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <Card className="shadow-medium border-0">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">Total</CardTitle>
-                  <CardDescription className="text-3xl font-bold">{stats.total}</CardDescription>
-                </CardHeader>
-              </Card>
-              <Card className="shadow-medium border-0">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">Pending</CardTitle>
-                  <CardDescription className="text-3xl font-bold flex items-center gap-2"><Clock className="w-5 h-5" />{stats.pending}</CardDescription>
-                </CardHeader>
-              </Card>
-              <Card className="shadow-medium border-0">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">Approved</CardTitle>
-                  <CardDescription className="text-3xl font-bold flex items-center gap-2"><CheckCircle className="w-5 h-5" />{stats.approved}</CardDescription>
-                </CardHeader>
-              </Card>
-              <Card className="shadow-medium border-0">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">Rejected</CardTitle>
-                  <CardDescription className="text-3xl font-bold flex items-center gap-2"><XCircle className="w-5 h-5" />{stats.rejected}</CardDescription>
-                </CardHeader>
-              </Card>
-            </div>
+          <div className="w-full max-w-6xl mx-auto space-y-6">
+            <h1 className="text-2xl font-bold">Approvals</h1>
 
             {/* Tabs */}
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-              <Button variant={tab === 'pending' ? 'default' : 'outline'} onClick={() => setTab('pending')}>Pending <Badge className="ml-2" variant="secondary">{stats.pending}</Badge></Button>
-              <Button variant={tab === 'approved' ? 'default' : 'outline'} onClick={() => setTab('approved')}>Approved <Badge className="ml-2" variant="secondary">{stats.approved}</Badge></Button>
-              <Button variant={tab === 'rejected' ? 'default' : 'outline'} onClick={() => setTab('rejected')}>Rejected <Badge className="ml-2" variant="secondary">{stats.rejected}</Badge></Button>
-              <Button variant={tab === 'all' ? 'default' : 'outline'} onClick={() => setTab('all')}>All <Badge className="ml-2" variant="secondary">{stats.total}</Badge></Button>
-            </div>
+            <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="w-full">
+              <TabsList className="grid w-full grid-cols-3 max-w-md">
+                <TabsTrigger value="pending">Pending</TabsTrigger>
+                <TabsTrigger value="approved">Approved</TabsTrigger>
+                <TabsTrigger value="rejected">Rejected</TabsTrigger>
+              </TabsList>
+            {/* Tabs */}
+            <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="w-full">
+              <TabsList className="grid w-full grid-cols-3 max-w-md">
+                <TabsTrigger value="pending">Pending</TabsTrigger>
+                <TabsTrigger value="approved">Approved</TabsTrigger>
+                <TabsTrigger value="rejected">Rejected</TabsTrigger>
+              </TabsList>
 
-            {/* Tab content */}
-            {tab === 'pending' && (
-              <div className="space-y-6">
-                {buckets.pending.map(app => (
-                  <ApprovalCard
-                    key={app.id}
-                    member={{
-                      id: app.id,
-                      name: app.profile?.profile?.profile?.firstName || app.userId,
-                      email: app.profile?.profile?.profile?.email || '',
-                      role: role,
-                      gender: '', sector: '', phone: ''
-                    }}
-                    onApprove={handleApprove}
-                    onReject={handleReject}
-                  />
-                ))}
-                {buckets.pending.length === 0 && (
+              <TabsContent value="pending" className="mt-6">
+                {buckets.pending.length === 0 ? (
                   <Card className="shadow-medium border-0">
-                    <CardContent className="p-6 text-center text-muted-foreground">No pending applications.</CardContent>
-                  </Card>
-                )}
-              </div>
-            )}
-
-            {tab !== 'pending' && (
-              <Card className="shadow-medium border-0">
-                <CardContent>
-                  <div className="space-y-4">
-                    {(tab === 'approved' ? buckets.approved : tab === 'rejected' ? buckets.rejected : buckets.all).map(app => {
-                      const stg = getCurrentStage(app);
-                      const statusLabel = app.status === 'Rejected' ? 'Rejected' : (app.status === 'Ready for Payment' ? 'Ready for Payment' : (stg?.status || ''));
-                      const isApproved = statusLabel === 'Approved' || statusLabel === 'Ready for Payment';
-                      const isRejected = statusLabel === 'Rejected';
-                      return (
-                        <div key={app.id} className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
-                          <div className="flex items-center gap-3">
-                            <Avatar>
-                              <AvatarFallback className="bg-primary text-primary-foreground">
-                                {(app.profile?.profile?.profile?.firstName || app.userId || 'U').slice(0,2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium">{app.profile?.profile?.profile?.firstName || app.userId}</p>
-                              <p className="text-sm text-muted-foreground">{app.id}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <Badge
-                              variant={isApproved ? 'default' : isRejected ? 'destructive' : 'secondary'}
-                              className={isApproved ? 'bg-success' : isRejected ? 'bg-destructive' : ''}
-                            >
-                              {isApproved && <CheckCircle className="w-4 h-4 mr-1" />}
-                              {isRejected && <XCircle className="w-4 h-4 mr-1" />}
-                              {statusLabel || '—'}
-                            </Badge>
-                          </div>
+                    <CardContent className="pt-12 pb-12">
+                      <div className="flex flex-col items-center justify-center text-center">
+                        <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                          <Clock className="w-8 h-8 text-gray-400" />
                         </div>
-                      );
-                    })}
-                    {(tab === 'approved' ? buckets.approved : tab === 'rejected' ? buckets.rejected : buckets.all).length === 0 && (
-                      <div className="p-6 text-center text-muted-foreground">No records.</div>
-                    )}
+                        <h3 className="text-lg font-semibold mb-2">No pending approvals</h3>
+                        <p className="text-sm text-muted-foreground">
+                          All applications have been reviewed.
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {buckets.pending.map(app => (
+                      <ApprovalCard
+                        key={app.id}
+                        member={{
+                          id: app.id,
+                          name: app.profile?.profile?.profile?.firstName || app.userId,
+                          email: app.profile?.profile?.profile?.email || '',
+                          role: role,
+                          gender: '', sector: '', phone: ''
+                        }}
+                        onApprove={handleApprove}
+                        onReject={handleReject}
+                      />
+                    ))}
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                )}
+              </TabsContent>
+
+              <TabsContent value="approved" className="mt-6">
+                {buckets.approved.length === 0 ? (
+                  <Card className="shadow-medium border-0">
+                    <CardContent className="pt-12 pb-12">
+                      <div className="flex flex-col items-center justify-center text-center">
+                        <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                          <CheckCircle className="w-8 h-8 text-gray-400" />
+                        </div>
+                        <h3 className="text-lg font-semibold mb-2">No approved applications</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Approved applications will appear here.
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {buckets.approved.map(app => (
+                      <Card key={app.id} className="shadow-medium border-0">
+                        <CardHeader>
+                          <CardTitle>{app.profile?.profile?.profile?.firstName || app.userId}</CardTitle>
+                          <CardDescription>Approved</CardDescription>
+                        </CardHeader>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="rejected" className="mt-6">
+                {buckets.rejected.length === 0 ? (
+                  <Card className="shadow-medium border-0">
+                    <CardContent className="pt-12 pb-12">
+                      <div className="flex flex-col items-center justify-center text-center">
+                        <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                          <XCircle className="w-8 h-8 text-gray-400" />
+                        </div>
+                        <h3 className="text-lg font-semibold mb-2">No rejected applications</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Rejected applications will appear here.
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {buckets.rejected.map(app => (
+                      <Card key={app.id} className="shadow-medium border-0">
+                        <CardHeader>
+                          <CardTitle>{app.profile?.profile?.profile?.firstName || app.userId}</CardTitle>
+                          <CardDescription>Rejected</CardDescription>
+                        </CardHeader>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
-        {/* Add Toaster for notifications */}
-        <Toaster />
       </div>
+      <Toaster />
     </div>
   );
 };

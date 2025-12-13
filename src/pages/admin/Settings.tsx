@@ -4,121 +4,117 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Menu } from "lucide-react";
-import { useState } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
-import AdminMobileMenu from "@/components/AdminMobileMenu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Mail, MapPin, Users, CheckCircle, XCircle, Clock, HeadphonesIcon } from "lucide-react";
 
 const Settings = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const userName = localStorage.getItem('userName') || 'Admin';
+  const userEmail = localStorage.getItem('userEmail') || 'admin@example.com';
+  const role = localStorage.getItem('role') || '';
 
   return (
-    <div className="min-h-screen flex">
-      {/* Sidebar for desktop */}
-      <div className="hidden md:block w-16 lg:w-56">
+    <div className="min-h-screen flex bg-gray-50">
+      {/* Sidebar - always visible */}
+      <div className="w-16 lg:w-64 border-r bg-white">
         <AdminSidebar />
       </div>
 
-      {/* Mobile menu */}
-      <AdminMobileMenu isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
       {/* Main content */}
       <div className="flex-1 flex flex-col">
-        {/* Mobile header with menu button */}
-        <div className="md:hidden flex items-center justify-between p-4 bg-white border-b">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => setSidebarOpen(true)}
-            className="p-2"
-          >
-            <Menu className="h-6 w-6" />
-          </Button>
-          <h1 className="text-xl font-bold">Settings</h1>
-          <Avatar className="w-10 h-10">
-            <AvatarFallback className="bg-primary text-primary-foreground">AU</AvatarFallback>
-          </Avatar>
-        </div>
-
         <div className="flex-1 p-4 md:p-6 overflow-auto bg-background">
-          <div className="w-full max-w-4xl mx-auto">
-            <h1 className="text-2xl font-bold mb-6">Settings</h1>
+          <div className="w-full max-w-4xl mx-auto space-y-6">
+            <h1 className="text-2xl font-bold">Settings</h1>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-1">
-                <Card className="shadow-medium border-0">
-                  <CardHeader>
-                    <CardTitle>Settings Menu</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <nav className="space-y-2">
-                      <Button variant="ghost" className="w-full justify-start font-normal bg-blue-50 text-blue-600">
-                        General
-                      </Button>
-                      <Button variant="ghost" className="w-full justify-start font-normal">
-                        Profile
-                      </Button>
-                      <Button variant="ghost" className="w-full justify-start font-normal">
-                        Notifications
-                      </Button>
-                      <Button variant="ghost" className="w-full justify-start font-normal">
-                        Security
-                      </Button>
-                    </nav>
-                  </CardContent>
-                </Card>
-              </div>
-              
-              <div className="md:col-span-2">
-                <Card className="shadow-medium border-0">
-                  <CardHeader>
-                    <CardTitle>General Settings</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="organization">Organization Name</Label>
-                      <Input id="organization" placeholder="Enter organization name" defaultValue="TechCorp Solutions" />
+            {/* Profile Card */}
+            <Card className="shadow-medium border-0">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <Avatar className="w-16 h-16">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xl">
+                      {userName.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h2 className="text-xl font-semibold">{userName}</h2>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                      <Mail className="w-4 h-4" />
+                      <span>{userEmail}</span>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="timezone">Timezone</Label>
-                      <Select defaultValue="utc-5">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select timezone" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="utc-8">Pacific Time (UTC-8)</SelectItem>
-                          <SelectItem value="utc-5">Eastern Time (UTC-5)</SelectItem>
-                          <SelectItem value="utc-0">London (UTC+0)</SelectItem>
-                          <SelectItem value="utc+5:30">India (UTC+5:30)</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                      <MapPin className="w-4 h-4" />
+                      <span>Tamil Nadu, India</span>
                     </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label>Email Notifications</Label>
-                        <p className="text-sm text-muted-foreground">Receive email notifications for important updates</p>
-                      </div>
-                      <Switch defaultChecked />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Administration Stats */}
+            <Card className="shadow-medium border-0">
+              <CardHeader>
+                <CardTitle>Administration</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                      <Users className="w-5 h-5 text-blue-600" />
                     </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label>Two-Factor Authentication</Label>
-                        <p className="text-sm text-muted-foreground">Add an extra layer of security to your account</p>
-                      </div>
-                      <Switch />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Total</p>
+                      <p className="text-lg font-bold">0</p>
                     </div>
-                    
-                    <div className="pt-4">
-                      <Button>Save Changes</Button>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg">
+                    <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                      <Clock className="w-5 h-5 text-amber-600" />
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Pending</p>
+                      <p className="text-lg font-bold">0</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Approved</p>
+                      <p className="text-lg font-bold">0</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg">
+                    <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                      <XCircle className="w-5 h-5 text-red-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Rejected</p>
+                      <p className="text-lg font-bold">0</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Support Card */}
+            <Card className="shadow-medium border-0">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <HeadphonesIcon className="w-5 h-5" />
+                  Support
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Need help? Contact our support team for assistance with your admin dashboard.
+                </p>
+                <Button variant="outline">Contact Support</Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
