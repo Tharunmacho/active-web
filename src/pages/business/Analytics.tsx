@@ -7,10 +7,10 @@ const Analytics = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const stats = [
-        { label: "Total Views", value: "1,234", change: "+12.5%", icon: Eye, color: "from-blue-500 to-blue-600" },
-        { label: "Profile Visits", value: "456", change: "+8.2%", icon: Users, color: "from-purple-500 to-purple-600" },
-        { label: "Product Views", value: "789", change: "+15.7%", icon: Package, color: "from-pink-500 to-pink-600" },
-        { label: "Engagement Rate", value: "23.4%", change: "+5.3%", icon: TrendingUp, color: "from-green-500 to-green-600" },
+        { label: "Total Views", value: "1,234", change: "+12.5%", icon: Eye, color: "from-blue-500 to-blue-600", borderColor: "border-blue-200 hover:border-blue-400" },
+        { label: "Profile Visits", value: "456", change: "+8.2%", icon: Users, color: "from-purple-500 to-purple-600", borderColor: "border-purple-200 hover:border-purple-400" },
+        { label: "Product Views", value: "789", change: "+15.7%", icon: Package, color: "from-pink-500 to-pink-600", borderColor: "border-pink-200 hover:border-pink-400" },
+        { label: "Engagement Rate", value: "23.4%", change: "+5.3%", icon: TrendingUp, color: "from-green-500 to-green-600", borderColor: "border-green-200 hover:border-green-400" },
     ];
 
     const weeklyData = [
@@ -24,22 +24,20 @@ const Analytics = () => {
     ];
 
     return (
-        <div className="min-h-screen flex" style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-        }}>
+        <div className="min-h-screen flex bg-white">
             <BusinessSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
             <div className="flex-1 flex flex-col">
-                {/* Glassmorphism Header */}
-                <div className="p-6 backdrop-blur-xl bg-white/10 border-b border-white/20">
+                {/* Header */}
+                <div className="p-6 bg-gray-50 border-b border-gray-200">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-white mb-1">Analytics Dashboard</h1>
-                            <p className="text-white/80">Track your business performance and insights</p>
+                            <h1 className="text-3xl font-bold text-gray-800 mb-1">Analytics Dashboard</h1>
+                            <p className="text-gray-600">Track your business performance and insights</p>
                         </div>
-                        <div className="flex items-center gap-3 px-4 py-2 rounded-2xl backdrop-blur-md bg-white/20 border border-white/30">
-                            <Calendar className="h-4 w-4 text-white" />
-                            <span className="text-sm text-white font-medium">Last 7 days</span>
+                        <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-blue-50 border border-blue-200">
+                            <Calendar className="h-4 w-4 text-blue-600" />
+                            <span className="text-sm text-blue-700 font-medium">Last 7 days</span>
                         </div>
                     </div>
                 </div>
@@ -51,7 +49,7 @@ const Analytics = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             {stats.map((stat, index) => (
                                 <div key={index} className="group">
-                                    <div className="h-full p-6 rounded-3xl backdrop-blur-xl bg-white/95 border border-white/50 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:-translate-y-1">
+                                    <div className={`h-full p-6 rounded-2xl bg-white border-2 ${stat.borderColor} transition-all duration-300 shadow-md hover:shadow-xl hover:-translate-y-1`}>
                                         <div className="flex items-start justify-between mb-4">
                                             <div className={`p-3 rounded-2xl bg-gradient-to-br ${stat.color} shadow-lg`}>
                                                 <stat.icon className="h-6 w-6 text-white" strokeWidth={2} />
@@ -70,7 +68,7 @@ const Analytics = () => {
                         {/* Charts Section */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Weekly Trends */}
-                            <div className="p-6 rounded-3xl backdrop-blur-xl bg-white/95 border border-white/50 shadow-2xl">
+                            <div className="p-6 rounded-2xl bg-white border border-gray-200 shadow-lg">
                                 <div className="flex items-center gap-3 mb-6">
                                     <div className="p-2 rounded-xl bg-blue-100">
                                         <BarChart3 className="h-5 w-5 text-blue-600" />
@@ -96,7 +94,7 @@ const Analytics = () => {
                             </div>
 
                             {/* Category Breakdown */}
-                            <div className="p-6 rounded-3xl backdrop-blur-xl bg-white/95 border border-white/50 shadow-2xl">
+                            <div className="p-6 rounded-2xl bg-white border border-gray-200 shadow-lg">
                                 <div className="flex items-center gap-3 mb-6">
                                     <div className="p-2 rounded-xl bg-purple-100">
                                         <PieChart className="h-5 w-5 text-purple-600" />
@@ -124,7 +122,7 @@ const Analytics = () => {
                         </div>
 
                         {/* Activity Feed */}
-                        <div className="p-6 rounded-3xl backdrop-blur-xl bg-white/95 border border-white/50 shadow-2xl">
+                        <div className="p-6 rounded-2xl bg-white border border-gray-200 shadow-lg">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="p-2 rounded-xl bg-green-100">
                                     <Activity className="h-5 w-5 text-green-600" />

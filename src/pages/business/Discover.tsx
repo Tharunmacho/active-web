@@ -40,17 +40,15 @@ const Discover = () => {
     ];
 
     return (
-        <div className="min-h-screen flex" style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-        }}>
+        <div className="min-h-screen flex bg-white">
             <BusinessSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
             <div className="flex-1 flex flex-col">
                 {/* Glassmorphism Header */}
-                <div className="p-6 backdrop-blur-xl bg-white/10 border-b border-white/20">
+                <div className="p-6 bg-gray-50 border-b border-gray-200">
                     <div>
-                        <h1 className="text-3xl font-bold text-white mb-1">Discover Businesses</h1>
-                        <p className="text-white/80">Connect with other businesses in your network</p>
+                        <h1 className="text-3xl font-bold text-gray-800 mb-1">Discover Businesses</h1>
+                        <p className="text-gray-600">Connect with other businesses in your network</p>
                     </div>
                 </div>
 
@@ -58,7 +56,7 @@ const Discover = () => {
                 <div className="flex-1 p-6 overflow-auto">
                     <div className="max-w-7xl mx-auto space-y-6">
                         {/* Search Bar */}
-                        <div className="p-6 rounded-3xl backdrop-blur-xl bg-white/95 border border-white/50 shadow-2xl">
+                        <div className="p-6 rounded-2xl bg-white border border-gray-200 shadow-lg">
                             <div className="flex gap-3">
                                 <div className="flex-1 relative">
                                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -69,7 +67,7 @@ const Discover = () => {
                                         className="pl-12 h-12 rounded-2xl border-2 border-gray-200 focus:border-purple-500"
                                     />
                                 </div>
-                                <Button className="h-12 px-6 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg">
+                                <Button className="h-12 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg">
                                     <Filter className="h-4 w-4 mr-2" />
                                     Filters
                                 </Button>
@@ -78,34 +76,34 @@ const Discover = () => {
 
                         {/* Stats Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="p-5 rounded-3xl backdrop-blur-xl bg-white/20 border border-white/30 shadow-xl">
+                            <div className="p-5 rounded-2xl bg-white border-2 border-blue-200 hover:border-blue-400 transition-all shadow-md">
                                 <div className="flex items-center gap-3 mb-2">
-                                    <div className="p-2 rounded-xl bg-blue-500/20">
-                                        <Users className="h-5 w-5 text-white" />
+                                    <div className="p-2 rounded-xl bg-blue-100">
+                                        <Users className="h-5 w-5 text-blue-600" />
                                     </div>
-                                    <span className="text-2xl font-bold text-white">{businesses.length}</span>
+                                    <span className="text-2xl font-bold text-gray-800">{businesses.length}</span>
                                 </div>
-                                <p className="text-white/80 text-sm">Total Businesses</p>
+                                <p className="text-gray-600 text-sm">Total Businesses</p>
                             </div>
 
-                            <div className="p-5 rounded-3xl backdrop-blur-xl bg-white/20 border border-white/30 shadow-xl">
+                            <div className="p-5 rounded-2xl bg-white border-2 border-purple-200 hover:border-purple-400 transition-all shadow-md">
                                 <div className="flex items-center gap-3 mb-2">
-                                    <div className="p-2 rounded-xl bg-purple-500/20">
-                                        <TrendingUp className="h-5 w-5 text-white" />
+                                    <div className="p-2 rounded-xl bg-purple-100">
+                                        <TrendingUp className="h-5 w-5 text-purple-600" />
                                     </div>
-                                    <span className="text-2xl font-bold text-white">12</span>
+                                    <span className="text-2xl font-bold text-gray-800">12</span>
                                 </div>
-                                <p className="text-white/80 text-sm">Categories</p>
+                                <p className="text-gray-600 text-sm">Categories</p>
                             </div>
 
-                            <div className="p-5 rounded-3xl backdrop-blur-xl bg-white/20 border border-white/30 shadow-xl">
+                            <div className="p-5 rounded-2xl bg-white border-2 border-pink-200 hover:border-pink-400 transition-all shadow-md">
                                 <div className="flex items-center gap-3 mb-2">
-                                    <div className="p-2 rounded-xl bg-pink-500/20">
-                                        <Sparkles className="h-5 w-5 text-white" />
+                                    <div className="p-2 rounded-xl bg-pink-100">
+                                        <Sparkles className="h-5 w-5 text-pink-600" />
                                     </div>
-                                    <span className="text-2xl font-bold text-white">45</span>
+                                    <span className="text-2xl font-bold text-gray-800">45</span>
                                 </div>
-                                <p className="text-white/80 text-sm">Featured</p>
+                                <p className="text-gray-600 text-sm">Featured</p>
                             </div>
                         </div>
 
@@ -113,7 +111,7 @@ const Discover = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {businesses.map((business) => (
                                 <div key={business.id} className="group">
-                                    <div className="h-full p-6 rounded-3xl backdrop-blur-xl bg-white/95 border border-white/50 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:-translate-y-2">
+                                    <div className="h-full p-6 rounded-2xl bg-white border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
                                         {/* Header */}
                                         <div className="flex items-start justify-between mb-4">
                                             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
@@ -142,7 +140,7 @@ const Discover = () => {
                                             </div>
                                         </div>
 
-                                        <Button className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium shadow-lg">
+                                        <Button className="w-full rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-medium shadow-lg">
                                             View Profile
                                         </Button>
                                     </div>

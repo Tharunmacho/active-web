@@ -52,7 +52,7 @@ const BusinessDashboard = () => {
                         </div>
                         <div className="flex items-center gap-3">
                             <div className="px-4 py-2 rounded-2xl bg-blue-50 border border-blue-200">
-                                <p className="text-sm text-blue-700 font-medium">Welcome back</p>
+                                <p className="text-sm text-blue-700 font-semibold">Welcome back</p>
                             </div>
                         </div>
                     </div>
