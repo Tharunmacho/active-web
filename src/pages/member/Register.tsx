@@ -10,15 +10,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserPlus, ArrowRight, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { INDIA_DISTRICTS } from "@/data/india-districts";
+import { register as registerUser } from "@/services/authService";
+import axios from "axios";
 
 const MemberRegister = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [profilePicture, setProfilePicture] = useState<string>("");
   
+  // Location API state
+  const [states, setStates] = useState<string[]>([]);
   const [districts, setDistricts] = useState<string[]>([]);
+  const [blocks, setBlocks] = useState<string[]>([]);
+  const [loadingStates, setLoadingStates] = useState(false);
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
+  const [loadingBlocks, setLoadingBlocks] = useState(false);
+  
   const [partialData, setPartialData] = useState<any>({});
+
+  // Location API base URL - using localhost
+  const LOCATION_API_BASE_URL = "http://localhost:3000/api";
+  // For production: const LOCATION_API_BASE_URL = "https://actv-project.onrender.com/api";
 
   // Derive role from email and id patterns
   const emailToRole = (e: string): string => {
@@ -58,15 +70,98 @@ const MemberRegister = () => {
     stateName: string;
     districtName: string;
     block: string;
-    address: string;
+    city: string;
   };
 
   const { register: registerStep1, handleSubmit: handleSubmitStep1, control: controlStep1, formState: { errors: errorsStep1 } } = useForm<Step1Form>({ mode: 'onBlur' });
-  const { register: registerStep2, handleSubmit: handleSubmitStep2, control: controlStep2, watch: watchStep2, clearErrors: clearErrorsStep2, formState: { errors: errorsStep2 } } = useForm<Step2Form>({
+  const { register: registerStep2, handleSubmit: handleSubmitStep2, control: controlStep2, watch: watchStep2, setValue: setValueStep2, clearErrors: clearErrorsStep2, formState: { errors: errorsStep2 } } = useForm<Step2Form>({
     mode: 'onBlur',
     reValidateMode: 'onChange',
-    defaultValues: { stateName: '', districtName: '', block: '', address: '' },
+    defaultValues: { stateName: '', districtName: '', block: '', city: '' },
   });
+
+  // Watch for state and district changes to fetch dependent data
+  const selectedState = watchStep2('stateName');
+  const selectedDistrict = watchStep2('districtName');
+
+  // Fetch states on component mount
+  useEffect(() => {
+    const fetchStates = async () => {
+      try {
+        setLoadingStates(true);
+        const response = await axios.get(`${LOCATION_API_BASE_URL}/locations/states`);
+        if (response.data && response.data.data) {
+          setStates(response.data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching states:', error);
+        toast.error('Failed to load states. Please try again.');
+      } finally {
+        setLoadingStates(false);
+      }
+    };
+
+    fetchStates();
+  }, []);
+
+  // Fetch districts when state changes
+  useEffect(() => {
+    const fetchDistricts = async () => {
+      if (!selectedState) {
+        setDistricts([]);
+        setBlocks([]);
+        return;
+      }
+
+      try {
+        setLoadingDistricts(true);
+        const response = await axios.get(`${LOCATION_API_BASE_URL}/locations/states/${selectedState}/districts`);
+        if (response.data && response.data.data) {
+          setDistricts(response.data.data);
+          // Reset district and block when state changes
+          setValueStep2('districtName', '');
+          setValueStep2('block', '');
+          setBlocks([]);
+        }
+      } catch (error) {
+        console.error('Error fetching districts:', error);
+        toast.error('Failed to load districts. Please try again.');
+        setDistricts([]);
+      } finally {
+        setLoadingDistricts(false);
+      }
+    };
+
+    fetchDistricts();
+  }, [selectedState]);
+
+  // Fetch blocks when district changes
+  useEffect(() => {
+    const fetchBlocks = async () => {
+      if (!selectedState || !selectedDistrict) {
+        setBlocks([]);
+        return;
+      }
+
+      try {
+        setLoadingBlocks(true);
+        const response = await axios.get(`${LOCATION_API_BASE_URL}/locations/states/${selectedState}/districts/${selectedDistrict}/blocks`);
+        if (response.data && response.data.data) {
+          setBlocks(response.data.data);
+          // Reset block when district changes
+          setValueStep2('block', '');
+        }
+      } catch (error) {
+        console.error('Error fetching blocks:', error);
+        toast.error('Failed to load blocks. Please try again');
+        setBlocks([]);
+      } finally {
+        setLoadingBlocks(false);
+      }
+    };
+
+    fetchBlocks();
+  }, [selectedState, selectedDistrict]);
 
   const handleStep1Submit = (data: Step1Form) => {
     if (data.password !== data.confirmPassword) {
@@ -78,102 +173,46 @@ const MemberRegister = () => {
   };
 
   const handleStep2Submit = async (data: Step2Form) => {
-    const combined = {
-      ...partialData,
-      memberId: partialData.email,
-      password: partialData.password,
-      state: data.stateName,
-      district: data.districtName,
-      block: data.block,
-      address: data.address,
-      registeredAt: new Date().toISOString(),
-    };
-
-    // Persist user to users list so they can login later
     try {
-      const usersJson = localStorage.getItem('users') || '[]';
-      const users = JSON.parse(usersJson) as Array<any>;
-
-      // prevent duplicate memberId (using email as unique ID)
-      if (users.some((u) => u.memberId === partialData.email)) {
-        toast.error('Member ID already exists. Please choose another.');
+      // Validate passwords match
+      if (partialData.password !== partialData.confirmPassword) {
+        toast.error('Passwords do not match');
         return;
       }
 
-      // derive intended role from email prefix (fallback to member)
-      const roleFromEmail = emailToRole(partialData.email);
-      users.push({
-        memberId: partialData.email,
-        password: partialData.password,
+      // Prepare registration data for backend with location details
+      const registrationData = {
+        fullName: `${partialData.firstName} ${partialData.middleName || ''} ${partialData.lastName || ''}`.trim(),
         email: partialData.email,
-        firstName: partialData.firstName,
-        role: roleFromEmail,
-        registeredAt: new Date().toISOString(),
-      });
+        phoneNumber: partialData.mobile,
+        password: partialData.password,
+        confirmPassword: partialData.confirmPassword,
+        state: data.stateName,
+        district: data.districtName,
+        block: data.block,
+        city: data.city
+      };
 
-      // Try to register with backend if available, otherwise fallback to localStorage users
-      let backendOk = false;
-      try {
-        const res = await fetch('http://localhost:4000/api/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ memberId: partialData.email, password: partialData.password, email: partialData.email, firstName: partialData.firstName }),
-        });
+      // Show loading state
+      toast.loading('Registering your account...');
 
-        if (res.ok) {
-          backendOk = true;
+      // Call backend API
+      const response = await registerUser(registrationData);
 
-          // Also save the full profile to backend after successful registration
-          try {
-            const profilePayload = {
-              userId: partialData.email,
-              firstName: partialData.firstName,
-              lastName: partialData.lastName,
-              email: partialData.email,
-              phone: partialData.mobile,
-              state: data.stateName,
-              district: data.districtName,
-              block: data.block,
-              address: data.address,
-            };
-            await fetch('http://localhost:4000/api/profile', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(profilePayload),
-            });
-          } catch (e) {
-            console.warn('Failed to save profile to backend', e);
-          }
-        }
-      } catch (err) {
-        // backend not available — fall back to localStorage
-        backendOk = false;
-      }
+      // Dismiss loading toast
+      toast.dismiss();
 
-      if (!backendOk) localStorage.setItem('users', JSON.stringify(users));
-
-      // Keep registrationData (profile) for convenience
-      localStorage.setItem('registrationData', JSON.stringify(combined));
-      localStorage.setItem('userName', partialData.firstName || combined.firstName || 'Member');
-      // set session so the user is logged in immediately after register
-      localStorage.setItem('memberId', partialData.email);
-      const fromEmail = emailToRole(partialData.email);
-      const fromId = idToRole(partialData.email); // memberId equals email here
-      const roleDerived = fromEmail !== 'member' ? fromEmail : (fromId !== 'member' ? fromId : 'member');
-      localStorage.setItem('role', roleDerived);
-      if (['super_admin','state_admin','district_admin','block_admin'].includes(roleDerived)) {
-        localStorage.setItem('isAdminLoggedIn', 'true');
+      if (response.success) {
+        toast.success('Registration successful! Welcome to ACTIV Portal');
+        
+        // Navigate to member dashboard
+        navigate('/member/dashboard');
       } else {
-        localStorage.setItem('isLoggedIn', 'true');
+        toast.error(response.message || 'Registration failed. Please try again.');
       }
-      localStorage.removeItem('hasVisitedDashboard');
-      toast.success('Registration successful — you are now signed in');
-      // navigate to appropriate dashboard
-      const adminPath = roleDerived === 'block_admin' ? '/admin/block/dashboard' : '/admin/dashboard';
-      navigate(['super_admin','state_admin','district_admin','block_admin'].includes(roleDerived) ? adminPath : '/member/dashboard');
-    } catch (err) {
-      console.error('Failed to persist user', err);
-      toast.error('Failed to save registration. Please try again.');
+    } catch (error: any) {
+      toast.dismiss();
+      toast.error(error.message || 'Something went wrong. Please try again.');
     }
   };
 
@@ -187,15 +226,6 @@ const MemberRegister = () => {
       reader.readAsDataURL(file);
     }
   };
-
-  const watchedState = watchStep2 ? watchStep2('stateName') : null;
-  useEffect(() => {
-    if (watchedState) {
-      setDistricts(INDIA_DISTRICTS[watchedState] ?? []);
-    } else {
-      setDistricts([]);
-    }
-  }, [watchedState]);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-[url('/assets/gradient-bg.png')] bg-cover bg-center">
@@ -302,10 +332,10 @@ const MemberRegister = () => {
                         render={({ field }) => (
                           <Select value={field.value || ''} onValueChange={(v: string) => { field.onChange(v); }}>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select state" />
+                              <SelectValue placeholder={loadingStates ? "Loading states..." : "Select state"} />
                             </SelectTrigger>
                             <SelectContent>
-                              {Object.keys(INDIA_DISTRICTS).map((s) => (
+                              {states.map((s) => (
                                 <SelectItem key={s} value={s}>{s}</SelectItem>
                               ))}
                             </SelectContent>
@@ -322,21 +352,26 @@ const MemberRegister = () => {
                         name="districtName"
                         rules={{ required: 'District is required' }}
                         render={({ field }) => (
-                          <Select value={field.value || ''} onValueChange={(v: string) => field.onChange(v)}>
+                          <Select 
+                            value={field.value || ''} 
+                            onValueChange={(v: string) => field.onChange(v)}
+                            disabled={!selectedState || loadingDistricts}
+                          >
                             <SelectTrigger>
-                              <SelectValue placeholder={districts.length ? 'Select district' : 'No districts available'} />
+                              <SelectValue placeholder={
+                                !selectedState 
+                                  ? 'Please select state first' 
+                                  : loadingDistricts 
+                                  ? 'Loading districts...' 
+                                  : districts.length > 0 
+                                  ? 'Select district' 
+                                  : 'No districts available'
+                              } />
                             </SelectTrigger>
                             <SelectContent>
-                              {districts.length > 0 ? (
-                                districts.map((d) => (
-                                  <SelectItem key={d} value={d}>{d}</SelectItem>
-                                ))
-                              ) : (
-                                <>
-                                  <SelectItem value="district1">District 1</SelectItem>
-                                  <SelectItem value="district2">District 2</SelectItem>
-                                </>
-                              )}
+                              {districts.map((d) => (
+                                <SelectItem key={d} value={d}>{d}</SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         )}
@@ -352,13 +387,26 @@ const MemberRegister = () => {
                         defaultValue=""
                         rules={{ required: 'Block is required' }}
                         render={({ field }) => (
-                          <Select value={field.value || ''} onValueChange={(v: string) => { field.onChange(v); clearErrorsStep2('block'); }}>
+                          <Select 
+                            value={field.value || ''} 
+                            onValueChange={(v: string) => { field.onChange(v); clearErrorsStep2('block'); }}
+                            disabled={!selectedDistrict || loadingBlocks}
+                          >
                             <SelectTrigger>
-                              <SelectValue placeholder="Select block" />
+                              <SelectValue placeholder={
+                                !selectedDistrict 
+                                  ? 'Please select district first' 
+                                  : loadingBlocks 
+                                  ? 'Loading blocks...' 
+                                  : blocks.length > 0 
+                                  ? 'Select block' 
+                                  : 'No blocks available'
+                              } />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="block1">Block 1</SelectItem>
-                              <SelectItem value="block2">Block 2</SelectItem>
+                              {blocks.map((b) => (
+                                <SelectItem key={b} value={b}>{b}</SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         )}
@@ -367,9 +415,9 @@ const MemberRegister = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="address">Complete Address*</Label>
-                      <Input id="address" placeholder="Complete address" {...registerStep2('address', { required: 'Address required' })} />
-                      {errorsStep2.address && <p className="text-xs text-red-600 mt-1">{errorsStep2.address.message}</p>}
+                      <Label htmlFor="city">City*</Label>
+                      <Input id="city" placeholder="Enter city name" {...registerStep2('city', { required: 'City is required' })} />
+                      {errorsStep2.city && <p className="text-xs text-red-600 mt-1">{errorsStep2.city.message}</p>}
                     </div>
 
                     <div className="flex justify-between">

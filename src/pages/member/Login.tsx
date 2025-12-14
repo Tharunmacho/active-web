@@ -7,12 +7,26 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserCircle, Lock } from "lucide-react";
 import { toast } from "sonner";
+import { login as loginUser } from "@/services/authService";
 
 const MemberLogin = () => {
   const navigate = useNavigate();
-  const { register, handleSubmit, formState: { errors } } = useForm<{ memberId: string; password: string }>({ mode: 'onBlur' });
+  const [isLoading, setIsLoading] = useState(false);
+  const { register, handleSubmit, formState: { errors } } = useForm<{ email: string; password: string }>({ mode: 'onBlur' });
 
   // Map special admin emails to roles (also supports prefix formats like block., district., state., super.)
+  const emailToRole = (e: string): string => {
+    const n = (e || '').trim().toLowerCase();
+    if (n.startsWith('block.')) return 'block_admin';
+    if (n.startsWith('district.')) return 'district_admin';
+    if (n.startsWith('state.')) return 'state_admin';
+    if (n.startsWith('super.')) return 'super_admin';
+    if (n === 'blockadmin@activ.com') return 'block_admin';
+    if (n === 'districtadmin@activ.com') return 'district_admin';
+    if (n === 'stateadmin@activ.com') return 'state_admin';
+    if (n === 'superadmin@activ.com') return 'super_admin';
+    return 'member';
+  };
   
   const idToRole = (id: string): string => {
     const s = (id || '').toUpperCase();
@@ -23,14 +37,51 @@ const MemberLogin = () => {
     return 'member';
   };
 
-  const handleLogin = async (data: { memberId: string; password: string }) => {
+  const handleLogin = async (data: { email: string; password: string }) => {
     try {
-      // try backend auth first
+      setIsLoading(true);
+      toast.loading('Logging in...');
+
+      // Call backend API
+      const response = await loginUser({
+        email: data.email,
+        password: data.password
+      });
+
+      toast.dismiss();
+      setIsLoading(false);
+
+      if (response.success && response.data) {
+        toast.success('Login successful!');
+        
+        // Navigate based on role
+        const role = response.data.user.role;
+        
+        if (role === 'member') {
+          navigate('/member/dashboard');
+        } else if (role.includes('admin')) {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/member/dashboard');
+        }
+      } else {
+        toast.error(response.message || 'Invalid email or password');
+      }
+    } catch (error: any) {
+      toast.dismiss();
+      setIsLoading(false);
+      toast.error(error.message || 'Login failed. Please try again.');
+    }
+  };
+
+  const handleLegacyLogin = async (data: { email: string; password: string }) => {
+    try {
+      // Fallback for old localStorage-based login if needed
       try {
-        const res = await fetch('http://localhost:4000/api/login', {
+        const res = await fetch('http://localhost:4000/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ identifier: data.memberId, password: data.password }),
+          body: JSON.stringify({ identifier: data.email, password: data.password }),
         });
 
         if (res.ok) {
@@ -108,10 +159,10 @@ const MemberLogin = () => {
             localStorage.setItem('registrationData', JSON.stringify(found));
           }
 
-          localStorage.setItem('userName', found.firstName || found.email || found.memberId);
-          localStorage.setItem('memberId', found.memberId);
+          localStorage.setItem('userName', found.firstName || found.email || data.email);
+          localStorage.setItem('memberId', found.memberId || found.email);
           const fromEmail = emailToRole(found.email || '');
-          const fromId = idToRole(found.memberId || data.memberId);
+          const fromId = idToRole(found.memberId || data.email);
           const roleDerived = (typeof found.role === 'string' && found.role)
             || (fromEmail !== 'member' ? fromEmail : (fromId !== 'member' ? fromId : 'member'));
           localStorage.setItem('role', roleDerived || 'member');
@@ -138,9 +189,9 @@ const MemberLogin = () => {
       }
 
       const users = JSON.parse(usersJson) as Array<any>;
-      const found = users.find((u) => u.memberId === data.memberId);
+      const found = users.find((u) => u.email === data.email || u.memberId === data.email);
       if (!found) {
-        toast.error("No account found with that Member ID");
+        toast.error("No account found with that email");
         return;
       }
 
@@ -184,10 +235,10 @@ const MemberLogin = () => {
       }
 
       // Set logged-in session info (local fallback)
-      localStorage.setItem("userName", found.firstName || found.email || found.memberId);
-      localStorage.setItem("memberId", found.memberId);
+      localStorage.setItem("userName", found.firstName || found.email || data.email);
+      localStorage.setItem("memberId", found.memberId || found.email);
       const fromEmail = emailToRole(found.email || '');
-      const fromId = idToRole(found.memberId || data.memberId);
+      const fromId = idToRole(found.memberId || data.email);
       const roleDerived = (typeof found.role === 'string' && (found.role as string))
         || (fromEmail !== 'member' ? fromEmail : (fromId !== 'member' ? fromId : 'member'));
       localStorage.setItem("role", roleDerived || 'member');
@@ -220,9 +271,20 @@ const MemberLogin = () => {
         <CardContent>
           <form onSubmit={handleSubmit(handleLogin)} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="memberId">Member ID</Label>
-              <Input id="memberId" placeholder="Enter your member ID" {...register('memberId', { required: 'Member ID is required' })} />
-              {errors.memberId && <p className="text-xs text-red-600 mt-1">{errors.memberId.message}</p>}
+              <Label htmlFor="email">Email Address</Label>
+              <Input 
+                id="email" 
+                type="email"
+                placeholder="Enter your email" 
+                {...register('email', { 
+                  required: 'Email is required',
+                  pattern: {
+                    value: /^\S+@\S+\.\S+$/,
+                    message: 'Please enter a valid email'
+                  }
+                })} 
+              />
+              {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
@@ -234,9 +296,9 @@ const MemberLogin = () => {
                 Forgot Password?
               </Link>
             </div>
-            <Button type="submit" className="w-full" size="lg">
+            <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
               <Lock className="w-4 h-4 mr-2" />
-              Login
+              {isLoading ? 'Logging in...' : 'Login'}
             </Button>
             <div className="text-center text-sm">
               <span className="text-muted-foreground">New Member? </span>
