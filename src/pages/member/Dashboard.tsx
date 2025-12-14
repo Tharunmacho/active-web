@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Menu } from "lucide-react";
+import { Menu, User, Briefcase } from "lucide-react";
 import { useState, useEffect } from "react";
 import MemberSidebar from "./MemberSidebar";
 import { useNavigate } from "react-router-dom";
@@ -167,66 +167,69 @@ const MemberDashboard = () => {
           </Avatar>
         </div>
 
-        <div className="flex-1 p-4 md:p-6 overflow-auto bg-background">
+        <div className="flex-1 p-4 md:p-6 overflow-auto bg-white">
           <div className="w-full max-w-6xl mx-auto">
-            {/* Welcome section - adjusted for mobile */}
+            {/* Welcome section */}
             <div className="mb-6">
 
               <div className="flex items-center gap-4 mt-4">
                 <Avatar className="w-16 h-16">
                   <AvatarImage src="/placeholder.svg" />
-                  <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+                  <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white text-2xl">
                     {userName ? userName.split(" ").map(n => n[0]).join("") : "SD"}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h2 className="text-xl font-bold md:text-2xl">
+                  <h2 className="text-xl font-bold md:text-2xl text-gray-800">
                     {isFirstVisit ? "Welcome" : "Welcome back"}, {userName || "Member"}
                   </h2>
-                  <p className="text-muted-foreground">TechCorp Solution</p>
+                  <p className="text-gray-500">TechCorp Solution</p>
                 </div>
               </div>
             </div>
 
-            {/* Complete Your Profile Card - First */}
-            <Card className="shadow-medium border-0 w-full mb-6 bg-gray-50">
-              <CardContent className="p-4 md:p-6">
+            {/* Complete Your Profile Card - Professional Blue */}
+            <Card className="shadow-lg border-0 w-full mb-6 bg-blue-600 text-white">
+              <CardContent className="p-6 md:p-8">
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
                   <div className="flex-1">
-                    <h3 className="text-xl md:text-2xl font-bold mb-2">Complete Your Profile</h3>
-                    <p className="text-base text-gray-600 mb-3">{completionPercentage}% completed</p>
-                    <p className="text-sm text-muted-foreground mb-4">Unlock all features by completing your profile.</p>
+                    <h3 className="text-2xl md:text-3xl font-bold mb-3">Complete Your Profile</h3>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="text-4xl font-bold">{completionPercentage}%</div>
+                      <span className="text-sm opacity-90">completed</span>
+                    </div>
+                    <p className="text-sm opacity-90 mb-4">Unlock all features by completing your profile.</p>
                     <div className="mt-4">
-                      <Button className="bg-blue-600 hover:bg-blue-700 text-white w-full md:w-auto px-6" onClick={() => navigate('/member/profile')}>
+                      <Button className="bg-white text-blue-600 hover:bg-gray-100 font-semibold px-8 py-2" onClick={() => navigate('/member/profile')}>
                         Complete Profile
                       </Button>
                     </div>
                   </div>
-                  <div className="w-24 h-24 md:w-32 md:h-32 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <span className="text-5xl">🔍</span>
+                  <div className="w-24 h-24 md:w-32 md:h-32 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center">
+                    <User className="w-16 h-16 md:w-20 md:h-20 text-white" strokeWidth={1.5} />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Your Business Account Card - Second */}
-            <Card className="shadow-medium border-0 w-full mb-6 bg-gray-50">
-              <CardContent className="p-4 md:p-6">
+            {/* Your Business Account Card - Professional Purple */}
+            <Card className="shadow-lg border-0 w-full mb-6 bg-purple-600 text-white">
+              <CardContent className="p-6 md:p-8">
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
                   <div className="flex-1">
-                    <h3 className="text-xl md:text-2xl font-bold mb-2">Your Business Account</h3>
+                    <h3 className="text-2xl md:text-3xl font-bold mb-3">Your Business Account</h3>
                     <div className="mb-3">
-                      <span className="inline-block text-sm font-semibold bg-yellow-100 text-yellow-700 rounded-full px-3 py-1">Pending</span>
+                      <span className="inline-block text-sm font-semibold bg-white bg-opacity-20 rounded-full px-4 py-2">Pending</span>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-4">View and manage your business profile and settings</p>
+                    <p className="text-sm opacity-90 mb-4">View and manage your business profile and settings</p>
                     <div className="mt-4">
-                      <Button className="bg-blue-600 hover:bg-blue-700 text-white w-full md:w-auto px-6" onClick={() => navigate('/member/business-profile')}>
+                      <Button className="bg-white text-purple-600 hover:bg-gray-100 font-semibold px-8 py-2" onClick={() => navigate('/member/business-profile')}>
                         Create Account
                       </Button>
                     </div>
                   </div>
-                  <div className="w-24 h-24 md:w-32 md:h-32 bg-gray-200 rounded-lg flex items-center justify-center">
-                    <span className="text-5xl">💼</span>
+                  <div className="w-24 h-24 md:w-32 md:h-32 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center">
+                    <Briefcase className="w-16 h-16 md:w-20 md:h-20 text-white" strokeWidth={1.5} />
                   </div>
                 </div>
               </CardContent>

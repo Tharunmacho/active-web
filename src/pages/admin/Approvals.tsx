@@ -137,13 +137,6 @@ const Approvals = () => {
                 <TabsTrigger value="approved">Approved</TabsTrigger>
                 <TabsTrigger value="rejected">Rejected</TabsTrigger>
               </TabsList>
-            {/* Tabs */}
-            <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="w-full">
-              <TabsList className="grid w-full grid-cols-3 max-w-md">
-                <TabsTrigger value="pending">Pending</TabsTrigger>
-                <TabsTrigger value="approved">Approved</TabsTrigger>
-                <TabsTrigger value="rejected">Rejected</TabsTrigger>
-              </TabsList>
 
               <TabsContent value="pending" className="mt-6">
                 {buckets.pending.length === 0 ? (

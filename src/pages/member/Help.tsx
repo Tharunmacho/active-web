@@ -132,38 +132,38 @@ const MemberHelp = () => {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 p-4 md:p-6 overflow-auto bg-background">
-          <div className="w-full max-w-4xl mx-auto space-y-6">
+        <div className="flex-1 p-3 md:p-4 overflow-auto bg-white">
+          <div className="w-full space-y-4">
             {/* Header */}
             <div>
-              <h1 className="text-3xl font-bold mb-2">Help & Support Center</h1>
-              <p className="text-muted-foreground">
+              <h1 className="text-2xl font-bold mb-1">Help & Support Center</h1>
+              <p className="text-gray-600">
                 Find answers to common questions and get help from our support team
               </p>
             </div>
 
             {/* Tabs */}
             <Tabs defaultValue="faqs" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsList className="grid w-full grid-cols-2 mb-4">
                 <TabsTrigger value="faqs" className="flex items-center gap-2">
-                  <HelpCircle className="w-4 h-4 hidden md:block" />
+                  <HelpCircle className="w-4 h-4" />
                   FAQs
                 </TabsTrigger>
                 <TabsTrigger value="contact" className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 hidden md:block" />
+                  <Mail className="w-4 h-4" />
                   Contact Us
                 </TabsTrigger>
               </TabsList>
 
               {/* FAQs Tab */}
-              <TabsContent value="faqs" className="space-y-4">
+              <TabsContent value="faqs" className="space-y-3">
                 {faqs.map((faq, index) => (
-                  <Card key={faq.id} className="overflow-hidden">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg text-left">{faq.question}</CardTitle>
+                  <Card key={faq.id} className="overflow-hidden rounded-xl border-0 shadow-md">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base text-left">{faq.question}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-muted-foreground text-sm leading-relaxed">{faq.answer}</p>
+                      <p className="text-gray-600 text-sm leading-relaxed">{faq.answer}</p>
                     </CardContent>
                   </Card>
                 ))}
@@ -171,21 +171,21 @@ const MemberHelp = () => {
 
               {/* Contact Us Tab */}
               <TabsContent value="contact">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   {/* Contact Info Cards */}
-                  <div className="lg:col-span-1 space-y-4">
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="flex gap-4">
-                          <div className="bg-blue-100 p-3 rounded-lg">
-                            <Mail className="w-6 h-6 text-blue-600" />
+                  <div className="lg:col-span-1 space-y-3">
+                    <Card className="rounded-xl border-0 shadow-md">
+                      <CardContent className="pt-5">
+                        <div className="flex gap-3">
+                          <div className="bg-blue-100 p-2 rounded-lg">
+                            <Mail className="w-5 h-5 text-blue-600" />
                           </div>
                           <div>
-                            <h4 className="font-semibold mb-1">Email</h4>
-                            <p className="text-sm text-muted-foreground">
+                            <h4 className="font-semibold mb-1 text-sm">Email</h4>
+                            <p className="text-xs text-gray-600">
                               support@Actvportal.com
                             </p>
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <p className="text-xs text-gray-500 mt-1">
                               Response: 24 hours
                             </p>
                           </div>
@@ -193,18 +193,18 @@ const MemberHelp = () => {
                       </CardContent>
                     </Card>
 
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="flex gap-4">
-                          <div className="bg-green-100 p-3 rounded-lg">
-                            <HelpCircle className="w-6 h-6 text-green-600" />
+                    <Card className="rounded-xl border-0 shadow-md">
+                      <CardContent className="pt-5">
+                        <div className="flex gap-3">
+                          <div className="bg-green-100 p-2 rounded-lg">
+                            <HelpCircle className="w-5 h-5 text-green-600" />
                           </div>
                           <div>
-                            <h4 className="font-semibold mb-1">Support Hours</h4>
-                            <p className="text-sm text-muted-foreground">
+                            <h4 className="font-semibold mb-1 text-sm">Support Hours</h4>
+                            <p className="text-xs text-gray-600">
                               Mon - Fri: 9 AM - 6 PM
                             </p>
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <p className="text-xs text-gray-500 mt-1">
                               IST (India Standard Time)
                             </p>
                           </div>
@@ -215,10 +215,10 @@ const MemberHelp = () => {
 
                   {/* Contact Form */}
                   <div className="lg:col-span-2">
-                    <Card>
+                    <Card className="rounded-xl border-0 shadow-md">
                       <CardHeader>
-                        <CardTitle>Send us a Message</CardTitle>
-                        <CardDescription>
+                        <CardTitle className="text-lg">Send us a Message</CardTitle>
+                        <CardDescription className="text-sm">
                           Fill out the form and we'll get back to you as soon as possible
                         </CardDescription>
                       </CardHeader>

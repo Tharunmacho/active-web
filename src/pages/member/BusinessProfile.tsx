@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Upload, ImagePlus } from "lucide-react";
+import { Menu, Upload, ImagePlus, Building2, MapPin, Phone, FileText, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 import MemberSidebar from "./MemberSidebar";
 
@@ -54,177 +54,234 @@ const BusinessProfile = () => {
     };
 
     return (
-        <div className="min-h-screen flex bg-gray-50">
-            {/* Sidebar - hidden on mobile */}
-            <div className="hidden md:block">
-                <MemberSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-            </div>
+        <div className="min-h-screen flex">
+            {/* Sidebar */}
+            <MemberSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
             {/* Main content */}
             <div className="flex-1 flex flex-col">
-                {/* Header */}
-                <div className="bg-white text-gray-900 p-4 flex items-center gap-4 sticky top-0 z-10 border-b shadow-sm">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => navigate("/member/dashboard")}
-                        className="text-gray-900 hover:bg-gray-100"
-                    >
-                        <ArrowLeft className="h-6 w-6" />
+                {/* Mobile header */}
+                <div className="md:hidden flex items-center justify-between p-4 bg-white border-b">
+                    <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)} className="p-2">
+                        <Menu className="h-6 w-6" />
                     </Button>
-                    <h1 className="text-xl font-semibold">Business Profile</h1>
+                    <h1 className="text-xl font-bold">Business Profile</h1>
+                    <div className="w-10" />
                 </div>
 
-                {/* Form Content */}
-                <div className="flex-1 overflow-auto p-4 pb-24 md:pb-6">
-                    <div className="max-w-2xl mx-auto">
-                        {/* Logo Upload Section */}
-                        <div className="flex flex-col items-center mb-6">
-                            <div
-                                className="w-40 h-40 bg-white rounded-2xl shadow-md flex items-center justify-center cursor-pointer hover:shadow-lg transition-shadow"
-                                onClick={() => document.getElementById("logo-upload")?.click()}
-                            >
-                                {logoPreview ? (
-                                    <img src={logoPreview} alt="Logo" className="w-full h-full object-cover rounded-2xl" />
-                                ) : (
-                                    <div className="flex flex-col items-center text-gray-400">
-                                        <ImagePlus className="w-16 h-16 mb-2" />
-                                        <span className="text-sm font-medium">Upload Logo</span>
-                                    </div>
-                                )}
-                            </div>
-                            <p className="text-sm text-gray-500 mt-3">Tap to upload business logo</p>
-                            <input
-                                id="logo-upload"
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={handleLogoUpload}
-                            />
+                {/* Page content */}
+                <div className="flex-1 p-3 md:p-4 overflow-auto bg-white">
+                    <div className="w-full space-y-4">
+                        {/* Header */}
+                        <div>
+                            <h1 className="text-2xl font-bold mb-1 text-gray-800">Create Business Profile</h1>
+                            <p className="text-gray-600">Set up your business account and showcase your brand</p>
                         </div>
 
-                        {/* Form Card */}
-                        <Card className="border-0 shadow-md">
-                            <CardContent className="p-6 space-y-5">
-                                {/* Business Name */}
-                                <div>
-                                    <Label htmlFor="businessName" className="text-base font-semibold mb-2 block">
-                                        Business Name
-                                    </Label>
-                                    <Input
-                                        id="businessName"
-                                        placeholder="Enter business name"
-                                        value={formData.businessName}
-                                        onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
-                                        className="bg-gray-50 border-gray-200"
-                                    />
-                                </div>
+                        {/* Main Layout */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                            {/* Left Column - Logo Upload */}
+                            <div className="lg:col-span-1">
+                                <Card className="rounded-2xl border-0 shadow-lg overflow-hidden bg-gradient-to-br from-blue-50 to-purple-50">
+                                    <CardHeader className="text-center pb-4">
+                                        <CardTitle className="text-lg text-gray-800">Business Logo</CardTitle>
+                                        <CardDescription className="text-sm">Upload your brand identity</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="flex flex-col items-center pb-6">
+                                        <div
+                                            className="w-40 h-40 bg-white rounded-2xl shadow-md flex items-center justify-center cursor-pointer hover:shadow-xl transition-all border-4 border-dashed border-blue-200 hover:border-blue-400"
+                                            onClick={() => document.getElementById("logo-upload")?.click()}
+                                        >
+                                            {logoPreview ? (
+                                                <img src={logoPreview} alt="Logo" className="w-full h-full object-cover rounded-xl" />
+                                            ) : (
+                                                <div className="flex flex-col items-center text-blue-400">
+                                                    <ImagePlus className="w-12 h-12 mb-2" strokeWidth={1.5} />
+                                                    <span className="text-sm font-medium">Upload Logo</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-3 text-center">
+                                            Click to upload<br />Recommended: 400x400px
+                                        </p>
+                                        <input
+                                            id="logo-upload"
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={handleLogoUpload}
+                                        />
+                                    </CardContent>
+                                </Card>
 
-                                {/* Description */}
-                                <div>
-                                    <Label htmlFor="description" className="text-base font-semibold mb-2 block">
-                                        Description
-                                    </Label>
-                                    <Textarea
-                                        id="description"
-                                        placeholder="Describe your business..."
-                                        value={formData.description}
-                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                        className="bg-gray-50 border-gray-200 min-h-[120px] resize-none"
-                                        maxLength={500}
-                                    />
-                                    <div className="text-right text-xs text-gray-500 mt-1">
-                                        {formData.description.length}/500
-                                    </div>
-                                </div>
+                                {/* Info Card */}
+                                <Card className="rounded-2xl border-0 shadow-md mt-4 bg-blue-600 text-white">
+                                    <CardContent className="pt-6">
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                                                    <Building2 className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium">Professional Profile</p>
+                                                    <p className="text-xs opacity-90">Stand out from the crowd</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                                                    <Briefcase className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium">Business Features</p>
+                                                    <p className="text-xs opacity-90">Access premium tools</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
 
-                                {/* Business Type */}
-                                <div>
-                                    <Label htmlFor="businessType" className="text-base font-semibold mb-2 block">
-                                        Business Type
-                                    </Label>
-                                    <Select
-                                        value={formData.businessType}
-                                        onValueChange={(value) => setFormData({ ...formData, businessType: value })}
-                                    >
-                                        <SelectTrigger className="bg-gray-50 border-gray-200">
-                                            <SelectValue placeholder="Select business type" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="retail">Retail</SelectItem>
-                                            <SelectItem value="wholesale">Wholesale</SelectItem>
-                                            <SelectItem value="manufacturing">Manufacturing</SelectItem>
-                                            <SelectItem value="service">Service</SelectItem>
-                                            <SelectItem value="technology">Technology</SelectItem>
-                                            <SelectItem value="food">Food & Beverage</SelectItem>
-                                            <SelectItem value="healthcare">Healthcare</SelectItem>
-                                            <SelectItem value="education">Education</SelectItem>
-                                            <SelectItem value="other">Other</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                            {/* Right Column - Form Fields */}
+                            <div className="lg:col-span-2">
+                                <Card className="rounded-2xl border-0 shadow-lg">
+                                    <CardHeader>
+                                        <CardTitle className="text-xl text-gray-800">Business Information</CardTitle>
+                                        <CardDescription>Tell us about your business</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-5">
+                                        {/* Business Name */}
+                                        <div>
+                                            <Label htmlFor="businessName" className="text-sm font-semibold mb-2 flex items-center gap-2 text-gray-700">
+                                                <Building2 className="w-4 h-4 text-blue-600" />
+                                                Business Name *
+                                            </Label>
+                                            <Input
+                                                id="businessName"
+                                                placeholder="Enter your business name"
+                                                value={formData.businessName}
+                                                onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
+                                                className="border-gray-300 focus:border-blue-500 rounded-xl"
+                                            />
+                                        </div>
 
-                                {/* Mobile Number */}
-                                <div>
-                                    <Label htmlFor="mobileNumber" className="text-base font-semibold mb-2 block">
-                                        Mobile Number
-                                    </Label>
-                                    <Input
-                                        id="mobileNumber"
-                                        type="tel"
-                                        placeholder="Enter mobile number"
-                                        value={formData.mobileNumber}
-                                        onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
-                                        className="bg-gray-50 border-gray-200"
-                                    />
-                                </div>
+                                        {/* Description */}
+                                        <div>
+                                            <Label htmlFor="description" className="text-sm font-semibold mb-2 flex items-center gap-2 text-gray-700">
+                                                <FileText className="w-4 h-4 text-blue-600" />
+                                                Business Description
+                                            </Label>
+                                            <Textarea
+                                                id="description"
+                                                placeholder="Describe what your business does, your products/services, and what makes you unique..."
+                                                value={formData.description}
+                                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                                className="border-gray-300 focus:border-blue-500 min-h-[120px] resize-none rounded-xl"
+                                                maxLength={500}
+                                            />
+                                            <div className="text-right text-xs text-gray-500 mt-1">
+                                                {formData.description.length}/500 characters
+                                            </div>
+                                        </div>
 
-                                {/* Area */}
-                                <div>
-                                    <Label htmlFor="area" className="text-base font-semibold mb-2 block">
-                                        Area
-                                    </Label>
-                                    <Input
-                                        id="area"
-                                        placeholder="Enter area"
-                                        value={formData.area}
-                                        onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-                                        className="bg-gray-50 border-gray-200"
-                                    />
-                                </div>
+                                        {/* Business Type & Mobile Number - Grid */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {/* Business Type */}
+                                            <div>
+                                                <Label htmlFor="businessType" className="text-sm font-semibold mb-2 flex items-center gap-2 text-gray-700">
+                                                    <Briefcase className="w-4 h-4 text-blue-600" />
+                                                    Business Type *
+                                                </Label>
+                                                <Select
+                                                    value={formData.businessType}
+                                                    onValueChange={(value) => setFormData({ ...formData, businessType: value })}
+                                                >
+                                                    <SelectTrigger className="border-gray-300 rounded-xl">
+                                                        <SelectValue placeholder="Select type" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="retail">Retail</SelectItem>
+                                                        <SelectItem value="wholesale">Wholesale</SelectItem>
+                                                        <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                                                        <SelectItem value="service">Service</SelectItem>
+                                                        <SelectItem value="technology">Technology</SelectItem>
+                                                        <SelectItem value="food">Food & Beverage</SelectItem>
+                                                        <SelectItem value="healthcare">Healthcare</SelectItem>
+                                                        <SelectItem value="education">Education</SelectItem>
+                                                        <SelectItem value="other">Other</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
 
-                                {/* Location */}
-                                <div>
-                                    <Label htmlFor="location" className="text-base font-semibold mb-2 block">
-                                        Location
-                                    </Label>
-                                    <Input
-                                        id="location"
-                                        placeholder="Enter location"
-                                        value={formData.location}
-                                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                        className="bg-gray-50 border-gray-200"
-                                    />
-                                </div>
+                                            {/* Mobile Number */}
+                                            <div>
+                                                <Label htmlFor="mobileNumber" className="text-sm font-semibold mb-2 flex items-center gap-2 text-gray-700">
+                                                    <Phone className="w-4 h-4 text-blue-600" />
+                                                    Mobile Number *
+                                                </Label>
+                                                <Input
+                                                    id="mobileNumber"
+                                                    type="tel"
+                                                    placeholder="+91 98765 43210"
+                                                    value={formData.mobileNumber}
+                                                    onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
+                                                    className="border-gray-300 focus:border-blue-500 rounded-xl"
+                                                />
+                                            </div>
+                                        </div>
 
-                                {/* Action Buttons */}
-                                <div className="flex gap-3 pt-4">
-                                    <Button
-                                        variant="outline"
-                                        onClick={handleCancel}
-                                        className="flex-1 h-12 text-base font-medium"
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        onClick={handleSave}
-                                        className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white text-base font-medium"
-                                    >
-                                        Save Profile
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
+                                        {/* Area & Location - Grid */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {/* Area */}
+                                            <div>
+                                                <Label htmlFor="area" className="text-sm font-semibold mb-2 flex items-center gap-2 text-gray-700">
+                                                    <MapPin className="w-4 h-4 text-blue-600" />
+                                                    Area
+                                                </Label>
+                                                <Input
+                                                    id="area"
+                                                    placeholder="e.g., Downtown, Industrial Zone"
+                                                    value={formData.area}
+                                                    onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                                                    className="border-gray-300 focus:border-blue-500 rounded-xl"
+                                                />
+                                            </div>
+
+                                            {/* Location */}
+                                            <div>
+                                                <Label htmlFor="location" className="text-sm font-semibold mb-2 flex items-center gap-2 text-gray-700">
+                                                    <MapPin className="w-4 h-4 text-blue-600" />
+                                                    City / Location
+                                                </Label>
+                                                <Input
+                                                    id="location"
+                                                    placeholder="e.g., Mumbai, Maharashtra"
+                                                    value={formData.location}
+                                                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                                    className="border-gray-300 focus:border-blue-500 rounded-xl"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Action Buttons */}
+                                        <div className="flex gap-3 pt-4 border-t">
+                                            <Button
+                                                variant="outline"
+                                                onClick={handleCancel}
+                                                className="flex-1 h-11 text-base font-medium rounded-xl"
+                                            >
+                                                Cancel
+                                            </Button>
+                                            <Button
+                                                onClick={handleSave}
+                                                className="flex-1 h-11 bg-blue-600 hover:bg-blue-700 text-white text-base font-medium rounded-xl shadow-lg hover:shadow-xl transition-all"
+                                            >
+                                                Save Business Profile
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

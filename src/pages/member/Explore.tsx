@@ -60,105 +60,105 @@ const Explore = () => {
         </div>
 
         {/* Page content */}
-        <div className="flex-1 p-4 md:p-6 overflow-auto bg-background">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-2xl font-bold mb-6 hidden md:block">Explore</h1>
+        <div className="flex-1 p-3 md:p-4 overflow-auto bg-white">
+          <div className="w-full">
+            <h1 className="text-2xl font-bold mb-4 hidden md:block text-gray-800">Explore</h1>
 
             <div className="relative mb-6">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
               <Input
                 placeholder="Search for events, courses, or resources..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="pl-10 py-6 rounded-full"
+                className="pl-12 py-5 rounded-2xl border-2 border-gray-200 focus:border-blue-500 shadow-sm"
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-3 gap-3 mb-6">
               <Card
                 onClick={() => setSelected("events")}
-                className={`cursor-pointer transition-shadow ${selected === "events" ? "ring-2 ring-blue-300 shadow-lg" : "hover:shadow-md"}`}>
-                <CardHeader>
-                  <CardTitle>Upcoming Events</CardTitle>
+                className={`cursor-pointer transition-all rounded-xl border-0 ${selected === "events"
+                  ? "bg-blue-600 text-white shadow-lg"
+                  : "bg-gray-50 hover:bg-gray-100 shadow-sm"
+                  }`}>
+                <CardHeader className="p-4">
+                  <CardTitle className={`flex items-center gap-2 text-base ${selected === "events" ? "text-white" : "text-gray-800"}`}>
+                    <span className="text-xl">📅</span>
+                    Events
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">Discover events happening near you</p>
-                </CardContent>
               </Card>
 
               <Card
                 onClick={() => setSelected("resources")}
-                className={`cursor-pointer transition-shadow ${selected === "resources" ? "ring-2 ring-blue-300 shadow-lg" : "hover:shadow-md"}`}>
-                <CardHeader>
-                  <CardTitle>Learning Resources</CardTitle>
+                className={`cursor-pointer transition-all rounded-xl border-0 ${selected === "resources"
+                  ? "bg-purple-600 text-white shadow-lg"
+                  : "bg-gray-50 hover:bg-gray-100 shadow-sm"
+                  }`}>
+                <CardHeader className="p-4">
+                  <CardTitle className={`flex items-center gap-2 text-base ${selected === "resources" ? "text-white" : "text-gray-800"}`}>
+                    <span className="text-xl">📚</span>
+                    Resources
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">Access courses and training materials</p>
-                </CardContent>
               </Card>
 
               <Card
                 onClick={() => setSelected("groups")}
-                className={`cursor-pointer transition-shadow ${selected === "groups" ? "ring-2 ring-blue-300 shadow-lg" : "hover:shadow-md"}`}>
-                <CardHeader>
-                  <CardTitle>Community Groups</CardTitle>
+                className={`cursor-pointer transition-all rounded-xl border-0 ${selected === "groups"
+                  ? "bg-indigo-600 text-white shadow-lg"
+                  : "bg-gray-50 hover:bg-gray-100 shadow-sm"
+                  }`}>
+                <CardHeader className="p-4">
+                  <CardTitle className={`flex items-center gap-2 text-base ${selected === "groups" ? "text-white" : "text-gray-800"}`}>
+                    <span className="text-xl">👥</span>
+                    Groups
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">Join groups based on your interests</p>
-                </CardContent>
               </Card>
             </div>
 
             {/* Selected panel */}
-            <div className="mt-8">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="capitalize">{selected === "events" ? "Upcoming Events" : selected === "resources" ? "Learning Resources" : "Community Groups"}</CardTitle>
+            <div>
+              <Card className="rounded-xl shadow-md border-0">
+                <CardHeader className="pb-3">
+                  <CardTitle className="capitalize text-gray-800 text-lg">
+                    {selected === "events" ? "Upcoming Events" : selected === "resources" ? "Learning Resources" : "Community Groups"}
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  {selected === "events" && <p className="text-muted-foreground">Discover events happening near you</p>}
-                  {selected === "resources" && <p className="text-muted-foreground">Access courses and training materials</p>}
-                  {selected === "groups" && <p className="text-muted-foreground">Join groups based on your interests</p>}
-
-                  {/* Results list */}
-                  <div className="mt-4 space-y-4">
-                    {selected === "events" && (
-                      <div>
-                        {filteredEvents.length === 0 ? (
-                          <p className="text-muted-foreground">No events match "{query}"</p>
-                        ) : (
-                          filteredEvents.map((e) => (
-                            <div key={e.id} className="p-4 border rounded-md mb-3 bg-white">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <h4 className="font-semibold">{e.title}</h4>
-                                  <div className="text-sm text-muted-foreground">{e.location} • {new Date(e.date).toLocaleDateString()}</div>
-                                </div>
-                                <div className="text-sm text-muted-foreground">{e.date}</div>
-                              </div>
-                              <p className="mt-2 text-sm text-muted-foreground">{e.description}</p>
-                              <div className="mt-3 flex gap-2">
-                                <button className="text-sm px-3 py-1 border rounded hover:bg-gray-50">Register</button>
-                                <button className="text-sm px-3 py-1 border rounded hover:bg-gray-50">Remind me</button>
-                              </div>
+                <CardContent className="pt-0">{/* Results list */}
+                  <div className="space-y-2">{selected === "events" && (
+                    <div>
+                      {filteredEvents.length === 0 ? (
+                        <p className="text-gray-500 text-sm">No events match "{query}"</p>
+                      ) : (
+                        filteredEvents.map((e) => (
+                          <div key={e.id} className="p-4 rounded-lg bg-blue-50 border border-blue-100 hover:shadow-md transition-shadow">
+                            <h4 className="font-semibold text-blue-900 text-sm">{e.title}</h4>
+                            <div className="text-xs text-blue-700 mt-1">
+                              📍 {e.location} • 📅 {e.date}
                             </div>
-                          ))
-                        )}
-                      </div>
-                    )}
+                            <p className="text-xs text-gray-600 mt-2">{e.description}</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
 
                     {selected === "groups" && (
                       <div>
                         {filteredGroups.length === 0 ? (
-                          <p className="text-muted-foreground">No groups match "{query}"</p>
+                          <p className="text-gray-500 text-sm">No groups match "{query}"</p>
                         ) : (
                           filteredGroups.map((g) => (
-                            <div key={g.id} className="p-4 border rounded-md mb-3 bg-white flex items-center justify-between">
-                              <div>
-                                <h4 className="font-semibold">{g.name}</h4>
-                                <p className="text-sm text-muted-foreground mt-1">{g.description}</p>
+                            <div key={g.id} className="p-4 rounded-lg bg-indigo-50 border border-indigo-100 hover:shadow-md transition-shadow">
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <h4 className="font-semibold text-indigo-900 text-sm">{g.name}</h4>
+                                  <p className="text-xs text-indigo-700 mt-1">{g.description}</p>
+                                </div>
+                                <div className="text-xs text-indigo-600 font-medium ml-3">👥 {g.members}</div>
                               </div>
-                              <div className="text-sm text-muted-foreground">{g.members} members</div>
                             </div>
                           ))
                         )}
@@ -168,15 +168,17 @@ const Explore = () => {
                     {selected === "resources" && (
                       <div>
                         {filteredResources.length === 0 ? (
-                          <p className="text-muted-foreground">No resources match "{query}"</p>
+                          <p className="text-gray-500 text-sm">No resources match "{query}"</p>
                         ) : (
                           filteredResources.map((r) => (
-                            <div key={r.id} className="p-4 border rounded-md mb-3 bg-white flex items-center justify-between">
-                              <div>
-                                <h4 className="font-semibold">{r.title}</h4>
-                                <p className="text-sm text-muted-foreground mt-1">{r.source}</p>
+                            <div key={r.id} className="p-4 rounded-lg bg-purple-50 border border-purple-100 hover:shadow-md transition-shadow">
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <h4 className="font-semibold text-purple-900 text-sm">{r.title}</h4>
+                                  <p className="text-xs text-purple-700 mt-1">📚 {r.source}</p>
+                                </div>
+                                <div className="text-xs text-purple-600 font-medium">Free</div>
                               </div>
-                              <div className="text-sm text-muted-foreground">Free</div>
                             </div>
                           ))
                         )}
@@ -187,9 +189,9 @@ const Explore = () => {
               </Card>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+        </div >
+      </div >
+    </div >
   );
 };
 

@@ -263,12 +263,12 @@ export default function MemberProfile() {
           <div className="w-10" />
         </div>
 
-        <div className="flex-1 p-4 md:p-6 overflow-auto bg-background">
-          <div className="w-full max-w-4xl mx-auto space-y-6">
+        <div className="flex-1 p-3 md:p-4 overflow-auto bg-white">
+          <div className="w-full space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold mb-2">My Profile</h1>
-                <p className="text-muted-foreground">Manage your personal information</p>
+                <h1 className="text-2xl font-bold mb-1">My Profile</h1>
+                <p className="text-gray-600">Manage your personal information</p>
               </div>
 
               <div className="hidden md:block">
@@ -309,18 +309,25 @@ export default function MemberProfile() {
 
             {/* Additional Details multi-step form (4 steps) */}
             <div>
-              <div className="mb-6 text-center">
-                <h2 className="text-xl font-bold">Additional Details Form</h2>
-                <p className="text-sm text-muted-foreground">Member Registration</p>
-                <div className="flex items-center justify-center gap-2 mt-4">
+              <div className="mb-4 text-center">
+                <h2 className="text-lg font-bold text-gray-800">Additional Details Form</h2>
+                <p className="text-xs text-gray-500">Member Registration</p>
+                <div className="flex items-center justify-center gap-3 mt-4">
                   {[1, 2, 3, 4].map((s) => (
-                    <div key={s} className={`w-8 h-8 rounded-full flex items-center justify-center ${step === s ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'}`}>{s}</div>
+                    <div key={s} className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${step === s
+                      ? 'bg-blue-600 text-white shadow-lg'
+                      : step > s
+                        ? 'bg-blue-100 text-blue-600'
+                        : 'bg-gray-200 text-gray-400'
+                      }`}>
+                      {s}
+                    </div>
                   ))}
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">Step {step} of 4</p>
+                <p className="mt-2 text-sm text-gray-600">Step {step} of 4</p>
               </div>
 
-              <Card>
+              <Card className="rounded-2xl border-0 shadow-lg">
                 <CardContent className="p-6">
                   <form onSubmit={(e) => { e.preventDefault(); if (step < 4) nextStep(); else { saveExtra(); } }}>
                     {step === 1 && (
@@ -522,26 +529,58 @@ export default function MemberProfile() {
 
                     {step === 4 && (
                       <div>
-                        <h3 className="font-semibold mb-4">Declaration</h3>
-                        <div className="grid grid-cols-1 gap-3">
+                        <h3 className="font-semibold mb-4 text-gray-800">Declaration</h3>
+                        <div className="space-y-4">
                           <div>
-                            <Label>No. of Sister Concerns</Label>
-                            <Input className="border border-black" name="sisterConcerns" value={extra.sisterConcerns || ''} onChange={handleExtraChange} />
+                            <Label className="text-sm text-gray-700">No. of Sister Concerns</Label>
+                            <Input
+                              className="border border-gray-300 mt-1"
+                              name="sisterConcerns"
+                              value={extra.sisterConcerns || ''}
+                              onChange={handleExtraChange}
+                              placeholder="Enter number"
+                              type="number"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Please input a value</p>
                           </div>
+
                           <div>
-                            <Label>Name(s) of Company</Label>
-                            <Input className="border border-black" name="companyNames" value={extra.companyNames || ''} onChange={handleExtraChange} />
+                            <Label className="text-sm text-gray-700">Name(s) of Company</Label>
+                            <Input
+                              className="border border-gray-300 mt-1"
+                              name="companyNames"
+                              value={extra.companyNames || ''}
+                              onChange={handleExtraChange}
+                              placeholder="Enter company name"
+                            />
                           </div>
+
                           <div>
-                            <button type="button" onClick={() => setExtra(prev => ({ ...prev, companyNames: (prev.companyNames || '') + (prev.companyNames ? ', ' : '') }))} className="mt-2 inline-block px-3 py-1 border rounded text-sm">Add Another Company</button>
+                            <button
+                              type="button"
+                              onClick={() => setExtra(prev => ({ ...prev, companyNames: (prev.companyNames || '') + (prev.companyNames ? ', ' : '') }))}
+                              className="text-blue-600 text-sm hover:text-blue-700 flex items-center gap-1"
+                            >
+                              <span className="text-lg">+</span> Add Another Company
+                            </button>
                           </div>
-                          <div>
-                            <label className="flex items-center gap-2"><input type="checkbox" /> Show one field per name entered above</label>
-                          </div>
-                          <div>
-                            <Label>Declaration</Label>
-                            <textarea name="declaration" value={extra.declaration || ''} onChange={handleExtraChange} className="w-full border rounded p-2" rows={3} />
-                            <p className="text-xs text-muted-foreground mt-1">This application is under the Verification and Screening Process. We have every right to ACCEPT or REJECT this application according to our membership policy. I confirm the above information is true and correct</p>
+
+                          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <label className="flex items-start gap-3 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                name="declarationAccepted"
+                                checked={extra.declarationAccepted || false}
+                                onChange={(e) => setExtra(prev => ({ ...prev, declarationAccepted: e.target.checked }))}
+                                className="mt-1 w-4 h-4 text-blue-600"
+                              />
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-gray-800">Declaration</p>
+                                <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+                                  This application is under the Verification and Screening Process. We have every right to ACCEPT or REJECT this application according to our membership policy. I confirm the above information is true and correct.
+                                </p>
+                              </div>
+                            </label>
                           </div>
                         </div>
                       </div>

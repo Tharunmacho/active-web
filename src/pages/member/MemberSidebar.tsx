@@ -75,11 +75,16 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                         <Link
                             key={item.to}
                             to={item.to}
-                            className={`flex items-center gap-3 px-3 py-3 rounded-md transition-colors ${active ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'}`}
+                            className={`flex items-center gap-3 px-4 py-3 rounded-lg mb-1 transition-all ${active
+                                    ? 'bg-blue-600 text-white shadow-md'
+                                    : 'text-gray-700 hover:bg-gray-100'
+                                }`}
                             onClick={onClose}
                         >
-                            <span className="w-5 h-5">{item.icon}</span>
-                            <span>{item.label}</span>
+                            <span className={`w-5 h-5 ${active ? 'text-white' : 'text-gray-500'}`}>
+                                {item.icon}
+                            </span>
+                            <span className="font-medium">{item.label}</span>
                         </Link>
                     );
                 })}

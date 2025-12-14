@@ -77,29 +77,39 @@ const Notifications = () => {
         </div>
 
         {/* Page content */}
-        <div className="flex-1 p-4 md:p-6 overflow-auto bg-background">
-          <div className="max-w-2xl mx-auto">
-            <h1 className="text-2xl font-bold mb-6 hidden md:block">Notifications</h1>
+        <div className="flex-1 p-3 md:p-4 overflow-auto bg-white">
+          <div className="w-full">
+            <h1 className="text-2xl font-bold mb-4 hidden md:block text-gray-800">Notifications</h1>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {notifications.map((notification) => (
                 <Card
                   key={notification.id}
-                  className={notification.unread ? "border-l-4 border-l-blue-500" : ""}
+                  className={`rounded-2xl border-0 shadow-md transition-all hover:shadow-lg ${notification.unread
+                    ? notification.type === 'event'
+                      ? 'bg-blue-50 border-l-4 border-l-blue-600'
+                      : notification.type === 'document'
+                        ? 'bg-green-50 border-l-4 border-l-green-600'
+                        : 'bg-purple-50 border-l-4 border-l-purple-600'
+                    : 'bg-gray-50'
+                    }`}
                 >
-                  <CardContent className="p-4">
+                  <CardContent className="p-5">
                     <div className="flex items-start gap-4">
-                      <div className="mt-1">
+                      <div className={`mt-1 p-2 rounded-lg ${notification.type === 'event' ? 'bg-blue-100' :
+                        notification.type === 'document' ? 'bg-green-100' :
+                          'bg-purple-100'
+                        }`}>
                         {getIcon(notification.type)}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold">{notification.title}</h3>
+                          <h3 className="font-semibold text-gray-900">{notification.title}</h3>
                           {notification.unread && (
-                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                            <span className="w-2 h-2 rounded-full bg-blue-600"></span>
                           )}
                         </div>
-                        <p className="text-muted-foreground text-sm mt-1">{notification.message}</p>
+                        <p className="text-gray-600 text-sm mt-1">{notification.message}</p>
                         <p className="text-xs text-gray-500 mt-2">{notification.time}</p>
                       </div>
                     </div>

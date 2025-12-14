@@ -1,97 +1,154 @@
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Menu, Eye, Package, Search, Users } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Eye, Users, TrendingUp, Package, Calendar, BarChart3, PieChart, Activity } from "lucide-react";
 import BusinessSidebar from "./BusinessSidebar";
 
 const Analytics = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
-    const weekData = [
-        { day: "Mon", views: 0 },
-        { day: "Tue", views: 0 },
-        { day: "Wed", views: 0 },
-        { day: "Thu", views: 0 },
-        { day: "Fri", views: 0 },
-        { day: "Sat", views: 0 },
-        { day: "Sun", views: 0 },
+    const stats = [
+        { label: "Total Views", value: "1,234", change: "+12.5%", icon: Eye, color: "from-blue-500 to-blue-600" },
+        { label: "Profile Visits", value: "456", change: "+8.2%", icon: Users, color: "from-purple-500 to-purple-600" },
+        { label: "Product Views", value: "789", change: "+15.7%", icon: Package, color: "from-pink-500 to-pink-600" },
+        { label: "Engagement Rate", value: "23.4%", change: "+5.3%", icon: TrendingUp, color: "from-green-500 to-green-600" },
     ];
 
-    const stats = [
-        { label: "Profile Views", value: 0, change: "-9%", icon: Eye, color: "text-blue-600", bgColor: "bg-blue-100" },
-        { label: "Product Views", value: 0, change: "-1%", icon: Package, color: "text-blue-600", bgColor: "bg-blue-100" },
-        { label: "Search Appearances", value: 0, change: "+7%", icon: Search, color: "text-yellow-600", bgColor: "bg-yellow-100" },
-        { label: "Connections", value: 0, change: "+29%", icon: Users, color: "text-green-600", bgColor: "bg-green-100" },
+    const weeklyData = [
+        { day: "Mon", views: 45, visits: 23 },
+        { day: "Tue", views: 52, visits: 31 },
+        { day: "Wed", views: 38, visits: 19 },
+        { day: "Thu", views: 67, visits: 42 },
+        { day: "Fri", views: 71, visits: 39 },
+        { day: "Sat", views: 55, visits: 28 },
+        { day: "Sun", views: 48, visits: 25 },
     ];
 
     return (
-        <div className="min-h-screen flex bg-gradient-to-b from-blue-50 to-purple-50">
-            {/* Business Sidebar */}
+        <div className="min-h-screen flex" style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+        }}>
             <BusinessSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-            {/* Main content */}
             <div className="flex-1 flex flex-col">
-                {/* Header */}
-                <div className="p-4 bg-white border-b">
-                    <div className="flex items-center gap-3 mb-2">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setSidebarOpen(true)}
-                            className="md:hidden p-2"
-                        >
-                            <Menu className="h-6 w-6" />
-                        </Button>
-                        <h1 className="text-xl md:text-2xl font-bold">Analytics</h1>
+                {/* Glassmorphism Header */}
+                <div className="p-6 backdrop-blur-xl bg-white/10 border-b border-white/20">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-3xl font-bold text-white mb-1">Analytics Dashboard</h1>
+                            <p className="text-white/80">Track your business performance and insights</p>
+                        </div>
+                        <div className="flex items-center gap-3 px-4 py-2 rounded-2xl backdrop-blur-md bg-white/20 border border-white/30">
+                            <Calendar className="h-4 w-4 text-white" />
+                            <span className="text-sm text-white font-medium">Last 7 days</span>
+                        </div>
                     </div>
-                    <p className="text-gray-600 text-sm md:ml-12">Track your business performance</p>
-                    <p className="text-gray-500 text-sm md:ml-12">No Companies</p>
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 p-4 overflow-auto">
-                    <div className="max-w-4xl mx-auto space-y-4">
+                <div className="flex-1 p-6 overflow-auto">
+                    <div className="max-w-7xl mx-auto space-y-6">
                         {/* Stats Grid */}
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             {stats.map((stat, index) => (
-                                <Card key={index} className="bg-white shadow-sm">
-                                    <CardContent className="p-4">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <div className={`w-10 h-10 ${stat.bgColor} rounded-lg flex items-center justify-center`}>
-                                                <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                                <div key={index} className="group">
+                                    <div className="h-full p-6 rounded-3xl backdrop-blur-xl bg-white/95 border border-white/50 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:-translate-y-1">
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className={`p-3 rounded-2xl bg-gradient-to-br ${stat.color} shadow-lg`}>
+                                                <stat.icon className="h-6 w-6 text-white" strokeWidth={2} />
                                             </div>
-                                            <span className={`text-sm font-medium ${stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'
-                                                }`}>
-                                                {stat.change}
-                                            </span>
+                                            <div className="px-3 py-1 rounded-full bg-green-100">
+                                                <span className="text-xs font-bold text-green-700">{stat.change}</span>
+                                            </div>
                                         </div>
-                                        <div className="text-3xl font-bold mb-1">{stat.value}</div>
+                                        <div className="text-3xl font-bold text-gray-800 mb-1">{stat.value}</div>
                                         <div className="text-sm text-gray-600">{stat.label}</div>
-                                    </CardContent>
-                                </Card>
+                                    </div>
+                                </div>
                             ))}
                         </div>
 
-                        {/* Profile Views This Week */}
-                        <Card className="bg-white shadow-sm">
-                            <CardContent className="p-4">
-                                <h3 className="text-lg font-semibold mb-4">Profile Views This Week</h3>
+                        {/* Charts Section */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Weekly Trends */}
+                            <div className="p-6 rounded-3xl backdrop-blur-xl bg-white/95 border border-white/50 shadow-2xl">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="p-2 rounded-xl bg-blue-100">
+                                        <BarChart3 className="h-5 w-5 text-blue-600" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-800">Weekly Trends</h3>
+                                </div>
+
                                 <div className="space-y-3">
-                                    {weekData.map((item, index) => (
-                                        <div key={index} className="flex items-center justify-between">
-                                            <span className="text-gray-600 w-12">{item.day}</span>
-                                            <div className="flex-1 mx-4 bg-gray-100 rounded-full h-6 overflow-hidden">
-                                                <div
-                                                    className="bg-blue-600 h-full rounded-full"
-                                                    style={{ width: `${(item.views / 10) * 100}%` }}
-                                                ></div>
+                                    {weeklyData.map((data, index) => (
+                                        <div key={index} className="flex items-center gap-3">
+                                            <span className="w-12 text-sm font-medium text-gray-600">{data.day}</span>
+                                            <div className="flex-1 flex gap-2">
+                                                <div className="flex-1">
+                                                    <div className="h-8 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 shadow-md"
+                                                        style={{ width: `${(data.views / 80) * 100}%` }}>
+                                                    </div>
+                                                </div>
+                                                <span className="w-12 text-sm font-semibold text-blue-600">{data.views}</span>
                                             </div>
-                                            <span className="text-gray-900 font-medium w-8 text-right">{item.views}</span>
                                         </div>
                                     ))}
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+
+                            {/* Category Breakdown */}
+                            <div className="p-6 rounded-3xl backdrop-blur-xl bg-white/95 border border-white/50 shadow-2xl">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="p-2 rounded-xl bg-purple-100">
+                                        <PieChart className="h-5 w-5 text-purple-600" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-800">Top Categories</h3>
+                                </div>
+
+                                <div className="space-y-4">
+                                    {["Technology", "Retail", "Food & Beverage", "Healthcare"].map((category, index) => (
+                                        <div key={index}>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="text-sm font-medium text-gray-700">{category}</span>
+                                                <span className="text-sm font-bold text-purple-600">{90 - index * 15}%</span>
+                                            </div>
+                                            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-gradient-to-r from-purple-500 to-purple-600 rounded-full"
+                                                    style={{ width: `${90 - index * 15}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Activity Feed */}
+                        <div className="p-6 rounded-3xl backdrop-blur-xl bg-white/95 border border-white/50 shadow-2xl">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2 rounded-xl bg-green-100">
+                                    <Activity className="h-5 w-5 text-green-600" />
+                                </div>
+                                <h3 className="text-xl font-bold text-gray-800">Recent Activity</h3>
+                            </div>
+
+                            <div className="space-y-4">
+                                {[
+                                    { action: "New profile view", time: "2 hours ago", type: "view" },
+                                    { action: "Product inquiry received", time: "4 hours ago", type: "inquiry" },
+                                    { action: "Profile updated", time: "1 day ago", type: "update" },
+                                    { action: "New follower", time: "2 days ago", type: "follower" },
+                                ].map((activity, index) => (
+                                    <div key={index} className="flex items-start gap-4 p-4 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200">
+                                        <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
+                                        <div className="flex-1">
+                                            <p className="font-semibold text-gray-800 text-sm">{activity.action}</p>
+                                            <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

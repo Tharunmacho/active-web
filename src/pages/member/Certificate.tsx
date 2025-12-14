@@ -150,43 +150,43 @@ const MemberCertificate = () => {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 p-4 md:p-6 overflow-auto bg-background">
-          <div className="w-full max-w-4xl mx-auto space-y-6">
+        <div className="flex-1 p-3 md:p-4 overflow-auto bg-white">
+          <div className="w-full space-y-4">
             {/* Header */}
             <div>
-              <h1 className="text-3xl font-bold mb-2">My Certificates</h1>
-              <p className="text-muted-foreground">View, download, and manage your certificates</p>
+              <h1 className="text-2xl font-bold mb-1">My Certificates</h1>
+              <p className="text-gray-600">View, download, and manage your certificates</p>
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card>
-                <CardContent className="pt-6">
+            <div className="grid grid-cols-3 gap-3">
+              <Card className="rounded-xl border-0 shadow-md">
+                <CardContent className="pt-5 pb-4">
                   <div className="text-center">
                     <p className="text-3xl font-bold text-green-600">
                       {certificates.filter((c) => c.status === "valid").length}
                     </p>
-                    <p className="text-sm text-muted-foreground">Valid Certificates</p>
+                    <p className="text-xs text-gray-600 mt-1">Valid Certificates</p>
                   </div>
                 </CardContent>
               </Card>
-              <Card>
-                <CardContent className="pt-6">
+              <Card className="rounded-xl border-0 shadow-md">
+                <CardContent className="pt-5 pb-4">
                   <div className="text-center">
                     <p className="text-3xl font-bold text-red-600">
                       {certificates.filter((c) => c.status === "expired").length}
                     </p>
-                    <p className="text-sm text-muted-foreground">Expired Certificates</p>
+                    <p className="text-xs text-gray-600 mt-1">Expired Certificates</p>
                   </div>
                 </CardContent>
               </Card>
-              <Card>
-                <CardContent className="pt-6">
+              <Card className="rounded-xl border-0 shadow-md">
+                <CardContent className="pt-5 pb-4">
                   <div className="text-center">
                     <p className="text-3xl font-bold text-yellow-600">
                       {certificates.filter((c) => c.status === "pending").length}
                     </p>
-                    <p className="text-sm text-muted-foreground">Pending Certificates</p>
+                    <p className="text-xs text-gray-600 mt-1">Pending Certificates</p>
                   </div>
                 </CardContent>
               </Card>
@@ -194,27 +194,27 @@ const MemberCertificate = () => {
 
             {/* Certificates List */}
             {certificates.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {certificates.map((cert) => (
-                  <Card key={cert.id} className="overflow-hidden hover:shadow-md transition-shadow">
-                    <CardContent className="pt-6">
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <Card key={cert.id} className="overflow-hidden hover:shadow-lg transition-shadow rounded-xl border-0 shadow-md">
+                    <CardContent className="p-5">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                         <div className="flex-1">
-                          <div className="flex items-start gap-4">
-                            <div className="bg-blue-100 p-3 rounded-lg hidden md:block">
-                              <FileText className="w-6 h-6 text-blue-600" />
+                          <div className="flex items-start gap-3">
+                            <div className="bg-blue-100 p-2 rounded-lg">
+                              <FileText className="w-5 h-5 text-blue-600" />
                             </div>
                             <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <h3 className="font-semibold text-lg">{cert.title}</h3>
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="font-semibold text-base">{cert.title}</h3>
                                 <Badge className={getStatusColor(cert.status)}>
                                   {cert.status.charAt(0).toUpperCase() + cert.status.slice(1)}
                                 </Badge>
                               </div>
-                              <p className="text-sm text-muted-foreground mb-2">
+                              <p className="text-xs text-gray-600 mb-1">
                                 Certificate #: <span className="font-mono">{cert.certificateNumber}</span>
                               </p>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-xs text-gray-500">
                                 Issued: {new Date(cert.issueDate).toLocaleDateString()} • Expires:{" "}
                                 {new Date(cert.expiryDate).toLocaleDateString()}
                               </p>
@@ -223,7 +223,7 @@ const MemberCertificate = () => {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex gap-2 md:flex-col lg:flex-row">
+                        <div className="flex gap-2">
                           <Button
                             size="sm"
                             variant="outline"
