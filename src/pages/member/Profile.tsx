@@ -1,50 +1,113 @@
 ﻿import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Menu, Save, Edit2, X } from "lucide-react";
+import { Menu, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import MemberSidebar from "./MemberSidebar";
 import { INDIA_DISTRICTS } from "@/data/india-districts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type ProfileData = {
-  firstName: string;
-  middleName?: string;
-  lastName?: string;
-  email: string;
-  phone: string;
-  dateOfBirth?: string;
-  gender?: string;
+  // Step 1: Personal, Account, Demographic
+  name: string;
+  block?: string;
   state?: string;
   district?: string;
-  block?: string;
-  address?: string;
+  city?: string;
+  phone: string;
+  email: string;
+  currentPassword?: string;
+  password?: string;
+  confirmPassword?: string;
+  religion?: string;
+  socialCategory?: string;
+  
+  // Step 2: Business Information
+  doingBusiness?: string;
+  organization?: string;
+  constitution?: string;
+  businessTypes?: string[];
+  businessYear?: string;
+  employees?: string;
+  chamber?: string;
+  govtOrgs?: string[];
+  
+  // Step 3: Financial & Compliance
+  pan?: string;
+  gst?: string;
+  udyam?: string;
+  filedITR?: string;
+  itrYears?: string;
+  turnoverRange?: string;
+  turnover1?: string;
+  turnover2?: string;
+  turnover3?: string;
+  govtSchemes?: string;
+  scheme1?: string;
+  scheme2?: string;
+  scheme3?: string;
+  
+  // Step 4: Declaration
+  sisterConcerns?: string;
+  companyNames?: string;
+  declarationAccepted?: boolean;
 };
 
 const defaultProfile: ProfileData = {
-  firstName: "",
-  middleName: "",
-  lastName: "",
-  email: "",
-  phone: "",
-  dateOfBirth: "",
-  gender: "",
+  name: "",
+  block: "",
   state: "",
   district: "",
-  block: "",
-  address: "",
+  city: "",
+  phone: "",
+  email: "",
+  currentPassword: "",
+  password: "",
+  confirmPassword: "",
+  religion: "",
+  socialCategory: "",
+  doingBusiness: "",
+  organization: "",
+  constitution: "",
+  businessTypes: [],
+  businessYear: "",
+  employees: "",
+  chamber: "",
+  govtOrgs: [],
+  pan: "",
+  gst: "",
+  udyam: "",
+  filedITR: "",
+  itrYears: "",
+  turnoverRange: "",
+  turnover1: "",
+  turnover2: "",
+  turnover3: "",
+  govtSchemes: "",
+  scheme1: "",
+  scheme2: "",
+  scheme3: "",
+  sisterConcerns: "",
+  companyNames: "",
+  declarationAccepted: false,
 };
 
-export default function MemberProfile() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+export default function Profile() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [districts, setDistricts] = useState<string[]>([]);
-  const [isEditing, setIsEditing] = useState(false);
-  const [step, setStep] = useState<number>(1);
-  const [extra, setExtra] = useState<Record<string, any>>({});
+  const [blocks, setBlocks] = useState<string[]>([]);
+  const [currentStep, setCurrentStep] = useState<number>(1);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [companyNames, setCompanyNames] = useState<string[]>([""]);
+  const [showSeparateFields, setShowSeparateFields] = useState(false);
+  const navigate = useNavigate();
 
   const {
     register,
@@ -55,731 +118,1338 @@ export default function MemberProfile() {
     formState: { errors },
   } = useForm<ProfileData>({ defaultValues: defaultProfile });
 
-  // initialize form (load from localStorage if exists)
-  useEffect(() => {
-    const saved = localStorage.getItem("userProfile") || localStorage.getItem("registrationData");
-    if (saved) {
-      try {
-        const obj = JSON.parse(saved);
-        reset({ ...defaultProfile, ...obj });
-      } catch (e) {
-        reset(defaultProfile);
-      }
-    } else {
-      reset(defaultProfile);
-    }
-  }, [reset]);
-
-  const selectedState = watch("state");
-  useEffect(() => {
-    if (selectedState) setDistricts(INDIA_DISTRICTS[selectedState] ?? []);
-    else setDistricts([]);
-  }, [selectedState]);
-
-  // We're switching the profile page into a multi-step additional-details form
-  // The completion percentage will be computed from both existing profile fields
-  // and the additional details we capture below.
-
-  const getCompletionPercentage = (values: ProfileData) => {
-    const fields = [
-      values.firstName,
-      values.lastName,
-      values.email,
-      values.phone,
-      values.dateOfBirth,
-      values.gender,
-      values.state,
-      values.district,
-      values.block,
-      values.address,
-    ];
-    const filled = fields.filter((v) => !!v && `${v}`.trim() !== "").length;
-    return Math.round((filled / fields.length) * 100) || 0;
-  };
-
-  const onSave = (data: ProfileData) => {
-    if (!data.firstName || !data.email || !data.phone || !data.state || !data.district) {
-      toast.error("Please fill in required fields before saving.");
-      return;
-    }
-
-    localStorage.setItem("userProfile", JSON.stringify(data));
-    localStorage.setItem("userName", `${data.firstName} ${data.lastName ?? ""}`.trim());
-    localStorage.setItem("registrationData", JSON.stringify(data));
-
-    // try to persist core profile in backend as well
-    const userId = localStorage.getItem("memberId");
-    if (userId) {
-      fetch("http://localhost:4000/api/profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email,
-          phone: data.phone,
-          dateOfBirth: data.dateOfBirth,
-          gender: data.gender,
-          state: data.state,
-          district: data.district,
-          block: data.block,
-          address: data.address,
-        }),
-      }).catch(() => {/* ignore backend errors */ });
-    }
-
-    setIsEditing(false);
-    toast.success("Profile saved successfully");
-  };
-
-  const onCancel = () => {
-    const saved = localStorage.getItem("userProfile") || localStorage.getItem("registrationData");
-    if (saved) reset(JSON.parse(saved));
-    else reset(defaultProfile);
-    setIsEditing(false);
-  };
-
-  const currentValues = watch();
-  const completion = getCompletionPercentage(currentValues);
-
-  // Load extra details from localStorage when the component mounts
-  useEffect(() => {
-    const saved = localStorage.getItem("userProfileDetails");
-    if (saved) {
-      try {
-        setExtra(JSON.parse(saved));
-      } catch (e) {
-        // ignore
-      }
-    }
-  }, []);
-
-  const handleExtraChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target as any;
-    setExtra((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const navigate = useNavigate();
-
-  function generateApplicationId(): string {
-    // Format: APP-YYYY-XXX — where XXX is a sequential number stored in localStorage
-    const year = new Date().getFullYear();
-    const key = `application-seq-${year}`;
-    const seq = Number(localStorage.getItem(key) || 0) + 1;
-    localStorage.setItem(key, String(seq));
-    return `APP-${year}-${String(seq).padStart(3, '0')}`;
-  }
-
-  const saveExtra = async () => {
-    localStorage.setItem("userProfileDetails", JSON.stringify(extra));
-    const userId = localStorage.getItem("memberId");
-
-    if (!userId) {
-      toast.error("User not logged in");
-      return;
-    }
-
-    // Try to save additional details to backend
+  // Auto-save function with debounce - Only save Step 1 fields
+  const autoSaveData = async (data: Partial<ProfileData>) => {
     try {
-      const response = await fetch("http://localhost:4000/api/profile/additional-details", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, details: extra }),
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      // Only save Step 1 fields (Personal + Demographic details)
+      const step1Data = {
+        name: data.name,
+        phone: data.phone,
+        email: data.email,
+        state: data.state,
+        district: data.district,
+        block: data.block,
+        city: data.city,
+        religion: data.religion,
+        socialCategory: data.socialCategory
+      };
+
+      await fetch("http://localhost:4000/api/profile/additional-form/auto-save", {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(step1Data)
       });
-      if (!response.ok) {
-        console.warn("Backend save failed, continuing with localStorage");
-      }
-    } catch (e) {
-      console.warn("Backend unavailable, continuing with localStorage", e);
+    } catch (error) {
+      console.error("Auto-save error:", error);
     }
+  };
 
-    // create an application record on backend; fall back to local id if needed
-    let appId = '';
-    const profileSnapshot = JSON.parse(localStorage.getItem('userProfile') || '{}');
-    try {
-      const resp = await fetch("http://localhost:4000/api/applications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, profileSnapshot, detailsSnapshot: extra }),
-      });
-      if (resp.ok) {
-        const data = await resp.json();
-        appId = data?.application?.id || '';
+  // Watch for changes and auto-save
+  useEffect(() => {
+    if (isLocked) return;
+
+    const subscription = watch((value) => {
+      if (autoSaveTimeout) {
+        clearTimeout(autoSaveTimeout);
       }
-    } catch (e) {
-      // ignore and fallback
-    }
 
-    if (!appId) appId = generateApplicationId();
+      const timeout = setTimeout(() => {
+        autoSaveData(value);
+      }, 2000);
 
-    const stages = [
-      { id: 1, key: 'block', title: 'Block Admin Review', reviewer: 'Rajesh Kumar (Block Admin)', status: 'Under Review', reviewDate: null, notes: '' },
-      { id: 2, key: 'district', title: 'District Admin Review', reviewer: 'Priya Sharma (District Admin)', status: 'Pending', reviewDate: null, notes: '' },
-      { id: 3, key: 'state', title: 'State Admin Review', reviewer: 'Dr. Amit Patel (State Admin)', status: 'Pending', reviewDate: null, notes: '' },
-      { id: 4, key: 'payment', title: 'Ready for Payment', reviewer: 'ACTIV Super Admin', status: 'Pending', reviewDate: null, notes: '' },
-    ];
+      setAutoSaveTimeout(timeout);
+    });
 
-    const app = {
-      id: appId,
-      submittedAt: new Date().toISOString(),
-      status: 'Under Review',
-      stage: 1,
-      stages,
-      profile: {
-        profile: profileSnapshot,
-        extra: extra,
+    return () => {
+      subscription.unsubscribe();
+      if (autoSaveTimeout) {
+        clearTimeout(autoSaveTimeout);
+      }
+    };
+  }, [watch, isLocked]);
+
+  // Load profile data from backend on mount
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        
+        // Load from localStorage first (for non-authenticated users)
+        const savedProfile = localStorage.getItem("userProfile") || localStorage.getItem("registrationData");
+        if (savedProfile) {
+          const data = JSON.parse(savedProfile);
+          console.log("Loading registration data:", data);
+          
+          // Set all form fields from registration data
+          reset({
+            name: data.name || data.firstName || "",
+            phone: data.phone || data.mobile || "",
+            email: data.email || "",
+            state: data.state || "",
+            district: data.district || "",
+            block: data.block || "",
+            city: data.city || "",
+            password: "",
+            confirmPassword: "",
+            religion: data.religion || "",
+            socialCategory: data.socialCategory || "",
+          });
+
+          // Load districts if state exists
+          if (data.state) {
+            console.log("Setting districts for state:", data.state);
+            setDistricts(INDIA_DISTRICTS[data.state] ?? []);
+            
+            // Load blocks if district exists
+            if (data.district) {
+              const blocksUrl = `http://localhost:4000/api/locations/states/${encodeURIComponent(data.state)}/districts/${encodeURIComponent(data.district)}/blocks`;
+              console.log("Fetching blocks from:", blocksUrl);
+              
+              fetch(blocksUrl)
+                .then(res => {
+                  console.log("Blocks response status:", res.status);
+                  return res.ok ? res.json() : { data: [] };
+                })
+                .then(result => {
+                  console.log("Blocks data received:", result);
+                  setBlocks(result.data || []);
+                })
+                .catch(err => {
+                  console.error("Error fetching blocks:", err);
+                  setBlocks([]);
+                });
+            }
+          }
+        }
+        
+        // If authenticated, load from backend
+        if (!token) return;
+
+        const response = await fetch("http://localhost:4000/api/profile/additional-form", {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          const formData = result.data;
+          console.log("Loading profile from backend:", formData);
+          
+          setIsLocked(formData.isLocked || false);
+          
+          reset({
+            name: formData.name || "",
+            phone: formData.phone || "",
+            email: formData.email || "",
+            password: "",
+            confirmPassword: "",
+            religion: formData.religion || "",
+            socialCategory: formData.socialCategory || "",
+            block: formData.block || "",
+            state: formData.state || "",
+            district: formData.district || "",
+            city: formData.city || "",
+            doingBusiness: formData.doingBusiness || "",
+            organization: formData.organization || "",
+            constitution: formData.constitution || "",
+            businessTypes: formData.businessTypes || [],
+            businessYear: formData.businessYear || "",
+            employees: formData.employees || "",
+            chamber: formData.chamber || "",
+            govtOrgs: formData.govtOrgs || [],
+            pan: formData.pan || "",
+            gst: formData.gst || "",
+            udyam: formData.udyam || "",
+            filedITR: formData.filedITR || "",
+            itrYears: formData.itrYears || "",
+            turnoverRange: formData.turnoverRange || "",
+            turnover1: formData.turnover1 || "",
+            turnover2: formData.turnover2 || "",
+            turnover3: formData.turnover3 || "",
+            govtSchemes: formData.govtSchemes || "",
+            sisterConcerns: formData.sisterConcerns || "",
+            companyNames: formData.companyNames || "",
+            declarationAccepted: formData.declarationAccepted || false,
+          });
+
+          if (formData.state) {
+            setDistricts(INDIA_DISTRICTS[formData.state] ?? []);
+            
+            if (formData.district) {
+              const blocksResponse = await fetch(
+                `http://localhost:4000/api/locations/states/${encodeURIComponent(formData.state)}/districts/${encodeURIComponent(formData.district)}/blocks`
+              );
+              if (blocksResponse.ok) {
+                const blocksData = await blocksResponse.json();
+                setBlocks(blocksData.data || []);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error loading profile:", error);
       }
     };
 
-    try {
-      const appsJson = localStorage.getItem('applications') || '[]';
-      const apps = JSON.parse(appsJson);
-      apps.push(app);
-      localStorage.setItem('applications', JSON.stringify(apps));
-    } catch (e) {
-      localStorage.setItem('applications', JSON.stringify([app]));
+    loadUserProfile();
+  }, [reset]);
+
+  // Load districts when state changes
+  const selectedState = watch("state");
+  useEffect(() => {
+    if (selectedState) {
+      setDistricts(INDIA_DISTRICTS[selectedState] ?? []);
+    } else {
+      setDistricts([]);
     }
+  }, [selectedState]);
 
-    toast.success("Additional details saved");
+  // Load blocks when state and district change
+  const selectedDistrict = watch("district");
+  useEffect(() => {
+    const loadBlocks = async () => {
+      if (selectedState && selectedDistrict) {
+        try {
+          const url = `http://localhost:4000/api/locations/states/${encodeURIComponent(selectedState)}/districts/${encodeURIComponent(selectedDistrict)}/blocks`;
+          console.log("🔍 Loading blocks for:", selectedState, selectedDistrict);
+          console.log("📡 Blocks API URL:", url);
+          
+          const response = await fetch(url);
+          console.log("📊 Blocks API response status:", response.status);
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log("✅ Blocks API success! Data:", data);
+            console.log("📦 Number of blocks:", data.data?.length || 0);
+            if (data.data && data.data.length > 0) {
+              console.log("🏘️ First 5 blocks:", data.data.slice(0, 5));
+            }
+            setBlocks(data.data || []);
+          } else {
+            const errorText = await response.text();
+            console.error("❌ Blocks API failed:", response.statusText, errorText);
+            setBlocks([]);
+          }
+        } catch (error) {
+          console.error("❌ Error loading blocks:", error);
+          setBlocks([]);
+        }
+      } else {
+        console.log("⚠️ Clearing blocks - state:", selectedState, "district:", selectedDistrict);
+        setBlocks([]);
+      }
+    };
+    loadBlocks();
+  }, [selectedState, selectedDistrict]);
 
-    // navigate to submitted confirmation page and pass id via query param
-    navigate(`/member/application-submitted?id=${encodeURIComponent(appId)}`);
+  const saveCurrentStepData = (data: ProfileData) => {
+    const currentData = JSON.parse(localStorage.getItem("userProfile") || "{}");
+    const updatedData = { ...currentData, ...data };
+    localStorage.setItem("userProfile", JSON.stringify(updatedData));
+    localStorage.setItem("registrationData", JSON.stringify(updatedData));
+    return updatedData;
   };
 
-  const nextStep = () => setStep((s) => Math.min(s + 1, 4));
-  const prevStep = () => setStep((s) => Math.max(s - 1, 1));
+  const saveStep1 = async (data: ProfileData) => {
+    if (data.password && data.password !== data.confirmPassword) {
+      toast.error("Passwords do not match");
+      return false;
+    }
+
+    if (!data.name || !data.phone || !data.email || !data.state || !data.district || !data.block || !data.city) {
+      toast.error("Please fill in all required fields");
+      return false;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      
+      if (data.password && token) {
+        if (!data.currentPassword) {
+          toast.error("Please enter your current password to change it");
+          return false;
+        }
+
+        const passwordResponse = await fetch("http://localhost:4000/api/auth/change-password", {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            currentPassword: data.currentPassword,
+            newPassword: data.password
+          })
+        });
+
+        if (!passwordResponse.ok) {
+          const errorData = await passwordResponse.json();
+          toast.error(errorData.message || "Failed to update password");
+          return false;
+        }
+
+        toast.success("Password updated successfully");
+      }
+
+      if (token) {
+        // Save Step 1 fields to "additional form for personal information 1" collection
+        const step1Data = {
+          name: data.name,
+          phoneNumber: data.phone,
+          email: data.email,
+          state: data.state,
+          district: data.district,
+          block: data.block,
+          city: data.city,
+          religion: data.religion,
+          socialCategory: data.socialCategory,
+          isLocked: true
+        };
+
+        const saveResponse = await fetch("http://localhost:4000/api/personal-form", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(step1Data)
+        });
+
+        if (!saveResponse.ok) {
+          toast.error("Failed to save profile");
+          return false;
+        }
+      }
+
+      saveCurrentStepData(data);
+      setIsLocked(true);
+      toast.success("Profile saved and locked successfully!");
+      
+      return true;
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      toast.error("Failed to save profile");
+      return false;
+    }
+  };
+
+  const handleNext = async () => {
+    const data = watch();
+    if (currentStep === 1) {
+      const saved = await saveStep1(data);
+      if (saved) {
+        setCurrentStep(2);
+      }
+    } else if (currentStep === 2) {
+      if (data.doingBusiness === "no") {
+        // Save business form with "no" status before submission
+        try {
+          const token = localStorage.getItem("token");
+          if (token) {
+            await fetch("http://localhost:4000/api/business-form", {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({ doingBusiness: "no" })
+            });
+          }
+        } catch (error) {
+          console.error("Error saving business form:", error);
+        }
+        handleFinalSubmit();
+      } else if (data.doingBusiness === "yes") {
+        if (!data.organization || !data.constitution || !data.businessTypes?.length) {
+          toast.error("Please fill in all required business information");
+          return;
+        }
+        
+        // Save business form to "additional form for business 2" collection
+        try {
+          const token = localStorage.getItem("token");
+          if (token) {
+            const businessData = {
+              doingBusiness: data.doingBusiness,
+              organization: data.organization,
+              constitution: data.constitution,
+              businessTypes: data.businessTypes,
+              businessActivities: data.businessYear, // Using businessYear field for activities
+              businessYear: data.businessYear,
+              employees: data.employees,
+              chamber: data.chamber,
+              chamberDetails: data.chamberDetails || "",
+              govtOrgs: data.govtOrgs || []
+            };
+            
+            const response = await fetch("http://localhost:4000/api/business-form", {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify(businessData)
+            });
+            
+            if (!response.ok) {
+              toast.error("Failed to save business information");
+              return;
+            }
+            
+            toast.success("Business information saved!");
+          }
+        } catch (error) {
+          console.error("Error saving business form:", error);
+          toast.error("Failed to save business information");
+          return;
+        }
+        
+        saveCurrentStepData(data);
+        setCurrentStep(3);
+      } else {
+        toast.error("Please select if you are doing business");
+      }
+    } else if (currentStep === 3) {
+      // Save financial form to "additional form for financial 3" collection
+      try {
+        const token = localStorage.getItem("token");
+        if (token) {
+          const financialData = {
+            pan: data.pan,
+            gst: data.gst,
+            udyam: data.udyam,
+            filedITR: data.filedITR,
+            itrYears: data.itrYears,
+            turnoverRange: data.turnoverRange,
+            turnover1: data.turnover1,
+            turnover2: data.turnover2,
+            turnover3: data.turnover3,
+            govtSchemes: data.govtSchemes,
+            scheme1: data.scheme1 || "",
+            scheme2: data.scheme2 || "",
+            scheme3: data.scheme3 || ""
+          };
+          
+          const response = await fetch("http://localhost:4000/api/financial-form", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(financialData)
+          });
+          
+          if (!response.ok) {
+            toast.error("Failed to save financial information");
+            return;
+          }
+          
+          toast.success("Financial information saved!");
+        }
+      } catch (error) {
+        console.error("Error saving financial form:", error);
+        toast.error("Failed to save financial information");
+        return;
+      }
+      
+      saveCurrentStepData(data);
+      setCurrentStep(4);
+    }
+  };
+
+  const handleFinalSubmit = async () => {
+    const data = watch();
+    saveCurrentStepData(data);
+
+    try {
+      const token = localStorage.getItem("token");
+      if (token) {
+        // Save Step 4 to "additional form for declaration 4" collection
+        const declarationData = {
+          sisterConcerns: data.sisterConcerns || "",
+          companyNames: companyNames.filter(name => name.trim() !== ""),
+          declarationAccepted: true
+        };
+
+        const response = await fetch("http://localhost:4000/api/declaration-form", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(declarationData)
+        });
+
+        if (!response.ok) {
+          toast.error("Failed to submit declaration");
+          return;
+        }
+      }
+    } catch (error) {
+      console.error("Error saving declaration:", error);
+      toast.error("Failed to submit application");
+      return;
+    }
+
+    toast.success("Application submitted successfully!");
+    navigate("/member/dashboard");
+  };
+
+  const toggleBusinessType = (type: string) => {
+    const currentTypes = watch("businessTypes") || [];
+    const updated = currentTypes.includes(type)
+      ? currentTypes.filter(t => t !== type)
+      : [...currentTypes, type];
+    return updated;
+  };
+
+  const toggleGovtOrg = (org: string) => {
+    const currentOrgs = watch("govtOrgs") || [];
+    const updated = currentOrgs.includes(org)
+      ? currentOrgs.filter(o => o !== org)
+      : [...currentOrgs, org];
+    return updated;
+  };
 
   return (
-    <div className="min-h-screen flex">
-      <MemberSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <div className="flex h-screen bg-gray-50">
+      <MemberSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <header className="bg-white border-b px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="lg:hidden">
+              <Menu className="h-6 w-6" />
+            </button>
+            <h1 className="text-xl font-semibold">My Profile</h1>
+          </div>
+        </header>
 
-      <div className="flex-1 flex flex-col">
-        <div className="md:hidden flex items-center justify-between p-4 bg-white border-b">
-          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)} className="p-2">
-            <Menu className="h-6 w-6" />
-          </Button>
-          <h1 className="text-xl font-bold">My Profile</h1>
-          <div className="w-10" />
-        </div>
-
-        <div className="flex-1 p-3 md:p-4 overflow-auto bg-white">
-          <div className="w-full space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold mb-1">My Profile</h1>
-                <p className="text-gray-600">Manage your personal information</p>
-              </div>
-
-              <div className="hidden md:block">
-                {isEditing ? (
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={onCancel}>
-                      <X className="w-4 h-4 mr-2" />
-                      Cancel
-                    </Button>
-                    <Button size="sm" onClick={handleSubmit(onSave)} className="bg-blue-600 text-white">
-                      <Save className="w-4 h-4 mr-2" />
-                      Save Changes
-                    </Button>
+        <main className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-8">
+              <div className="flex items-center justify-center gap-3 mb-4">
+                {[1, 2, 3, 4].map((s) => (
+                  <div key={s} className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${
+                    s <= currentStep
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-200 text-gray-400'
+                  }`}>
+                    {s}
                   </div>
-                ) : (
-                  <Button size="sm" onClick={() => setIsEditing(true)}>
-                    <Edit2 className="w-4 h-4 mr-2" />
-                    Edit Profile
-                  </Button>
-                )}
+                ))}
               </div>
+              <p className="text-center text-sm text-gray-600">Step {currentStep} of 4</p>
             </div>
 
-            <Card>
-              <CardContent className="pt-6">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium">Profile Completion</p>
-                    <p className="text-sm font-semibold text-blue-600">{completion}%</p>
-                  </div>
-
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="h-2 rounded-full bg-blue-600 transition-all duration-300" style={{ width: `${completion}%` }} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Additional Details multi-step form (4 steps) */}
-            <div>
-              <div className="mb-4 text-center">
-                <h2 className="text-lg font-bold text-gray-800">Additional Details Form</h2>
-                <p className="text-xs text-gray-500">Member Registration</p>
-                <div className="flex items-center justify-center gap-3 mt-4">
-                  {[1, 2, 3, 4].map((s) => (
-                    <div key={s} className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${step === s
-                      ? 'bg-blue-600 text-white shadow-lg'
-                      : step > s
-                        ? 'bg-blue-100 text-blue-600'
-                        : 'bg-gray-200 text-gray-400'
-                      }`}>
-                      {s}
-                    </div>
-                  ))}
-                </div>
-                <p className="mt-2 text-sm text-gray-600">Step {step} of 4</p>
+            <Card className="rounded-2xl border-0 shadow-lg">
+              <div className="bg-blue-600 text-white py-4 px-6 rounded-t-2xl">
+                <h2 className="text-xl font-bold">ACTIV</h2>
               </div>
 
-              <Card className="rounded-2xl border-0 shadow-lg">
-                <CardContent className="p-6">
-                  <form onSubmit={(e) => { e.preventDefault(); if (step < 4) nextStep(); else { saveExtra(); } }}>
-                    {step === 1 && (
-                      <div>
-                        <h3 className="font-semibold mb-4">Personal details</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <Label>Name</Label>
-                            <Input className="border border-black" disabled value={watch('firstName') ? `${watch('firstName')} ${watch('lastName') ?? ''}` : ''} />
-                          </div>
-                          <div>
-                            <Label>Block</Label>
-                            <Input className="border border-black" disabled value={watch('block') || ''} />
-                          </div>
-                          <div>
-                            <Label>City</Label>
-                            <Input className="border border-black" disabled value={watch('district') || ''} />
-                          </div>
-                          <div>
-                            <Label>District</Label>
-                            <Input className="border border-black" disabled value={watch('district') || ''} />
-                          </div>
-                          <div>
-                            <Label>Phone Number</Label>
-                            <Input className="border border-black" disabled value={watch('phone') || ''} />
-                          </div>
-                          <div>
-                            <Label>Email ID</Label>
-                            <Input className="border border-black" disabled value={watch('email') || ''} />
-                          </div>
-                          <div>
-                            <Label>Date of Birth</Label>
-                            <Input className="border border-black" disabled value={watch('dateOfBirth') || ''} />
-                          </div>
+              <CardContent className="p-6">
+                {isLocked && currentStep === 1 && (
+                  <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800">
+                      🔒 Profile is locked. Please logout and login with your updated credentials to make changes.
+                    </p>
+                  </div>
+                )}
+                
+                {currentStep === 1 && (
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Personal details</h3>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="name">Name *</Label>
+                          <Input
+                            id="name"
+                            placeholder="Enter your full name"
+                            {...register("name", { required: true })}
+                            className="mt-1"
+                            disabled={isLocked}
+                          />
+                          {errors.name && <p className="text-red-500 text-sm mt-1">Name is required</p>}
                         </div>
 
-                        <div className="mt-6 bg-gray-50 border rounded p-4">
-                          <h4 className="font-medium mb-3">Page 1 - Personal & Demographic Details</h4>
-                          <div className="grid grid-cols-1 gap-3">
-                            <div>
-                              <Label>Aadhaar No. (Personal Identity No.)</Label>
-                              <Input className="border border-black" name="aadhaar" value={extra.aadhaar || ''} onChange={handleExtraChange} />
-                            </div>
-                            <div>
-                              <Label>Street Name</Label>
-                              <Input className="border border-black" name="street" value={extra.street || ''} onChange={handleExtraChange} />
-                            </div>
-                            <div>
-                              <Label>Educational Qualification</Label>
-                              <Input className="border border-black" name="education" value={extra.education || ''} onChange={handleExtraChange} />
-                            </div>
-                            <div>
-                              <Label>Religion</Label>
-                              <Input className="border border-black" name="religion" value={extra.religion || ''} onChange={handleExtraChange} />
-                            </div>
-                            <div>
-                              <Label>Social Category</Label>
-                              <Input className="border border-black" name="socialCategory" value={extra.socialCategory || ''} onChange={handleExtraChange} />
-                            </div>
-                          </div>
+                        <div>
+                          <Label htmlFor="state">State *</Label>
+                          <Controller
+                            name="state"
+                            control={control}
+                            rules={{ required: true }}
+                            render={({ field }) => (
+                              <Select 
+                                onValueChange={(value) => {
+                                  field.onChange(value);
+                                  const currentData = watch();
+                                  reset({ ...currentData, state: value, district: '', block: '' });
+                                }} 
+                                value={field.value} 
+                                disabled={isLocked}
+                              >
+                                <SelectTrigger className="mt-1">
+                                  <SelectValue placeholder="Select state" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Object.keys(INDIA_DISTRICTS).map((state) => (
+                                    <SelectItem key={state} value={state}>
+                                      {state}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                          {errors.state && <p className="text-red-500 text-sm mt-1">State is required</p>}
                         </div>
-                      </div>
-                    )}
 
-                    {step === 2 && (
-                      <div>
-                        <h3 className="font-semibold mb-4">Business Information</h3>
-                        <div className="space-y-3">
-                          <div>
-                            <Label>Doing Business</Label>
-                            <div className="flex gap-4 mt-2">
-                              <label className="flex items-center gap-2"><input type="radio" name="doingBusiness" value="yes" checked={extra.doingBusiness === 'yes'} onChange={handleExtraChange} /> Yes</label>
-                              <label className="flex items-center gap-2"><input type="radio" name="doingBusiness" value="no" checked={extra.doingBusiness === 'no'} onChange={handleExtraChange} /> No</label>
-                            </div>
-                          </div>
-
-                          <div>
-                            <Label>Name of the Organization</Label>
-                            <Input name="organization" value={extra.organization || ''} onChange={handleExtraChange} />
-                          </div>
-
-                          <div>
-                            <Label>Constitution of the Company</Label>
-                            <select name="constitution" value={extra.constitution || ''} onChange={handleExtraChange} className="w-full border rounded p-2">
-                              <option value="">Select constitution type</option>
-                              <option value="proprietorship">Proprietorship</option>
-                              <option value="partnership">Partnership</option>
-                              <option value="private">Private Limited</option>
-                              <option value="public">Public Limited</option>
-                              <option value="others">Others</option>
-                            </select>
-                          </div>
-
-                          <div>
-                            <Label>Type of Business</Label>
-                            <div className="grid grid-cols-2 gap-2 mt-2">
-                              {['Agriculture', 'Manufacturing', 'Trader', 'Retailer', 'Service Provider', 'Others'].map((b) => (
-                                <label key={b} className="flex items-center gap-2"><input type="checkbox" name="businessType" value={b} checked={(extra.businessType || []).includes(b)} onChange={(e) => {
-                                  const checked = e.target.checked;
-                                  setExtra(prev => {
-                                    const current = prev.businessType || [];
-                                    const next = checked ? [...current, b] : current.filter(x => x !== b);
-                                    return { ...prev, businessType: next };
-                                  })
-                                }} /> {b}</label>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <Label>Business Commencement Year</Label>
-                              <select name="businessYear" value={extra.businessYear || ''} onChange={handleExtraChange} className="w-full border rounded p-2">
-                                <option value="">Select year</option>
-                                {Array.from({ length: 50 }).map((_, i) => (
-                                  <option key={i} value={`${1980 + i}`}>{1980 + i}</option>
-                                ))}
-                              </select>
-                            </div>
-                            <div>
-                              <Label>Number of Employees</Label>
-                              <Input className="border border-black" name="employees" value={extra.employees || ''} onChange={handleExtraChange} />
-                            </div>
-                          </div>
-
-                          <div>
-                            <Label>Member of any other Chamber/Association</Label>
-                            <Input className="border border-black" name="chamber" value={extra.chamber || ''} onChange={handleExtraChange} />
-                          </div>
-
-                          <div>
-                            <Label>Registered with Govt. Organization</Label>
-                            <div className="grid grid-cols-3 gap-2 mt-2">
-                              {['MSME', 'KVIC', 'NABARD', 'None', 'Others'].map(x => (
-                                <label key={x} className="flex items-center gap-2"><input type="checkbox" name="govtOrg" value={x} onChange={(e) => {
-                                  const checked = e.target.checked;
-                                  setExtra(prev => {
-                                    const cur = Array.isArray(prev.govtOrg) ? prev.govtOrg : (prev.govtOrg ? [prev.govtOrg] : []);
-                                    const next = checked ? [...cur, x] : cur.filter(y => y !== x);
-                                    return { ...prev, govtOrg: next };
-                                  })
-                                }} /> {x}</label>
-                              ))}
-                            </div>
-                          </div>
+                        <div>
+                          <Label htmlFor="district">District *</Label>
+                          <Controller
+                            name="district"
+                            control={control}
+                            rules={{ required: true }}
+                            render={({ field }) => (
+                              <Select 
+                                onValueChange={(value) => {
+                                  field.onChange(value);
+                                  const currentData = watch();
+                                  reset({ ...currentData, district: value, block: '' });
+                                }} 
+                                value={field.value} 
+                                disabled={!selectedState || isLocked}
+                              >
+                                <SelectTrigger className="mt-1">
+                                  <SelectValue placeholder={selectedState ? "Select district" : "Select state first"} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {districts.map((district) => (
+                                    <SelectItem key={district} value={district}>
+                                      {district}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                          {errors.district && <p className="text-red-500 text-sm mt-1">District is required</p>}
                         </div>
-                      </div>
-                    )}
 
-                    {step === 3 && (
-                      <div>
-                        <h3 className="font-semibold mb-4">Financial & Compliance Information</h3>
-                        <div className="grid grid-cols-1 gap-3">
-                          <div>
-                            <Label>PAN Number</Label>
-                            <Input className="border border-black" name="pan" value={extra.pan || ''} onChange={handleExtraChange} placeholder="Enter PAN number" />
-                          </div>
-                          <div>
-                            <Label>GST Number</Label>
-                            <Input className="border border-black" name="gst" value={extra.gst || ''} onChange={handleExtraChange} placeholder="Enter GST number" />
-                          </div>
-                          <div>
-                            <Label>Udyam Number</Label>
-                            <Input className="border border-black" name="udyam" value={extra.udyam || ''} onChange={handleExtraChange} placeholder="Enter Udyam number" />
-                          </div>
-
-                          <div>
-                            <Label>Filed Income Tax Returns</Label>
-                            <div className="flex gap-4 mt-2 items-center">
-                              <label className="flex items-center gap-2"><input type="radio" name="filedITR" value="yes" checked={extra.filedITR === 'yes'} onChange={handleExtraChange} /> Yes</label>
-                              <label className="flex items-center gap-2"><input type="radio" name="filedITR" value="no" checked={extra.filedITR === 'no'} onChange={handleExtraChange} /> No</label>
-                            </div>
-                          </div>
-
-                          <div>
-                            <Label>How many continuous years have you filed ITR?</Label>
-                            <Input className="border border-black" name="itrYears" value={extra.itrYears || ''} onChange={handleExtraChange} />
-                          </div>
-
-                          <div>
-                            <Label>Turnover</Label>
-                            <select name="turnover" value={extra.turnover || ''} onChange={handleExtraChange} className="w-full border rounded p-2">
-                              <option value="">Select turnover range</option>
-                              <option value="lt_10l">Less than 10 L</option>
-                              <option value="10l_1cr">10 L - 1 Cr</option>
-                              <option value="gt_1cr">Over 1 Cr</option>
-                            </select>
-                          </div>
-
-                          <div>
-                            <Label>Turnover for Last 3 Yrs</Label><br></br>
-                            <Input className="border border-black" name="turnover1" value={extra.turnover1 || ''} onChange={handleExtraChange} placeholder="FY 2024-25" /><br></br>
-                            <Input className="border border-black" name="turnover2" value={extra.turnover2 || ''} onChange={handleExtraChange} placeholder="FY 2023-24" /><br></br>
-                            <Input className="border border-black" name="turnover3" value={extra.turnover3 || ''} onChange={handleExtraChange} placeholder="FY 2022-23" />
-                          </div>
+                        <div>
+                          <Label htmlFor="block">Block *</Label>
+                          <Controller
+                            name="block"
+                            control={control}
+                            rules={{ required: true }}
+                            render={({ field }) => (
+                              <Select onValueChange={field.onChange} value={field.value} disabled={!selectedDistrict || isLocked}>
+                                <SelectTrigger className="mt-1">
+                                  <SelectValue placeholder={selectedDistrict ? "Select block" : "Select district first"} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {blocks.length > 0 ? (
+                                    blocks.map((block) => (
+                                      <SelectItem key={block} value={block}>
+                                        {block}
+                                      </SelectItem>
+                                    ))
+                                  ) : (
+                                    <div className="px-2 py-1.5 text-sm text-gray-500">No blocks available</div>
+                                  )}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                          {errors.block && <p className="text-red-500 text-sm mt-1">Block is required</p>}
                         </div>
-                      </div>
-                    )}
 
-                    {step === 4 && (
-                      <div>
-                        <h3 className="font-semibold mb-4 text-gray-800">Declaration</h3>
-                        <div className="space-y-4">
-                          <div>
-                            <Label className="text-sm text-gray-700">No. of Sister Concerns</Label>
+                        <div>
+                          <Label htmlFor="city">City *</Label>
+                          <Input
+                            id="city"
+                            placeholder="Enter city"
+                            {...register("city", { required: true })}
+                            className="mt-1"
+                            disabled={isLocked}
+                          />
+                          {errors.city && <p className="text-red-500 text-sm mt-1">City is required</p>}
+                        </div>
+
+                        <div>
+                          <Label htmlFor="phone">Phone Number *</Label>
+                          <Input
+                            id="phone"
+                            type="tel"
+                            placeholder="Enter phone number"
+                            {...register("phone", { required: true })}
+                            className="mt-1"
+                            disabled={isLocked}
+                          />
+                          {errors.phone && <p className="text-red-500 text-sm mt-1">Phone number is required</p>}
+                        </div>
+
+                        <div>
+                          <Label htmlFor="email">Email ID *</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            placeholder="Enter email"
+                            {...register("email", { required: true })}
+                            className="mt-1"
+                            disabled={isLocked}
+                          />
+                          {errors.email && <p className="text-red-500 text-sm mt-1">Email is required</p>}
+                        </div>
+
+                        <div>
+                          <Label htmlFor="currentPassword">Current Password</Label>
+                          <div className="relative mt-1">
                             <Input
-                              className="border border-gray-300 mt-1"
-                              name="sisterConcerns"
-                              value={extra.sisterConcerns || ''}
-                              onChange={handleExtraChange}
-                              placeholder="Enter number"
-                              type="number"
+                              id="currentPassword"
+                              type={showPassword ? "text" : "password"}
+                              placeholder="Enter current password"
+                              {...register("currentPassword")}
+                              disabled={isLocked}
                             />
-                            <p className="text-xs text-gray-500 mt-1">Please input a value</p>
-                          </div>
-
-                          <div>
-                            <Label className="text-sm text-gray-700">Name(s) of Company</Label>
-                            <Input
-                              className="border border-gray-300 mt-1"
-                              name="companyNames"
-                              value={extra.companyNames || ''}
-                              onChange={handleExtraChange}
-                              placeholder="Enter company name"
-                            />
-                          </div>
-
-                          <div>
                             <button
                               type="button"
-                              onClick={() => setExtra(prev => ({ ...prev, companyNames: (prev.companyNames || '') + (prev.companyNames ? ', ' : '') }))}
-                              className="text-blue-600 text-sm hover:text-blue-700 flex items-center gap-1"
+                              className="absolute right-3 top-1/2 -translate-y-1/2"
+                              onClick={() => setShowPassword(!showPassword)}
+                              disabled={isLocked}
                             >
-                              <span className="text-lg">+</span> Add Another Company
+                              {showPassword ? <EyeOff className="h-4 w-4 text-gray-500" /> : <Eye className="h-4 w-4 text-gray-500" />}
                             </button>
                           </div>
+                          <p className="text-xs text-gray-500 mt-1">Required if you want to change your password.</p>
+                        </div>
 
-                          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <label className="flex items-start gap-3 cursor-pointer">
+                        <div>
+                          <Label htmlFor="password">New Password</Label>
+                          <div className="relative mt-1">
+                            <Input
+                              id="password"
+                              type={showPassword ? "text" : "password"}
+                              placeholder="Enter new password (optional)"
+                              {...register("password")}
+                              disabled={isLocked}
+                            />
+                            <button
+                              type="button"
+                              className="absolute right-3 top-1/2 -translate-y-1/2"
+                              onClick={() => setShowPassword(!showPassword)}
+                              disabled={isLocked}
+                            >
+                              {showPassword ? <EyeOff className="h-4 w-4 text-gray-500" /> : <Eye className="h-4 w-4 text-gray-500" />}
+                            </button>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">Leave blank to keep your current password.</p>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="confirmPassword">Confirm Password</Label>
+                          <div className="relative mt-1">
+                            <Input
+                              id="confirmPassword"
+                              type={showConfirmPassword ? "text" : "password"}
+                              placeholder="Confirm new password"
+                              {...register("confirmPassword")}
+                              disabled={isLocked}
+                            />
+                            <button
+                              type="button"
+                              className="absolute right-3 top-1/2 -translate-y-1/2"
+                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              disabled={isLocked}
+                            >
+                              {showConfirmPassword ? <EyeOff className="h-4 w-4 text-gray-500" /> : <Eye className="h-4 w-4 text-gray-500" />}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-6 pb-6">
+                      <Button
+                        type="button"
+                        onClick={async () => {
+                          const data = watch();
+                          await saveStep1(data);
+                        }}
+                        className={`w-full ${isLocked ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                        disabled={isLocked}
+                      >
+                        {isLocked ? 'Profile Saved ✓' : 'Save Personal Details'}
+                      </Button>
+                    </div>
+
+                    <div className="border-t pt-6">
+                      <h3 className="text-lg font-semibold mb-4">Demographic details</h3>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="religion">Religion</Label>
+                          <Input
+                            id="religion"
+                            placeholder="Enter religion"
+                            {...register("religion")}
+                            className="mt-1"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="socialCategory">Social Category</Label>
+                          <Controller
+                            name="socialCategory"
+                            control={control}
+                            render={({ field }) => (
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <SelectTrigger className="mt-1">
+                                  <SelectValue placeholder="Select category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="General">General</SelectItem>
+                                  <SelectItem value="OBC">OBC</SelectItem>
+                                  <SelectItem value="SC">SC</SelectItem>
+                                  <SelectItem value="ST">ST</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-6">
+                      <Button
+                        type="button"
+                        onClick={handleNext}
+                        className="w-full bg-blue-600 hover:bg-blue-700"
+                      >
+                        Next &gt;
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {currentStep === 2 && (
+                  <div className="space-y-6">
+                    <h3 className="text-lg font-semibold mb-4">Business Information</h3>
+                    
+                    <div>
+                      <Label className="text-sm font-medium">Doing Business</Label>
+                      <div className="flex gap-6 mt-2">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            value="yes"
+                            {...register("doingBusiness", { required: true })}
+                          />
+                          <span>Yes</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            value="no"
+                            {...register("doingBusiness", { required: true })}
+                          />
+                          <span>No</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {watch("doingBusiness") === "yes" && (
+                      <>
+                        <div>
+                          <Label htmlFor="organization">Name of the Organization</Label>
+                          <Input
+                            id="organization"
+                            placeholder="Enter organization name"
+                            {...register("organization")}
+                            className="mt-1"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="constitution">Constitution of the Company</Label>
+                          <Controller
+                            name="constitution"
+                            control={control}
+                            render={({ field }) => (
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <SelectTrigger className="mt-1">
+                                  <SelectValue placeholder="Select constitution type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Proprietorship">Proprietorship</SelectItem>
+                                  <SelectItem value="Partnership">Partnership</SelectItem>
+                                  <SelectItem value="Private Limited">Private Limited</SelectItem>
+                                  <SelectItem value="Public Limited">Public Limited</SelectItem>
+                                  <SelectItem value="LLP">LLP</SelectItem>
+                                  <SelectItem value="Others">Others</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                        </div>
+
+                        <div>
+                          <Label>Type of Business</Label>
+                          <div className="mt-2 space-y-2">
+                            {["Agriculture", "Manufacturing", "Trader", "Retailer", "Service Provider", "Others"].map((type) => (
+                              <label key={type} className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  value={type}
+                                  checked={watch("businessTypes")?.includes(type)}
+                                  onChange={(e) => {
+                                    const updated = toggleBusinessType(type);
+                                    reset({ ...watch(), businessTypes: updated });
+                                  }}
+                                />
+                                <span>{type}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="businessActivities">Business Activities</Label>
+                          <textarea
+                            id="businessActivities"
+                            placeholder="Describe your business activities"
+                            {...register("businessYear")}
+                            className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md min-h-[100px]"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="businessYear">Business Commencement Year</Label>
+                          <Controller
+                            name="businessYear"
+                            control={control}
+                            render={({ field }) => (
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <SelectTrigger className="mt-1">
+                                  <SelectValue placeholder="Select year" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                                    <SelectItem key={year} value={year.toString()}>
+                                      {year}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="employees">Number of Employees</Label>
+                          <Input
+                            id="employees"
+                            type="number"
+                            placeholder="Enter number of employees"
+                            {...register("employees")}
+                            className="mt-1"
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="text-sm font-medium">Member of any other Chamber/Association</Label>
+                          <div className="flex gap-6 mt-2">
+                            <label className="flex items-center gap-2">
                               <input
-                                type="checkbox"
-                                name="declarationAccepted"
-                                checked={extra.declarationAccepted || false}
-                                onChange={(e) => setExtra(prev => ({ ...prev, declarationAccepted: e.target.checked }))}
-                                className="mt-1 w-4 h-4 text-blue-600"
+                                type="radio"
+                                value="yes"
+                                {...register("chamber")}
                               />
-                              <div className="flex-1">
-                                <p className="text-sm font-medium text-gray-800">Declaration</p>
-                                <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                                  This application is under the Verification and Screening Process. We have every right to ACCEPT or REJECT this application according to our membership policy. I confirm the above information is true and correct.
-                                </p>
-                              </div>
+                              <span>Yes</span>
+                            </label>
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="radio"
+                                value="no"
+                                {...register("chamber")}
+                              />
+                              <span>No</span>
                             </label>
                           </div>
                         </div>
+
+                        {watch("chamber") === "yes" && (
+                          <div>
+                            <textarea
+                              placeholder="Please specify chamber/association details"
+                              className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md min-h-[80px]"
+                            />
+                          </div>
+                        )}
+
+                        <div>
+                          <Label>Registered with Govt. Organization</Label>
+                          <div className="mt-2 space-y-2">
+                            {["MSME", "KVIC", "NABARD", "None", "Others"].map((org) => (
+                              <label key={org} className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  value={org}
+                                  checked={watch("govtOrgs")?.includes(org)}
+                                  onChange={(e) => {
+                                    const updated = toggleGovtOrg(org);
+                                    reset({ ...watch(), govtOrgs: updated });
+                                  }}
+                                />
+                                <span>{org}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {watch("doingBusiness") === "no" && (
+                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-start gap-3">
+                          <div className="text-blue-600 mt-1">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-blue-900 mb-1">Registering as Aspirant</h4>
+                            <p className="text-sm text-blue-800">
+                              You are registering as an Aspirant (Student / Non-business member). Steps 3 and 4 are not required.
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     )}
 
-                    <div className="flex justify-between mt-6">
-                      {step > 1 && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            prevStep();
-                          }}
-                        >
-                          Previous
-                        </Button>
-                      )}
-                      <div className="ml-auto">
-                        <Button type="submit" className="bg-blue-600 text-white">{step === 4 ? 'Submit Application' : 'Next'}</Button>
+                    <div className="border-t pt-6 flex gap-4">
+                      <Button
+                        type="button"
+                        onClick={() => setCurrentStep(1)}
+                        className="flex-1 bg-white border-2 border-purple-600 text-purple-600 hover:bg-purple-50"
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={watch("doingBusiness") === "no" ? handleFinalSubmit : handleNext}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700"
+                      >
+                        {watch("doingBusiness") === "no" ? "✓ Submit" : "Next →"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {currentStep === 3 && (
+                  <div className="space-y-6">
+                    <h3 className="text-lg font-semibold mb-4">Financial & Compliance Information</h3>
+                    
+                    <div>
+                      <Label htmlFor="pan">PAN Number</Label>
+                      <Input
+                        id="pan"
+                        placeholder="Enter PAN number"
+                        {...register("pan")}
+                        className="mt-1"
+                        maxLength={10}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Validate PAN Number (10 chars Alphanumeric)</p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="gst">GST Number</Label>
+                      <Input
+                        id="gst"
+                        placeholder="Enter GST number"
+                        {...register("gst")}
+                        className="mt-1"
+                        maxLength={15}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Validate GSTIN Number (15 chars)</p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="udyam">Udyam Number</Label>
+                      <Input
+                        id="udyam"
+                        placeholder="Enter Udyam number"
+                        {...register("udyam")}
+                        className="mt-1"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Optional</p>
+                    </div>
+
+                    <div>
+                      <Label className="text-sm font-medium">Filed Income Tax Returns</Label>
+                      <div className="flex gap-6 mt-2">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            value="yes"
+                            {...register("filedITR")}
+                          />
+                          <span>Yes</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            value="no"
+                            {...register("filedITR")}
+                          />
+                          <span>No</span>
+                        </label>
                       </div>
                     </div>
-                  </form>
-                </CardContent>
-              </Card>
-            </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Personal Information</CardTitle>
-                <CardDescription>Your basic details and contact information</CardDescription>
-              </CardHeader>
+                    {watch("filedITR") === "yes" && (
+                      <div>
+                        <Label htmlFor="itrYears">How many continuous years have you filed ITR?</Label>
+                        <Input
+                          id="itrYears"
+                          type="number"
+                          placeholder="Enter number of years"
+                          {...register("itrYears")}
+                          className="mt-1"
+                        />
+                      </div>
+                    )}
 
-              <CardContent>
-                <form onSubmit={handleSubmit(onSave)} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name*</Label>
-                      <Input className="border border-black" id="firstName" {...register("firstName", { required: "First name required" })} disabled={!isEditing} />
-                      {errors.firstName && <p className="text-xs text-red-600 mt-1">{errors.firstName.message}</p>}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="middleName">Middle Name</Label>
-                      <Input className="border border-black" id="middleName" {...register("middleName")} disabled={!isEditing} />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
-                      <Input className="border border-black" id="lastName" {...register("lastName")} disabled={!isEditing} />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email Address*</Label>
-                      <Input className="border border-black" id="email" type="email" {...register("email", { required: "Email required", pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Invalid email" } })} disabled={!isEditing} />
-                      {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number*</Label>
-                      <Input className="border border-black" id="phone" {...register("phone", { required: "Phone required", pattern: { value: /^\+?\d{10,15}$/, message: "Invalid phone" } })} disabled={!isEditing} />
-                      {errors.phone && <p className="text-xs text-red-600 mt-1">{errors.phone.message}</p>}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                      <Input className="border border-black" id="dateOfBirth" type="date" {...register("dateOfBirth")} disabled={!isEditing} />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="gender">Gender</Label>
+                    <div>
+                      <Label htmlFor="turnoverRange">Turnover</Label>
                       <Controller
+                        name="turnoverRange"
                         control={control}
-                        name="gender"
                         render={({ field }) => (
-                          <Select value={field.value || ""} onValueChange={(v: string) => field.onChange(v)} disabled={!isEditing}>
-                            <SelectTrigger className="border border-black">
-                              <SelectValue placeholder="Select gender" />
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger className="mt-1">
+                              <SelectValue placeholder="Select turnover range" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="male">Male</SelectItem>
-                              <SelectItem value="female">Female</SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
+                              <SelectItem value="0-1cr">0 - 1 Crore</SelectItem>
+                              <SelectItem value="1-5cr">1 - 5 Crores</SelectItem>
+                              <SelectItem value="5-10cr">5 - 10 Crores</SelectItem>
+                              <SelectItem value="10-25cr">10 - 25 Crores</SelectItem>
+                              <SelectItem value="25-50cr">25 - 50 Crores</SelectItem>
+                              <SelectItem value="50cr+">Above 50 Crores</SelectItem>
                             </SelectContent>
                           </Select>
                         )}
                       />
                     </div>
+
+                    <div>
+                      <Label className="text-sm font-medium mb-3 block">Turnover for Last 3 Yrs</Label>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <Input
+                            placeholder="Enter turnover amount"
+                            {...register("turnover1")}
+                            className="mt-1"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">FY 2024-25</p>
+                        </div>
+
+                        <div>
+                          <Input
+                            placeholder="Enter turnover amount"
+                            {...register("turnover2")}
+                            className="mt-1"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">FY 2023-24</p>
+                        </div>
+
+                        <div>
+                          <Input
+                            placeholder="Enter turnover amount"
+                            {...register("turnover3")}
+                            className="mt-1"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">FY 2022-23</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-sm font-medium">Have you got benefitted through any Govt. Schemes to your Business?</Label>
+                      <div className="flex gap-6 mt-2">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            value="yes"
+                            {...register("govtSchemes")}
+                          />
+                          <span>Yes</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            value="no"
+                            {...register("govtSchemes")}
+                          />
+                          <span>No</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {watch("govtSchemes") === "yes" && (
+                      <div className="space-y-3">
+                        <Input
+                          placeholder="Scheme 1"
+                          {...register("scheme1")}
+                          className="mt-1"
+                        />
+                        <Input
+                          placeholder="Scheme 2"
+                          {...register("scheme2")}
+                          className="mt-1"
+                        />
+                        <Input
+                          placeholder="Scheme 3"
+                          {...register("scheme3")}
+                          className="mt-1"
+                        />
+                      </div>
+                    )}
+
+                    <div className="border-t pt-6 flex gap-4">
+                      <Button
+                        type="button"
+                        onClick={() => setCurrentStep(2)}
+                        className="flex-1 bg-white border-2 border-purple-600 text-purple-600 hover:bg-purple-50"
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={handleNext}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700"
+                      >
+                        Next
+                      </Button>
+                    </div>
                   </div>
+                )}
 
-                  <div className="border-t pt-6">
-                    <h3 className="text-lg font-semibold mb-4">Location Information</h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="state">State*</Label>
-                        <Controller
-                          control={control}
-                          name="state"
-                          render={({ field }) => (
-                            <Select value={field.value || ""} onValueChange={(v: string) => field.onChange(v)} disabled={!isEditing}>
-                              <SelectTrigger className="border border-black">
-                                <SelectValue placeholder="Select state" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Object.keys(INDIA_DISTRICTS).map((s) => (
-                                  <SelectItem key={s} value={s}>
-                                    {s}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="district">District*</Label>
-                        <Controller
-                          control={control}
-                          name="district"
-                          render={({ field }) => (
-                            <Select value={field.value || ""} onValueChange={(v: string) => field.onChange(v)} disabled={!isEditing || !selectedState}>
-                              <SelectTrigger className="border border-black">
-                                <SelectValue placeholder={districts.length ? "Select district" : "No districts available"} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {districts.length > 0 ? (
-                                  districts.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)
-                                ) : (
-                                  <>
-                                    <SelectItem value="district1">District 1</SelectItem>
-                                    <SelectItem value="district2">District 2</SelectItem>
-                                  </>
-                                )}
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                      </div>
+                {currentStep === 4 && (
+                  <div className="space-y-6">
+                    <h3 className="text-lg font-semibold mb-4">Declaration</h3>
+                    
+                    <div>
+                      <Label htmlFor="sisterConcerns">No. of Sister Concerns</Label>
+                      <Input
+                        id="sisterConcerns"
+                        type="number"
+                        placeholder="Enter number"
+                        {...register("sisterConcerns")}
+                        className="mt-1"
+                        onChange={(e) => {
+                          const num = parseInt(e.target.value) || 0;
+                          if (num > 0) {
+                            setCompanyNames(Array(num).fill(""));
+                          } else {
+                            setCompanyNames([""]);
+                          }
+                        }}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Positive integers only</p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="block">Block</Label>
-                        <Controller
-                          control={control}
-                          name="block"
-                          render={({ field }) => (
-                            <Select value={field.value || ""} onValueChange={(v: string) => field.onChange(v)} disabled={!isEditing}>
-                              <SelectTrigger className="border border-black">
-                                <SelectValue placeholder="Select block" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="block1">Block 1</SelectItem>
-                                <SelectItem value="block2">Block 2</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="address">Address</Label>
-                        <Input id="address" {...register("address")} disabled={!isEditing} />
-                      </div>
-                    </div>
-
-                    {/* Mobile action buttons: when editing use Save/Cancel */}
-                    <div className="md:hidden flex gap-2 pt-6 border-t">
-                      {isEditing ? (
-                        <>
-                          <Button variant="outline" onClick={onCancel} className="flex-1">
-                            <X className="w-4 h-4 mr-2" />
-                            Cancel
-                          </Button>
-                          <Button onClick={handleSubmit(onSave)} className="flex-1 bg-blue-600 text-white">
-                            <Save className="w-4 h-4 mr-2" />
-                            Save
-                          </Button>
-                        </>
+                    <div>
+                      <Label htmlFor="companyNames">Name(s) of Company</Label>
+                      {showSeparateFields ? (
+                        <div className="space-y-3 mt-2">
+                          {companyNames.map((_, index) => (
+                            <Input
+                              key={index}
+                              placeholder={`Enter company name ${index + 1}`}
+                              value={companyNames[index]}
+                              onChange={(e) => {
+                                const updated = [...companyNames];
+                                updated[index] = e.target.value;
+                                setCompanyNames(updated);
+                              }}
+                              className="mt-1"
+                            />
+                          ))}
+                        </div>
                       ) : (
-                        <Button onClick={() => setIsEditing(true)} className="w-full">
-                          <Edit2 className="w-4 h-4 mr-2" />
-                          Edit Profile
-                        </Button>
+                        <Input
+                          id="companyNames"
+                          placeholder="Enter company name"
+                          {...register("companyNames")}
+                          className="mt-1"
+                        />
                       )}
+                      
+                      <Button
+                        type="button"
+                        onClick={() => setCompanyNames([...companyNames, ""])}
+                        className="mt-3 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                      >
+                        Add Another Company
+                      </Button>
+
+                      <div className="mt-3">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={showSeparateFields}
+                            onChange={(e) => setShowSeparateFields(e.target.checked)}
+                            className="rounded"
+                          />
+                          <span className="text-sm text-gray-600">Show one field per name entered above</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-6">
+                      <Label className="text-sm font-semibold mb-3 block">Declaration</Label>
+                      <p className="text-sm text-gray-700 mb-4">
+                        This application is under the Verification and Screening Process. We have every right to ACCEPT or REJECT this application according to our membership policy.
+                      </p>
+                      
+                      <p className="text-sm font-medium text-gray-900">
+                        I confirm the above information is true and correct
+                      </p>
+                    </div>
+
+                    <div className="border-t pt-6 flex gap-4">
+                      <Button
+                        type="button"
+                        onClick={() => setCurrentStep(3)}
+                        className="flex-1 bg-white border-2 border-purple-600 text-purple-600 hover:bg-purple-50"
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={handleFinalSubmit}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700"
+                      >
+                        Submit Application
+                      </Button>
                     </div>
                   </div>
-                </form>
+                )}
               </CardContent>
             </Card>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );

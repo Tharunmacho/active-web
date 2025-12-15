@@ -1,20 +1,22 @@
-import { INDIA_DISTRICTS, INDIA_BLOCKS } from '../data/india-locations.js';
+import Location from '../models/Location.js';
 
 // @desc    Get all states
 // @route   GET /api/locations/states
 // @access  Public
 export const getStates = async (req, res) => {
   try {
-    const states = Object.keys(INDIA_DISTRICTS);
+    const states = await Location.distinct('state');
     
     res.status(200).json({
       success: true,
-      data: states
+      data: states.sort()
     });
   } catch (error) {
+    console.error('Error in getStates:', error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching states'
+      message: 'Error fetching states',
+      error: error.message
     });
   }
 };
@@ -33,23 +35,18 @@ export const getDistricts = async (req, res) => {
       });
     }
 
-    const districts = INDIA_DISTRICTS[state];
+    const districts = await Location.distinct('district', { state });
     
-    if (!districts) {
-      return res.status(404).json({
-        success: false,
-        message: `No districts found for state: ${state}`
-      });
-    }
-
     res.status(200).json({
       success: true,
-      data: districts
+      data: districts.sort()
     });
   } catch (error) {
+    console.error('Error in getDistricts:', error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching districts'
+      message: 'Error fetching districts',
+      error: error.message
     });
   }
 };
@@ -59,7 +56,6 @@ export const getDistricts = async (req, res) => {
 // @access  Public
 export const getBlocks = async (req, res) => {
   try {
-    console.log('getBlocks called with params:', req.params);
     const { state, district } = req.params;
     
     if (!state || !district) {
@@ -69,38 +65,19 @@ export const getBlocks = async (req, res) => {
       });
     }
 
-    console.log('Looking for blocks in state:', state, 'district:', district);
-    console.log('INDIA_BLOCKS keys:', Object.keys(INDIA_BLOCKS));
+    const location = await Location.findOne({ state, district });
     
-    // Check if state exists in blocks data
-    const stateBlocks = INDIA_BLOCKS[state];
-    console.log('stateBlocks:', stateBlocks ? 'found' : 'not found');
-    
-    if (!stateBlocks) {
-      // Return default blocks if no specific data available
-      console.log('No state blocks found, returning defaults');
-      return res.status(200).json({
-        success: true,
-        data: ['Block 1', 'Block 2', 'Block 3', 'Block 4', 'Block 5']
+    if (!location) {
+      return res.status(404).json({
+        success: false,
+        message: `No blocks found for ${district}, ${state}`,
+        data: []
       });
     }
 
-    const blocks = stateBlocks[district];
-    console.log('blocks for district:', blocks ? `found ${blocks.length} blocks` : 'not found');
-    
-    if (!blocks) {
-      // Return default blocks if no specific data available for this district
-      console.log('No district blocks found, returning defaults');
-      return res.status(200).json({
-        success: true,
-        data: ['Block 1', 'Block 2', 'Block 3', 'Block 4', 'Block 5']
-      });
-    }
-
-    console.log('Returning blocks:', blocks);
     res.status(200).json({
       success: true,
-      data: blocks
+      data: location.blocks.sort()
     });
   } catch (error) {
     console.error('Error in getBlocks:', error);
@@ -117,17 +94,18 @@ export const getBlocks = async (req, res) => {
 // @access  Public
 export const getAllLocations = async (req, res) => {
   try {
+    const locations = await Location.find({}).select('state district blocks');
+    
     res.status(200).json({
       success: true,
-      data: {
-        states: INDIA_DISTRICTS,
-        blocks: INDIA_BLOCKS
-      }
+      data: locations
     });
   } catch (error) {
+    console.error('Error in getAllLocations:', error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching location data'
+      message: 'Error fetching location data',
+      error: error.message
     });
   }
 };

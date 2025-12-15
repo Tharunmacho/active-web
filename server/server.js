@@ -4,6 +4,11 @@ import cors from 'cors';
 import connectDB from './config/database.js';
 import authRoutes from './routes/authRoutes.js';
 import locationRoutes from './routes/locationRoutes.js';
+import profileRoutes from './routes/profileRoutes.js';
+import personalFormRoutes from './routes/personalFormRoutes.js';
+import businessFormRoutes from './routes/businessFormRoutes.js';
+import financialFormRoutes from './routes/financialFormRoutes.js';
+import declarationFormRoutes from './routes/declarationFormRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 // Load env vars
@@ -22,6 +27,11 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/locations', locationRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/personal-form', personalFormRoutes);
+app.use('/api/business-form', businessFormRoutes);
+app.use('/api/financial-form', financialFormRoutes);
+app.use('/api/declaration-form', declarationFormRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
