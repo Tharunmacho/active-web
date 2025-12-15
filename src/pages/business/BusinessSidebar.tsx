@@ -53,10 +53,10 @@ export default function BusinessSidebar({ isOpen, onClose }: Props) {
                 </div>
 
                 <div className="flex items-center gap-3 mt-4">
-                    <Avatar className="w-12 h-12">
-                        <AvatarImage src="/placeholder.svg" />
-                        <AvatarFallback className="bg-blue-600 text-white">
-                            {userName ? userName.split(" ").map(n => n[0]).join("") : "BS"}
+                    <Avatar className="w-12 h-12 ring-2 ring-blue-100">
+                        <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=96&h=96&fit=crop&crop=face" className="object-cover" />
+                        <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold">
+                            {userName ? userName.split(" ").map(n => n[0]).join("").toUpperCase() : "BS"}
                         </AvatarFallback>
                     </Avatar>
                     <div>
@@ -73,11 +73,16 @@ export default function BusinessSidebar({ isOpen, onClose }: Props) {
                         <Link
                             key={item.to}
                             to={item.to}
-                            className={`flex items-center gap-3 px-3 py-3 rounded-md transition-colors ${active ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'}`}
+                            className={`flex items-center gap-3 px-4 py-3 rounded-lg mb-1 transition-all ${active
+                                    ? 'bg-blue-600 text-white shadow-md'
+                                    : 'text-gray-700 hover:bg-gray-100'
+                                }`}
                             onClick={onClose}
                         >
-                            <span className="w-5 h-5">{item.icon}</span>
-                            <span>{item.label}</span>
+                            <span className={`w-5 h-5 ${active ? 'text-white' : 'text-gray-500'}`}>
+                                {item.icon}
+                            </span>
+                            <span className="font-medium">{item.label}</span>
                         </Link>
                     );
                 })}

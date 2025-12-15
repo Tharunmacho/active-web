@@ -74,16 +74,16 @@ const Explore = () => {
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-3 mb-6">
+            <div className="grid grid-cols-3 gap-5 mb-8">
               <Card
                 onClick={() => setSelected("events")}
-                className={`cursor-pointer transition-all rounded-xl border-0 ${selected === "events"
-                  ? "bg-blue-600 text-white shadow-lg"
-                  : "bg-gray-50 hover:bg-gray-100 shadow-sm"
+                className={`cursor-pointer transition-colors duration-300 rounded-2xl border-0 ${selected === "events"
+                  ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-2xl shadow-blue-500/50"
+                  : "bg-white hover:bg-gradient-to-br hover:from-blue-50 hover:to-blue-100 shadow-lg hover:shadow-xl"
                   }`}>
-                <CardHeader className="p-4">
-                  <CardTitle className={`flex items-center gap-2 text-base ${selected === "events" ? "text-white" : "text-gray-800"}`}>
-                    <span className="text-xl">📅</span>
+                <CardHeader className="p-6">
+                  <CardTitle className={`flex items-center gap-2 text-base font-bold ${selected === "events" ? "text-white" : "text-gray-800"}`}>
+                    <span className="text-2xl">📅</span>
                     Events
                   </CardTitle>
                 </CardHeader>
@@ -91,13 +91,13 @@ const Explore = () => {
 
               <Card
                 onClick={() => setSelected("resources")}
-                className={`cursor-pointer transition-all rounded-xl border-0 ${selected === "resources"
-                  ? "bg-purple-600 text-white shadow-lg"
-                  : "bg-gray-50 hover:bg-gray-100 shadow-sm"
+                className={`cursor-pointer transition-colors duration-300 rounded-2xl border-0 ${selected === "resources"
+                  ? "bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-2xl shadow-purple-500/50"
+                  : "bg-white hover:bg-gradient-to-br hover:from-purple-50 hover:to-purple-100 shadow-lg hover:shadow-xl"
                   }`}>
-                <CardHeader className="p-4">
-                  <CardTitle className={`flex items-center gap-2 text-base ${selected === "resources" ? "text-white" : "text-gray-800"}`}>
-                    <span className="text-xl">📚</span>
+                <CardHeader className="p-6">
+                  <CardTitle className={`flex items-center gap-2 text-base font-bold ${selected === "resources" ? "text-white" : "text-gray-800"}`}>
+                    <span className="text-2xl">📚</span>
                     Resources
                   </CardTitle>
                 </CardHeader>
@@ -105,13 +105,13 @@ const Explore = () => {
 
               <Card
                 onClick={() => setSelected("groups")}
-                className={`cursor-pointer transition-all rounded-xl border-0 ${selected === "groups"
-                  ? "bg-indigo-600 text-white shadow-lg"
-                  : "bg-gray-50 hover:bg-gray-100 shadow-sm"
+                className={`cursor-pointer transition-colors duration-300 rounded-2xl border-0 ${selected === "groups"
+                  ? "bg-gradient-to-br from-indigo-600 to-indigo-700 text-white shadow-2xl shadow-indigo-500/50"
+                  : "bg-white hover:bg-gradient-to-br hover:from-indigo-50 hover:to-indigo-100 shadow-lg hover:shadow-xl"
                   }`}>
-                <CardHeader className="p-4">
-                  <CardTitle className={`flex items-center gap-2 text-base ${selected === "groups" ? "text-white" : "text-gray-800"}`}>
-                    <span className="text-xl">👥</span>
+                <CardHeader className="p-6">
+                  <CardTitle className={`flex items-center gap-2 text-base font-bold ${selected === "groups" ? "text-white" : "text-gray-800"}`}>
+                    <span className="text-2xl">👥</span>
                     Groups
                   </CardTitle>
                 </CardHeader>
@@ -120,25 +120,25 @@ const Explore = () => {
 
             {/* Selected panel */}
             <div>
-              <Card className="rounded-xl shadow-md border-0">
-                <CardHeader className="pb-3">
-                  <CardTitle className="capitalize text-gray-800 text-lg">
+              <Card className="rounded-3xl shadow-2xl border-0 bg-gradient-to-br from-white to-gray-50">
+                <CardHeader className="pb-4 px-6 pt-6">
+                  <CardTitle className="capitalize text-gray-800 text-xl font-bold">
                     {selected === "events" ? "Upcoming Events" : selected === "resources" ? "Learning Resources" : "Community Groups"}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-0">{/* Results list */}
-                  <div className="space-y-2">{selected === "events" && (
+                <CardContent className="pt-0 px-6 pb-6">{/* Results list */}
+                  <div className="space-y-6">{selected === "events" && (
                     <div>
                       {filteredEvents.length === 0 ? (
                         <p className="text-gray-500 text-sm">No events match "{query}"</p>
                       ) : (
                         filteredEvents.map((e) => (
-                          <div key={e.id} className="p-4 rounded-lg bg-blue-50 border border-blue-100 hover:shadow-md transition-shadow">
-                            <h4 className="font-semibold text-blue-900 text-sm">{e.title}</h4>
-                            <div className="text-xs text-blue-700 mt-1">
+                          <div key={e.id} className="p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 hover:shadow-xl transition-shadow duration-300 cursor-pointer">
+                            <h4 className="font-bold text-blue-900 text-base mb-3">{e.title}</h4>
+                            <div className="text-sm text-blue-700 mb-3 font-medium">
                               📍 {e.location} • 📅 {e.date}
                             </div>
-                            <p className="text-xs text-gray-600 mt-2">{e.description}</p>
+                            <p className="text-sm text-gray-700 leading-relaxed">{e.description}</p>
                           </div>
                         ))
                       )}
@@ -151,13 +151,13 @@ const Explore = () => {
                           <p className="text-gray-500 text-sm">No groups match "{query}"</p>
                         ) : (
                           filteredGroups.map((g) => (
-                            <div key={g.id} className="p-4 rounded-lg bg-indigo-50 border border-indigo-100 hover:shadow-md transition-shadow">
-                              <div className="flex items-center justify-between">
+                            <div key={g.id} className="p-6 rounded-2xl bg-gradient-to-br from-indigo-50 to-indigo-100 border-2 border-indigo-200 hover:shadow-xl transition-shadow duration-300 cursor-pointer">
+                              <div className="flex items-center justify-between gap-4">
                                 <div className="flex-1">
-                                  <h4 className="font-semibold text-indigo-900 text-sm">{g.name}</h4>
-                                  <p className="text-xs text-indigo-700 mt-1">{g.description}</p>
+                                  <h4 className="font-bold text-indigo-900 text-base mb-3">{g.name}</h4>
+                                  <p className="text-sm text-indigo-700 leading-relaxed">{g.description}</p>
                                 </div>
-                                <div className="text-xs text-indigo-600 font-medium ml-3">👥 {g.members}</div>
+                                <div className="text-sm text-indigo-600 font-bold bg-white px-4 py-2 rounded-full whitespace-nowrap">👥 {g.members}</div>
                               </div>
                             </div>
                           ))
@@ -171,13 +171,13 @@ const Explore = () => {
                           <p className="text-gray-500 text-sm">No resources match "{query}"</p>
                         ) : (
                           filteredResources.map((r) => (
-                            <div key={r.id} className="p-4 rounded-lg bg-purple-50 border border-purple-100 hover:shadow-md transition-shadow">
-                              <div className="flex items-center justify-between">
+                            <div key={r.id} className="p-6 rounded-2xl bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200 hover:shadow-xl transition-shadow duration-300 cursor-pointer">
+                              <div className="flex items-center justify-between gap-4">
                                 <div className="flex-1">
-                                  <h4 className="font-semibold text-purple-900 text-sm">{r.title}</h4>
-                                  <p className="text-xs text-purple-700 mt-1">📚 {r.source}</p>
+                                  <h4 className="font-bold text-purple-900 text-base mb-3">{r.title}</h4>
+                                  <p className="text-sm text-purple-700 font-medium">📚 {r.source}</p>
                                 </div>
-                                <div className="text-xs text-purple-600 font-medium">Free</div>
+                                <div className="text-sm text-purple-600 font-bold bg-white px-4 py-2 rounded-full whitespace-nowrap">Free</div>
                               </div>
                             </div>
                           ))

@@ -77,46 +77,82 @@ const Notifications = () => {
         </div>
 
         {/* Page content */}
-        <div className="flex-1 p-3 md:p-4 overflow-auto bg-white">
-          <div className="w-full">
-            <h1 className="text-2xl font-bold mb-4 hidden md:block text-gray-800">Notifications</h1>
+        <div className="flex-1 p-4 md:p-6 overflow-auto bg-gradient-to-br from-gray-50 to-white">
+          <div className="max-w-6xl mx-auto">
+            {/* Header Section */}
+            <div className="mb-4 md:mb-6">
+              <h1 className="text-2xl md:text-3xl font-bold mb-1 hidden md:block text-gray-800">Notifications</h1>
+              <p className="text-gray-600 text-sm hidden md:block">Stay updated with your latest activities</p>
+            </div>
 
-            <div className="space-y-3">
+            {/* Notifications List */}
+            <div className="space-y-3 md:space-y-4">
               {notifications.map((notification) => (
                 <Card
                   key={notification.id}
-                  className={`rounded-2xl border-0 shadow-md transition-all hover:shadow-lg ${notification.unread
-                    ? notification.type === 'event'
-                      ? 'bg-blue-50 border-l-4 border-l-blue-600'
-                      : notification.type === 'document'
-                        ? 'bg-green-50 border-l-4 border-l-green-600'
-                        : 'bg-purple-50 border-l-4 border-l-purple-600'
-                    : 'bg-gray-50'
+                  className={`rounded-2xl border-0 shadow-lg hover:shadow-2xl transition-shadow duration-300 overflow-hidden ${notification.unread
+                      ? notification.type === 'event'
+                        ? 'bg-gradient-to-br from-blue-50 to-blue-100 border-l-4 border-l-blue-600'
+                        : notification.type === 'document'
+                          ? 'bg-gradient-to-br from-green-50 to-green-100 border-l-4 border-l-green-600'
+                          : 'bg-gradient-to-br from-purple-50 to-purple-100 border-l-4 border-l-purple-600'
+                      : 'bg-gradient-to-br from-white to-gray-50'
                     }`}
                 >
-                  <CardContent className="p-5">
-                    <div className="flex items-start gap-4">
-                      <div className={`mt-1 p-2 rounded-lg ${notification.type === 'event' ? 'bg-blue-100' :
-                        notification.type === 'document' ? 'bg-green-100' :
-                          'bg-purple-100'
-                        }`}>
-                        {getIcon(notification.type)}
+                  <CardContent className="p-4 md:p-5">
+                    <div className="flex items-start gap-3 md:gap-4">
+                      {/* Icon Container */}
+                      <div
+                        className={`flex-shrink-0 p-2.5 rounded-xl shadow-sm ${notification.type === 'event'
+                            ? 'bg-gradient-to-br from-blue-400 to-blue-600'
+                            : notification.type === 'document'
+                              ? 'bg-gradient-to-br from-green-400 to-green-600'
+                              : 'bg-gradient-to-br from-purple-400 to-purple-600'
+                          }`}
+                      >
+                        <div className="text-white">
+                          {notification.type === 'event' && <Calendar className="h-5 w-5" />}
+                          {notification.type === 'document' && <FileText className="h-5 w-5" />}
+                          {notification.type === 'profile' && <User className="h-5 w-5" />}
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-gray-900">{notification.title}</h3>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <h3 className="font-bold text-gray-900 text-sm md:text-base">{notification.title}</h3>
                           {notification.unread && (
-                            <span className="w-2 h-2 rounded-full bg-blue-600"></span>
+                            <span className="flex-shrink-0 w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
                           )}
                         </div>
-                        <p className="text-gray-600 text-sm mt-1">{notification.message}</p>
-                        <p className="text-xs text-gray-500 mt-2">{notification.time}</p>
+                        <p className="text-gray-700 text-sm leading-relaxed mb-2">
+                          {notification.message}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500 font-medium">
+                            🕐 {notification.time}
+                          </span>
+                          {notification.unread && (
+                            <span className="px-2 py-0.5 bg-blue-600 text-white text-xs font-bold rounded-full">
+                              New
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
+
+            {/* Empty State (if no notifications) */}
+            {notifications.length === 0 && (
+              <div className="text-center py-12">
+                <Bell className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">No notifications yet</h3>
+                <p className="text-gray-500 text-sm">You're all caught up!</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -251,40 +251,43 @@ export default function MemberProfile() {
   const prevStep = () => setStep((s) => Math.max(s - 1, 1));
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-gradient-to-br from-gray-50 to-white">
       <MemberSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col">
-        <div className="md:hidden flex items-center justify-between p-4 bg-white border-b">
+        {/* Mobile Header */}
+        <div className="md:hidden flex items-center justify-between p-4 bg-white border-b shadow-sm">
           <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)} className="p-2">
             <Menu className="h-6 w-6" />
           </Button>
-          <h1 className="text-xl font-bold">My Profile</h1>
+          <h1 className="text-xl font-bold text-gray-800">My Profile</h1>
           <div className="w-10" />
         </div>
 
-        <div className="flex-1 p-3 md:p-4 overflow-auto bg-white">
-          <div className="w-full space-y-4">
+        {/* Main Content */}
+        <div className="flex-1 p-4 md:p-6 overflow-auto">
+          <div className="max-w-6xl mx-auto space-y-6">
+            {/* Header Section */}
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold mb-1">My Profile</h1>
-                <p className="text-gray-600">Manage your personal information</p>
+                <h1 className="text-2xl md:text-3xl font-bold mb-2 text-gray-800">My Profile</h1>
+                <p className="text-gray-600 text-sm md:text-base">Manage your personal information and application details</p>
               </div>
 
               <div className="hidden md:block">
                 {isEditing ? (
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={onCancel}>
+                  <div className="flex gap-3">
+                    <Button variant="outline" size="sm" onClick={onCancel} className="shadow-sm">
                       <X className="w-4 h-4 mr-2" />
                       Cancel
                     </Button>
-                    <Button size="sm" onClick={handleSubmit(onSave)} className="bg-blue-600 text-white">
+                    <Button size="sm" onClick={handleSubmit(onSave)} className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg hover:shadow-xl">
                       <Save className="w-4 h-4 mr-2" />
                       Save Changes
                     </Button>
                   </div>
                 ) : (
-                  <Button size="sm" onClick={() => setIsEditing(true)}>
+                  <Button size="sm" onClick={() => setIsEditing(true)} className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg hover:shadow-xl">
                     <Edit2 className="w-4 h-4 mr-2" />
                     Edit Profile
                   </Button>
@@ -292,100 +295,126 @@ export default function MemberProfile() {
               </div>
             </div>
 
-            <Card>
-              <CardContent className="pt-6">
-                <div className="space-y-2">
+            {/* Profile Completion Card */}
+            <Card className="rounded-2xl border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
+              <CardContent className="p-5 md:p-6">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <p className="font-medium">Profile Completion</p>
-                    <p className="text-sm font-semibold text-blue-600">{completion}%</p>
+                    <p className="font-bold text-gray-800">Profile Completion</p>
+                    <p className="text-lg font-bold text-blue-600">{completion}%</p>
                   </div>
 
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="h-2 rounded-full bg-blue-600 transition-all duration-300" style={{ width: `${completion}%` }} />
+                  <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
+                    <div
+                      className="h-3 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500 shadow-md"
+                      style={{ width: `${completion}%` }}
+                    />
                   </div>
+                  <p className="text-xs text-gray-500">Complete your profile to unlock all features</p>
                 </div>
               </CardContent>
             </Card>
 
             {/* Additional Details multi-step form (4 steps) */}
             <div>
-              <div className="mb-4 text-center">
-                <h2 className="text-lg font-bold text-gray-800">Additional Details Form</h2>
-                <p className="text-xs text-gray-500">Member Registration</p>
-                <div className="flex items-center justify-center gap-3 mt-4">
-                  {[1, 2, 3, 4].map((s) => (
-                    <div key={s} className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${step === s
-                      ? 'bg-blue-600 text-white shadow-lg'
-                      : step > s
-                        ? 'bg-blue-100 text-blue-600'
-                        : 'bg-gray-200 text-gray-400'
-                      }`}>
-                      {s}
-                    </div>
+              {/* Step Indicator */}
+              <div className="mb-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">Additional Details Form</h2>
+                  <p className="text-sm text-gray-600">Member Registration Application</p>
+                </div>
+
+                {/* Progress Steps */}
+                <div className="flex items-center justify-center gap-2 md:gap-4">
+                  {[1, 2, 3, 4].map((s, idx) => (
+                    <React.Fragment key={s}>
+                      <div
+                        className={`flex flex-col items-center transition-all duration-300 ${step === s ? 'scale-110' : ''
+                          }`}
+                      >
+                        <div
+                          className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold text-sm md:text-base transition-all duration-300 ${step === s
+                            ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg ring-4 ring-blue-200'
+                            : step > s
+                              ? 'bg-gradient-to-br from-green-500 to-green-600 text-white shadow-md'
+                              : 'bg-gray-200 text-gray-500'
+                            }`}
+                        >
+                          {step > s ? '✓' : s}
+                        </div>
+                        <p className={`text-xs mt-2 font-medium ${step === s ? 'text-blue-600' : 'text-gray-500'}`}>
+                          Step {s}
+                        </p>
+                      </div>
+                      {idx < 3 && (
+                        <div className={`h-1 w-8 md:w-16 rounded-full transition-all duration-300 ${step > s ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gray-200'
+                          }`} />
+                      )}
+                    </React.Fragment>
                   ))}
                 </div>
-                <p className="mt-2 text-sm text-gray-600">Step {step} of 4</p>
+                <p className="mt-4 text-center text-sm font-medium text-gray-600">Step {step} of 4</p>
               </div>
 
-              <Card className="rounded-2xl border-0 shadow-lg">
-                <CardContent className="p-6">
+              <Card className="rounded-2xl border-0 shadow-xl bg-gradient-to-br from-white to-gray-50">
+                <CardContent className="p-5 md:p-8">
                   <form onSubmit={(e) => { e.preventDefault(); if (step < 4) nextStep(); else { saveExtra(); } }}>
                     {step === 1 && (
                       <div>
-                        <h3 className="font-semibold mb-4">Personal details</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <Label>Name</Label>
-                            <Input className="border border-black" disabled value={watch('firstName') ? `${watch('firstName')} ${watch('lastName') ?? ''}` : ''} />
+                        <h3 className="font-bold text-lg md:text-xl mb-6 text-gray-800 pb-3 border-b-2 border-blue-200">Personal Details</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+                          <div className="space-y-2">
+                            <Label className="font-semibold text-gray-700">Name</Label>
+                            <Input className="border-2 border-gray-300 rounded-lg" disabled value={watch('firstName') ? `${watch('firstName')} ${watch('lastName') ?? ''}` : ''} />
                           </div>
-                          <div>
-                            <Label>Block</Label>
-                            <Input className="border border-black" disabled value={watch('block') || ''} />
+                          <div className="space-y-2">
+                            <Label className="font-semibold text-gray-700">Block</Label>
+                            <Input className="border-2 border-gray-300 rounded-lg" disabled value={watch('block') || ''} />
                           </div>
-                          <div>
-                            <Label>City</Label>
-                            <Input className="border border-black" disabled value={watch('district') || ''} />
+                          <div className="space-y-2">
+                            <Label className="font-semibold text-gray-700">City</Label>
+                            <Input className="border-2 border-gray-300 rounded-lg" disabled value={watch('district') || ''} />
                           </div>
-                          <div>
-                            <Label>District</Label>
-                            <Input className="border border-black" disabled value={watch('district') || ''} />
+                          <div className="space-y-2">
+                            <Label className="font-semibold text-gray-700">District</Label>
+                            <Input className="border-2 border-gray-300 rounded-lg" disabled value={watch('district') || ''} />
                           </div>
-                          <div>
-                            <Label>Phone Number</Label>
-                            <Input className="border border-black" disabled value={watch('phone') || ''} />
+                          <div className="space-y-2">
+                            <Label className="font-semibold text-gray-700">Phone Number</Label>
+                            <Input className="border-2 border-gray-300 rounded-lg" disabled value={watch('phone') || ''} />
                           </div>
-                          <div>
-                            <Label>Email ID</Label>
-                            <Input className="border border-black" disabled value={watch('email') || ''} />
+                          <div className="space-y-2">
+                            <Label className="font-semibold text-gray-700">Email ID</Label>
+                            <Input className="border-2 border-gray-300 rounded-lg" disabled value={watch('email') || ''} />
                           </div>
-                          <div>
-                            <Label>Date of Birth</Label>
-                            <Input className="border border-black" disabled value={watch('dateOfBirth') || ''} />
+                          <div className="space-y-2">
+                            <Label className="font-semibold text-gray-700">Date of Birth</Label>
+                            <Input className="border-2 border-gray-300 rounded-lg" disabled value={watch('dateOfBirth') || ''} />
                           </div>
                         </div>
 
-                        <div className="mt-6 bg-gray-50 border rounded p-4">
-                          <h4 className="font-medium mb-3">Page 1 - Personal & Demographic Details</h4>
-                          <div className="grid grid-cols-1 gap-3">
-                            <div>
-                              <Label>Aadhaar No. (Personal Identity No.)</Label>
-                              <Input className="border border-black" name="aadhaar" value={extra.aadhaar || ''} onChange={handleExtraChange} />
+                        <div className="mt-6 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl p-5 md:p-6">
+                          <h4 className="font-bold mb-4 text-blue-900">Page 1 - Personal & Demographic Details</h4>
+                          <div className="grid grid-cols-1 gap-4">
+                            <div className="space-y-2">
+                              <Label className="font-semibold text-gray-700">Aadhaar No. (Personal Identity No.)</Label>
+                              <Input className="border-2 border-gray-300 rounded-lg bg-white" name="aadhaar" value={extra.aadhaar || ''} onChange={handleExtraChange} />
                             </div>
-                            <div>
-                              <Label>Street Name</Label>
-                              <Input className="border border-black" name="street" value={extra.street || ''} onChange={handleExtraChange} />
+                            <div className="space-y-2">
+                              <Label className="font-semibold text-gray-700">Street Name</Label>
+                              <Input className="border-2 border-gray-300 rounded-lg bg-white" name="street" value={extra.street || ''} onChange={handleExtraChange} />
                             </div>
-                            <div>
-                              <Label>Educational Qualification</Label>
-                              <Input className="border border-black" name="education" value={extra.education || ''} onChange={handleExtraChange} />
+                            <div className="space-y-2">
+                              <Label className="font-semibold text-gray-700">Educational Qualification</Label>
+                              <Input className="border-2 border-gray-300 rounded-lg bg-white" name="education" value={extra.education || ''} onChange={handleExtraChange} />
                             </div>
-                            <div>
-                              <Label>Religion</Label>
-                              <Input className="border border-black" name="religion" value={extra.religion || ''} onChange={handleExtraChange} />
+                            <div className="space-y-2">
+                              <Label className="font-semibold text-gray-700">Religion</Label>
+                              <Input className="border-2 border-gray-300 rounded-lg bg-white" name="religion" value={extra.religion || ''} onChange={handleExtraChange} />
                             </div>
-                            <div>
-                              <Label>Social Category</Label>
-                              <Input className="border border-black" name="socialCategory" value={extra.socialCategory || ''} onChange={handleExtraChange} />
+                            <div className="space-y-2">
+                              <Label className="font-semibold text-gray-700">Social Category</Label>
+                              <Input className="border-2 border-gray-300 rounded-lg bg-white" name="socialCategory" value={extra.socialCategory || ''} onChange={handleExtraChange} />
                             </div>
                           </div>
                         </div>
@@ -586,7 +615,7 @@ export default function MemberProfile() {
                       </div>
                     )}
 
-                    <div className="flex justify-between mt-6">
+                    <div className="flex justify-between mt-8 pt-6 border-t-2 border-gray-200">
                       {step > 1 && (
                         <Button
                           type="button"
@@ -596,12 +625,15 @@ export default function MemberProfile() {
                             e.stopPropagation();
                             prevStep();
                           }}
+                          className="px-6 py-3 font-semibold shadow-md hover:shadow-lg"
                         >
-                          Previous
+                          ← Previous
                         </Button>
                       )}
                       <div className="ml-auto">
-                        <Button type="submit" className="bg-blue-600 text-white">{step === 4 ? 'Submit Application' : 'Next'}</Button>
+                        <Button type="submit" className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 font-semibold shadow-lg hover:shadow-xl">
+                          {step === 4 ? '✓ Submit Application' : 'Next →'}
+                        </Button>
                       </div>
                     </div>
                   </form>
@@ -609,13 +641,13 @@ export default function MemberProfile() {
               </Card>
             </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Personal Information</CardTitle>
-                <CardDescription>Your basic details and contact information</CardDescription>
+            <Card className="rounded-2xl border-0 shadow-xl bg-gradient-to-br from-white to-gray-50">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl md:text-2xl font-bold text-gray-800">Personal Information</CardTitle>
+                <CardDescription className="text-sm md:text-base text-gray-600">Your basic details and contact information</CardDescription>
               </CardHeader>
 
-              <CardContent>
+              <CardContent className="px-6 pb-6">
                 <form onSubmit={handleSubmit(onSave)} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
