@@ -8,10 +8,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import PageContainer from "@/components/layout/PageContainer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UserPlus, ArrowRight, Upload } from "lucide-react";
+import { UserPlus, ArrowRight, Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { register as registerUser } from "@/services/authService";
+import { INDIA_DISTRICTS } from "@/data/india-districts";
 import axios from "axios";
+import "./register-styles.css";
 
 const MemberRegister = () => {
   const navigate = useNavigate();
@@ -28,9 +30,8 @@ const MemberRegister = () => {
   
   const [partialData, setPartialData] = useState<any>({});
 
-  // Location API base URL - using localhost
-  const LOCATION_API_BASE_URL = "http://localhost:3000/api";
-  // For production: const LOCATION_API_BASE_URL = "https://actv-project.onrender.com/api";
+  // Location API base URL - using local backend server
+  const LOCATION_API_BASE_URL = "http://localhost:4000/api";
 
   // Derive role from email and id patterns
   const emailToRole = (e: string): string => {
@@ -86,56 +87,32 @@ const MemberRegister = () => {
 
   // Fetch states on component mount
   useEffect(() => {
-    const fetchStates = async () => {
-      try {
-        setLoadingStates(true);
-        const response = await axios.get(`${LOCATION_API_BASE_URL}/locations/states`);
-        if (response.data && response.data.data) {
-          setStates(response.data.data);
-        }
-      } catch (error) {
-        console.error('Error fetching states:', error);
-        toast.error('Failed to load states. Please try again.');
-      } finally {
-        setLoadingStates(false);
-      }
-    };
-
-    fetchStates();
+    setLoadingStates(true);
+    const stateNames = Object.keys(INDIA_DISTRICTS);
+    setStates(stateNames);
+    setLoadingStates(false);
   }, []);
 
   // Fetch districts when state changes
   useEffect(() => {
-    const fetchDistricts = async () => {
-      if (!selectedState) {
-        setDistricts([]);
-        setBlocks([]);
-        return;
-      }
+    if (!selectedState) {
+      setDistricts([]);
+      setBlocks([]);
+      return;
+    }
 
-      try {
-        setLoadingDistricts(true);
-        const response = await axios.get(`${LOCATION_API_BASE_URL}/locations/states/${selectedState}/districts`);
-        if (response.data && response.data.data) {
-          setDistricts(response.data.data);
-          // Reset district and block when state changes
-          setValueStep2('districtName', '');
-          setValueStep2('block', '');
-          setBlocks([]);
-        }
-      } catch (error) {
-        console.error('Error fetching districts:', error);
-        toast.error('Failed to load districts. Please try again.');
-        setDistricts([]);
-      } finally {
-        setLoadingDistricts(false);
-      }
-    };
+    setLoadingDistricts(true);
+    const districtList = INDIA_DISTRICTS[selectedState] || [];
+    setDistricts(districtList);
+    
+    // Reset district and block when state changes
+    setValueStep2('districtName', '');
+    setValueStep2('block', '');
+    setBlocks([]);
+    setLoadingDistricts(false);
+  }, [selectedState, setValueStep2]);
 
-    fetchDistricts();
-  }, [selectedState]);
-
-  // Fetch blocks when district changes
+  // Fetch blocks when district changes - from backend API
   useEffect(() => {
     const fetchBlocks = async () => {
       if (!selectedState || !selectedDistrict) {
@@ -145,23 +122,31 @@ const MemberRegister = () => {
 
       try {
         setLoadingBlocks(true);
-        const response = await axios.get(`${LOCATION_API_BASE_URL}/locations/states/${selectedState}/districts/${selectedDistrict}/blocks`);
+        const response = await axios.get(
+          `${LOCATION_API_BASE_URL}/locations/states/${encodeURIComponent(selectedState)}/districts/${encodeURIComponent(selectedDistrict)}/blocks`
+        );
+        
         if (response.data && response.data.data) {
           setBlocks(response.data.data);
-          // Reset block when district changes
-          setValueStep2('block', '');
+        } else {
+          setBlocks([]);
         }
+        
+        // Reset block when district changes
+        setValueStep2('block', '');
       } catch (error) {
         console.error('Error fetching blocks:', error);
-        toast.error('Failed to load blocks. Please try again');
-        setBlocks([]);
+        // Fallback to generic blocks if API fails
+        const fallbackBlocks = [`${selectedDistrict} Block 1`, `${selectedDistrict} Block 2`, `${selectedDistrict} Block 3`];
+        setBlocks(fallbackBlocks);
+        setValueStep2('block', '');
       } finally {
         setLoadingBlocks(false);
       }
     };
 
     fetchBlocks();
-  }, [selectedState, selectedDistrict]);
+  }, [selectedState, selectedDistrict, setValueStep2]);
 
   const handleStep1Submit = (data: Step1Form) => {
     if (data.password !== data.confirmPassword) {
@@ -202,8 +187,32 @@ const MemberRegister = () => {
       // Dismiss loading toast
       toast.dismiss();
 
-      if (response.success) {
+      if (response.success && response.data) {
         toast.success('Registration successful! Welcome to ACTIV Portal');
+        
+        // Save complete registration data to localStorage for profile completion tracking
+        const completeUserData = {
+          firstName: partialData.firstName,
+          middleName: partialData.middleName,
+          lastName: partialData.lastName,
+          email: partialData.email,
+          phone: partialData.mobile,
+          mobile: partialData.mobile,
+          state: data.stateName,
+          district: data.districtName,
+          block: data.block,
+          city: data.city,
+          address: data.city,
+          memberId: response.data.user.id,
+          gender: '',
+          dateOfBirth: '',
+          dob: ''
+        };
+        
+        // Save to both keys for compatibility
+        localStorage.setItem('userProfile', JSON.stringify(completeUserData));
+        localStorage.setItem('registrationData', JSON.stringify(completeUserData));
+        localStorage.setItem('memberId', response.data.user.id);
         
         // Navigate to member dashboard
         navigate('/member/dashboard');
@@ -259,7 +268,7 @@ const MemberRegister = () => {
 
           {/* Right column - Card with form */}
           <div>
-            <Card className="w-full shadow-strong border-0">
+            <Card className="w-full shadow-strong border-0 registration-card">
               <CardHeader className="space-y-2 text-left">
                 <CardTitle className="text-2xl font-bold">Registration Form</CardTitle>
                 <CardDescription className="text-sm text-gray-500">Please provide accurate information</CardDescription>
@@ -319,19 +328,21 @@ const MemberRegister = () => {
                     </div>
 
                     <div className="flex justify-end">
-                      <Button type="submit" className="bg-blue-600 text-white">Next</Button>
+                      <Button type="submit" className="bg-blue-600 text-white btn-primary-enhanced">
+                        Next <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
                     </div>
                   </form>
                 ) : (
-                  <form onSubmit={handleSubmitStep2(handleStep2Submit)} className="space-y-6"><div className="space-y-2">
+                  <form onSubmit={handleSubmitStep2(handleStep2Submit)} className="space-y-6 form-step-enter"><div className="space-y-2 form-field-wrapper">
                       <Label htmlFor="state">State*</Label>
                       <Controller
                         control={controlStep2}
                         name="stateName"
                         rules={{ required: 'State is required' }}
                         render={({ field }) => (
-                          <Select value={field.value || ''} onValueChange={(v: string) => { field.onChange(v); }}>
-                            <SelectTrigger>
+                          <Select value={field.value || ''} onValueChange={(v: string) => { field.onChange(v); }} disabled={loadingStates}>
+                            <SelectTrigger className={`select-trigger-enhanced ${loadingStates ? 'select-loading' : ''}`}>
                               <SelectValue placeholder={loadingStates ? "Loading states..." : "Select state"} />
                             </SelectTrigger>
                             <SelectContent>
@@ -345,7 +356,7 @@ const MemberRegister = () => {
                       {errorsStep2.stateName && <p className="text-xs text-red-600 mt-1">{errorsStep2.stateName.message}</p>}
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 form-field-wrapper">
                       <Label htmlFor="district">District*</Label>
                       <Controller
                         control={controlStep2}
@@ -357,7 +368,7 @@ const MemberRegister = () => {
                             onValueChange={(v: string) => field.onChange(v)}
                             disabled={!selectedState || loadingDistricts}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger className={`select-trigger-enhanced ${loadingDistricts ? 'select-loading' : ''} ${!selectedState ? 'select-disabled' : ''}`}>
                               <SelectValue placeholder={
                                 !selectedState 
                                   ? 'Please select state first' 
@@ -379,7 +390,7 @@ const MemberRegister = () => {
                       {errorsStep2.districtName && <p className="text-xs text-red-600 mt-1">{errorsStep2.districtName.message}</p>}
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 form-field-wrapper">
                       <Label htmlFor="block">Block*</Label>
                       <Controller
                         control={controlStep2}
@@ -392,7 +403,7 @@ const MemberRegister = () => {
                             onValueChange={(v: string) => { field.onChange(v); clearErrorsStep2('block'); }}
                             disabled={!selectedDistrict || loadingBlocks}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger className={`select-trigger-enhanced ${loadingBlocks ? 'select-loading' : ''} ${!selectedDistrict ? 'select-disabled' : ''}`}>
                               <SelectValue placeholder={
                                 !selectedDistrict 
                                   ? 'Please select district first' 
@@ -433,7 +444,9 @@ const MemberRegister = () => {
                       >
                         Previous
                       </Button>
-                      <Button type="submit" className="bg-blue-600 text-white">Submit</Button>
+                      <Button type="submit" className="bg-blue-600 text-white btn-primary-enhanced">
+                        Submit Registration
+                      </Button>
                     </div>
                   </form>
                 )}

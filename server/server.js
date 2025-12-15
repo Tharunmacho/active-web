@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import connectDB from './config/database.js';
 import authRoutes from './routes/authRoutes.js';
+import locationRoutes from './routes/locationRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 // Load env vars
@@ -20,6 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/locations', locationRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

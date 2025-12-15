@@ -71,10 +71,13 @@ export const register = async (userData: RegisterData): Promise<AuthResponse> =>
       // Store token and user data
       localStorage.setItem('token', response.data.data.token);
       localStorage.setItem('userId', response.data.data.user.id);
+      localStorage.setItem('memberId', response.data.data.user.id);
       localStorage.setItem('userName', response.data.data.user.fullName);
       localStorage.setItem('userEmail', response.data.data.user.email);
       localStorage.setItem('role', response.data.data.user.role);
       localStorage.setItem('isLoggedIn', 'true');
+      
+      // Note: Full profile data including state/district/block will be saved by Register component
     }
     
     return response.data;
