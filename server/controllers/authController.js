@@ -1,4 +1,6 @@
 import WebUser from '../models/WebUser.js';
+import WebUserProfile from '../models/WebUserProfile.js';
+import PersonalForm from '../models/PersonalForm.js';
 import jwt from 'jsonwebtoken';
 
 // Generate JWT Token
@@ -46,17 +48,37 @@ export const register = async (req, res, next) => {
       });
     }
 
-    // Create user with location data
+    // Create user in "web auth" collection (email + password only)
     const user = await WebUser.create({
-      fullName,
       email,
+      password
+    });
+
+    // Create user profile in "web users" collection (all other details)
+    await WebUserProfile.create({
+      userId: user._id,
+      fullName,
       phoneNumber,
-      password,
       state,
       district,
       block,
       city,
-      role: 'member' // Default role
+      role: 'member'
+    });
+
+    // Also create personal form entry with registration data
+    await PersonalForm.create({
+      userId: user._id,
+      name: fullName,
+      phoneNumber: phoneNumber,
+      email: email,
+      state: state || '',
+      district: district || '',
+      block: block || '',
+      city: city || '',
+      religion: '',
+      socialCategory: '',
+      isLocked: false
     });
 
     // Generate token
@@ -68,10 +90,7 @@ export const register = async (req, res, next) => {
       data: {
         user: {
           id: user._id,
-          fullName: user.fullName,
-          email: user.email,
-          phoneNumber: user.phoneNumber,
-          role: user.role
+          email: user.email
         },
         token
       }

@@ -118,61 +118,7 @@ export default function Profile() {
     formState: { errors },
   } = useForm<ProfileData>({ defaultValues: defaultProfile });
 
-  // Auto-save function with debounce - Only save Step 1 fields
-  const autoSaveData = async (data: Partial<ProfileData>) => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      // Only save Step 1 fields (Personal + Demographic details)
-      const step1Data = {
-        name: data.name,
-        phone: data.phone,
-        email: data.email,
-        state: data.state,
-        district: data.district,
-        block: data.block,
-        city: data.city,
-        religion: data.religion,
-        socialCategory: data.socialCategory
-      };
-
-      await fetch("http://localhost:4000/api/profile/additional-form/auto-save", {
-        method: "PUT",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(step1Data)
-      });
-    } catch (error) {
-      console.error("Auto-save error:", error);
-    }
-  };
-
-  // Watch for changes and auto-save
-  useEffect(() => {
-    if (isLocked) return;
-
-    const subscription = watch((value) => {
-      if (autoSaveTimeout) {
-        clearTimeout(autoSaveTimeout);
-      }
-
-      const timeout = setTimeout(() => {
-        autoSaveData(value);
-      }, 2000);
-
-      setAutoSaveTimeout(timeout);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-      if (autoSaveTimeout) {
-        clearTimeout(autoSaveTimeout);
-      }
-    };
-  }, [watch, isLocked]);
+  // Auto-save disabled - Data is saved manually when clicking Save/Next buttons
 
   // Load profile data from backend on mount
   useEffect(() => {
@@ -180,118 +126,71 @@ export default function Profile() {
       try {
         const token = localStorage.getItem("token");
         
-        // Load from localStorage first (for non-authenticated users)
-        const savedProfile = localStorage.getItem("userProfile") || localStorage.getItem("registrationData");
-        if (savedProfile) {
-          const data = JSON.parse(savedProfile);
-          console.log("Loading registration data:", data);
-          
-          // Set all form fields from registration data
-          reset({
-            name: data.name || data.firstName || "",
-            phone: data.phone || data.mobile || "",
-            email: data.email || "",
-            state: data.state || "",
-            district: data.district || "",
-            block: data.block || "",
-            city: data.city || "",
-            password: "",
-            confirmPassword: "",
-            religion: data.religion || "",
-            socialCategory: data.socialCategory || "",
-          });
-
-          // Load districts if state exists
-          if (data.state) {
-            console.log("Setting districts for state:", data.state);
-            setDistricts(INDIA_DISTRICTS[data.state] ?? []);
-            
-            // Load blocks if district exists
-            if (data.district) {
-              const blocksUrl = `http://localhost:4000/api/locations/states/${encodeURIComponent(data.state)}/districts/${encodeURIComponent(data.district)}/blocks`;
-              console.log("Fetching blocks from:", blocksUrl);
-              
-              fetch(blocksUrl)
-                .then(res => {
-                  console.log("Blocks response status:", res.status);
-                  return res.ok ? res.json() : { data: [] };
-                })
-                .then(result => {
-                  console.log("Blocks data received:", result);
-                  setBlocks(result.data || []);
-                })
-                .catch(err => {
-                  console.error("Error fetching blocks:", err);
-                  setBlocks([]);
-                });
-            }
-          }
-        }
-        
         // If authenticated, load from backend
         if (!token) return;
 
-        const response = await fetch("http://localhost:4000/api/profile/additional-form", {
+        console.log("Fetching personal form data...");
+        // Load personal form data
+        const personalFormResponse = await fetch("http://localhost:4000/api/personal-form", {
           headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json"
           }
         });
 
-        if (response.ok) {
-          const result = await response.json();
-          const formData = result.data;
-          console.log("Loading profile from backend:", formData);
+        console.log("Personal form response status:", personalFormResponse.status);
+        
+        if (personalFormResponse.ok) {
+          const personalResult = await personalFormResponse.json();
+          console.log("Personal form result:", personalResult);
           
-          setIsLocked(formData.isLocked || false);
-          
-          reset({
-            name: formData.name || "",
-            phone: formData.phone || "",
-            email: formData.email || "",
-            password: "",
-            confirmPassword: "",
-            religion: formData.religion || "",
-            socialCategory: formData.socialCategory || "",
-            block: formData.block || "",
-            state: formData.state || "",
-            district: formData.district || "",
-            city: formData.city || "",
-            doingBusiness: formData.doingBusiness || "",
-            organization: formData.organization || "",
-            constitution: formData.constitution || "",
-            businessTypes: formData.businessTypes || [],
-            businessYear: formData.businessYear || "",
-            employees: formData.employees || "",
-            chamber: formData.chamber || "",
-            govtOrgs: formData.govtOrgs || [],
-            pan: formData.pan || "",
-            gst: formData.gst || "",
-            udyam: formData.udyam || "",
-            filedITR: formData.filedITR || "",
-            itrYears: formData.itrYears || "",
-            turnoverRange: formData.turnoverRange || "",
-            turnover1: formData.turnover1 || "",
-            turnover2: formData.turnover2 || "",
-            turnover3: formData.turnover3 || "",
-            govtSchemes: formData.govtSchemes || "",
-            sisterConcerns: formData.sisterConcerns || "",
-            companyNames: formData.companyNames || "",
-            declarationAccepted: formData.declarationAccepted || false,
-          });
-
-          if (formData.state) {
-            setDistricts(INDIA_DISTRICTS[formData.state] ?? []);
+          if (personalResult.data) {
+            const formData = personalResult.data;
+            console.log("Loading personal form from backend:", formData);
             
-            if (formData.district) {
-              const blocksResponse = await fetch(
-                `http://localhost:4000/api/locations/states/${encodeURIComponent(formData.state)}/districts/${encodeURIComponent(formData.district)}/blocks`
-              );
-              if (blocksResponse.ok) {
-                const blocksData = await blocksResponse.json();
-                setBlocks(blocksData.data || []);
+            setIsLocked(formData.isLocked || false);
+            
+            const formValues = {
+              name: formData.name || "",
+              phone: formData.phoneNumber || "",
+              email: formData.email || "",
+              state: formData.state || "",
+              district: formData.district || "",
+              block: formData.block || "",
+              city: formData.city || "",
+              religion: formData.religion || "",
+              socialCategory: formData.socialCategory || "",
+              password: "",
+              confirmPassword: "",
+              currentPassword: ""
+            };
+            
+            console.log("Setting form values:", formValues);
+            reset(formValues);
+
+            // Load districts if state exists
+            if (formData.state) {
+              console.log("Setting districts for state:", formData.state);
+              setDistricts(INDIA_DISTRICTS[formData.state] ?? []);
+              
+              // Load blocks if district exists
+              if (formData.district) {
+                const blocksUrl = `http://localhost:4000/api/locations/states/${encodeURIComponent(formData.state)}/districts/${encodeURIComponent(formData.district)}/blocks`;
+                console.log("Fetching blocks from:", blocksUrl);
+                
+                fetch(blocksUrl)
+                  .then(res => res.ok ? res.json() : { data: [] })
+                  .then(result => {
+                    console.log("Blocks loaded:", result.data);
+                    setBlocks(result.data || []);
+                  })
+                  .catch(err => {
+                    console.error("Error fetching blocks:", err);
+                    setBlocks([]);
+                  });
               }
             }
+            return;
           }
         }
       } catch (error) {
@@ -359,25 +258,88 @@ export default function Profile() {
   };
 
   const saveStep1 = async (data: ProfileData) => {
-    if (data.password && data.password !== data.confirmPassword) {
-      toast.error("Passwords do not match");
+    // Validate all required fields
+    if (!data.name || !data.name.trim()) {
+      toast.error("Name is required");
       return false;
     }
 
-    if (!data.name || !data.phone || !data.email || !data.state || !data.district || !data.block || !data.city) {
-      toast.error("Please fill in all required fields");
+    if (!data.phone || !data.phone.trim()) {
+      toast.error("Phone number is required");
       return false;
+    }
+
+    if (!data.email || !data.email.trim()) {
+      toast.error("Email is required");
+      return false;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email)) {
+      toast.error("Please enter a valid email address");
+      return false;
+    }
+
+    if (!data.state || !data.state.trim()) {
+      toast.error("State is required");
+      return false;
+    }
+
+    if (!data.district || !data.district.trim()) {
+      toast.error("District is required");
+      return false;
+    }
+
+    if (!data.block || !data.block.trim()) {
+      toast.error("Block is required");
+      return false;
+    }
+
+    if (!data.city || !data.city.trim()) {
+      toast.error("City is required");
+      return false;
+    }
+
+    if (!data.religion || !data.religion.trim()) {
+      toast.error("Religion is required");
+      return false;
+    }
+
+    if (!data.socialCategory || !data.socialCategory.trim()) {
+      toast.error("Social Category is required");
+      return false;
+    }
+
+    // Validate password fields if user wants to change password
+    if (data.password && data.password.trim() !== "") {
+      if (data.password.length < 6) {
+        toast.error("New password must be at least 6 characters");
+        return false;
+      }
+
+      if (data.password !== data.confirmPassword) {
+        toast.error("New password and confirm password do not match");
+        return false;
+      }
     }
 
     try {
       const token = localStorage.getItem("token");
       
-      if (data.password && token) {
-        if (!data.currentPassword) {
+      // Only attempt password change if new password is provided
+      if (data.password && data.password.trim() !== "" && token) {
+        if (!data.currentPassword || data.currentPassword.trim() === "") {
           toast.error("Please enter your current password to change it");
           return false;
         }
 
+        if (data.password !== data.confirmPassword) {
+          toast.error("New password and confirm password do not match");
+          return false;
+        }
+
+        console.log("Attempting password change...");
         const passwordResponse = await fetch("http://localhost:4000/api/auth/change-password", {
           method: "PUT",
           headers: {
@@ -390,9 +352,11 @@ export default function Profile() {
           })
         });
 
+        const passwordResult = await passwordResponse.json();
+        console.log("Password change response:", passwordResult);
+
         if (!passwordResponse.ok) {
-          const errorData = await passwordResponse.json();
-          toast.error(errorData.message || "Failed to update password");
+          toast.error(passwordResult.message || "Failed to update password");
           return false;
         }
 
@@ -466,7 +430,11 @@ export default function Profile() {
         } catch (error) {
           console.error("Error saving business form:", error);
         }
-        handleFinalSubmit();
+        
+        // Navigate to Application Submitted page for aspirants
+        toast.success("Registered as Aspirant!");
+        navigate("/member/application-submitted?id=APP-" + new Date().getFullYear() + "-" + Math.random().toString(36).substr(2, 5).toUpperCase());
+        return;
       } else if (data.doingBusiness === "yes") {
         if (!data.organization || !data.constitution || !data.businessTypes?.length) {
           toast.error("Please fill in all required business information");
@@ -600,7 +568,7 @@ export default function Profile() {
     }
 
     toast.success("Application submitted successfully!");
-    navigate("/member/dashboard");
+    navigate("/member/application-submitted?id=APP-" + new Date().getFullYear() + "-" + Math.random().toString(36).substr(2, 5).toUpperCase());
   };
 
   const toggleBusinessType = (type: string) => {
@@ -817,7 +785,7 @@ export default function Profile() {
                             <Input
                               id="currentPassword"
                               type={showPassword ? "text" : "password"}
-                              placeholder="Enter current password"
+                              placeholder="Enter your current login password"
                               {...register("currentPassword")}
                               disabled={isLocked}
                             />
@@ -830,7 +798,7 @@ export default function Profile() {
                               {showPassword ? <EyeOff className="h-4 w-4 text-gray-500" /> : <Eye className="h-4 w-4 text-gray-500" />}
                             </button>
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">Required if you want to change your password.</p>
+                          <p className="text-xs text-gray-500 mt-1">Required only if you want to change your password. Enter the password you use to login.</p>
                         </div>
 
                         <div>

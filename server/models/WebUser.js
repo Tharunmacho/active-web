@@ -61,7 +61,7 @@ const webUserSchema = new mongoose.Schema({
   }
 }, {
   timestamps: true,
-  collection: 'web users' // Exact collection name from your MongoDB
+  collection: 'web auth' // Changed to match mobile app collection
 });
 
 // Hash password before saving

@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Info } from 'lucide-react';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -11,26 +12,14 @@ export default function ApplicationStatus() {
   const q = useQuery();
   const id = q.get('id');
   const navigate = useNavigate();
-  const [app, setApp] = useState<any>(null);
-
-  useEffect(() => {
-    if (!id) return;
-    try {
-      const apps = JSON.parse(localStorage.getItem('applications') || '[]');
-      const found = apps.find((a: any) => a.id === id);
-      setApp(found || null);
-    } catch (e) {
-      setApp(null);
-    }
-  }, [id]);
 
   if (!id) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
         <Card className="max-w-lg w-full">
-          <CardContent>
+          <CardContent className="p-6">
             <h3 className="text-lg font-semibold">No application specified</h3>
-            <p className="text-sm text-muted-foreground">Please open this page with an application id (e.g. ?id=APP-2025-001).</p>
+            <p className="text-sm text-muted-foreground">Please provide an application ID.</p>
             <div className="mt-3">
               <Button onClick={() => navigate('/member/dashboard')}>Go to Dashboard</Button>
             </div>
@@ -40,112 +29,126 @@ export default function ApplicationStatus() {
     );
   }
 
-  const total = app?.stages?.length || 0;
-  const completed = app?.stages ? app.stages.filter((s: any) => s.status === 'Approved').length : 0;
-  const pct = total ? Math.round((completed / total) * 100) : 0;
-
-  const steps = app?.stages ?? [
-    { id: 1, title: 'Block Admin Review', status: 'Pending' },
-    { id: 2, title: 'District Admin Review', status: 'Pending' },
-    { id: 3, title: 'State Admin Review', status: 'Pending' },
-    { id: 4, title: 'Ready for Payment', status: 'Pending' },
+  const stages = [
+    { id: 1, name: 'Block Admin', admin: 'Ariyalur Block Admin', status: 'in-progress' },
+    { id: 2, name: 'District Admin', admin: 'Ariyalur District Admin', status: 'pending' },
+    { id: 3, name: 'State Admin', admin: 'Tamil Nadu State Admin', status: 'pending' },
+    { id: 4, name: 'Ready for Payment', admin: 'ACTIV Super Admin', status: 'pending' }
   ];
 
-  const sanitize = (v: any) => (v ?? '').toString().replace(/\\n|\n/g, ' ').trim();
+  const completedStages = stages.filter(s => s.status === 'completed').length;
+  const totalStages = stages.length;
+  const progressPercentage = (completedStages / totalStages) * 100;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-blue-100 to-blue-200">
-      <div className="w-full max-w-md">
-        <Card className="rounded-lg shadow-xl">
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-blue-200 p-4 md:p-6">
+      <div className="max-w-2xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold mb-2">Application Status</h1>
+          <p className="text-gray-700">Track your membership approval progress</p>
+        </div>
+
+        {/* Overall Progress Card */}
+        <Card className="rounded-2xl shadow-lg mb-6 bg-white">
           <CardContent className="p-6">
-            <div className="text-center mb-4">
-              <h2 className="text-2xl font-bold">Application Status</h2>
-              <p className="text-sm text-muted-foreground mt-1">Track your membership approval progress</p>
+            <h2 className="text-xl font-bold text-center mb-4">Overall Progress</h2>
+            <p className="text-center text-gray-600 mb-4">{completedStages} of {totalStages} stages completed</p>
+            
+            {/* Progress Bar */}
+            <div className="w-full bg-gray-200 rounded-full h-3 mb-6">
+              <div 
+                className="bg-blue-600 h-3 rounded-full transition-all duration-300" 
+                style={{ width: `${progressPercentage}%` }}
+              />
             </div>
 
-            <div className="bg-white rounded p-4 border mb-4">
-              <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
-                <div>Application ID:</div>
-                <div className="font-semibold text-black">{app?.id}</div>
-                <div>Submitted:</div>
-                <div>{app ? new Date(app.submittedAt).toLocaleString() : '-'}</div>
-                <div>Status:</div>
-                <div className="font-semibold text-amber-500">{sanitize(app?.status) || 'Unknown'}</div>
-              </div>
-
-              {total > 0 && (
-                <div className="mt-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm text-muted-foreground">Overall Progress</div>
-                    <div className="text-xs text-muted-foreground">{completed} of {total} stages completed</div>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2 mb-3">
-                    <div className="h-2 rounded-full bg-blue-600" style={{ width: `${pct}%` }} />
-                  </div>
-                  <div className="grid grid-cols-4 gap-2 text-center">
-                    {steps.slice(0, 4).map((s: any, i: number) => (
-                      <div key={s.id ?? i} className="text-xxs text-muted-foreground">{s.title}</div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-3 mb-4">
-              {steps.map((s: any, idx: number) => {
-                const status = s.status;
-                const isCompleted = status === 'Approved';
-                const isActive = status === 'Under Review' || status === 'In progress' || app?.stage === s.id;
-                const badgeClass = isCompleted
-                  ? 'bg-green-600 text-white'
-                  : isActive
-                  ? 'bg-yellow-400 text-black'
-                  : 'bg-gray-200 text-gray-600';
-                const badgeLabel = isCompleted ? 'Approved' : isActive ? 'In progress' : 'Pending';
+            {/* Stage Indicators */}
+            <div className="grid grid-cols-4 gap-4">
+              {stages.map((stage, index) => {
+                const isCompleted = stage.status === 'completed';
+                const isInProgress = stage.status === 'in-progress';
+                
                 return (
-                  <div key={s.key ?? s.id ?? idx} className={`p-3 rounded border ${isCompleted ? 'bg-green-50' : isActive ? 'bg-yellow-50' : 'bg-gray-50'}`}>
-                    <div className="flex items-start gap-3 justify-between">
-                      <div>
-                        <div className="text-sm font-semibold">{s.title}</div>
-                        <div className="text-xs text-muted-foreground">{s.reviewer ?? ''} {s.reviewDate ? ` — Review date: ${new Date(s.reviewDate).toLocaleDateString()}` : ''}</div>
-                        {s.notes && <div className="mt-2 text-xs bg-white border rounded p-2 text-muted-foreground">{s.notes}</div>}
-                      </div>
-                      <div className="text-right">
-                        <div className={`px-3 py-1 rounded-full text-xs font-semibold ${badgeClass}`}>{badgeLabel}</div>
-                      </div>
+                  <div key={stage.id} className="flex flex-col items-center">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 font-bold text-sm ${
+                      isCompleted 
+                        ? 'bg-green-600 text-white' 
+                        : isInProgress 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-300 text-gray-600'
+                    }`}>
+                      {isCompleted ? '✓' : index + 1}
                     </div>
+                    <p className="text-xs text-center text-gray-700 font-medium leading-tight">
+                      {stage.name}
+                    </p>
                   </div>
                 );
               })}
             </div>
-
-            {!(completed === total && total > 0) && (
-              <div className="bg-blue-50 border rounded p-3 mb-4">
-                <div className="font-semibold text-sm">Waiting for Approval</div>
-                <div className="text-xs text-muted-foreground mt-1">Your application is currently under review. You will be notified once this stage is complete.</div>
-              </div>
-            )}
-
-            <div className="flex flex-col gap-3">
-              <Button className="bg-blue-600 text-white" onClick={() => navigate(-1)}>Back</Button>
-              {app && completed === total && (
-                <Button className="bg-blue-600 text-white" onClick={() => navigate(`/member/payment?id=${encodeURIComponent(app?.id)}`)}>Register for Payment</Button>
-              )}
-              <Button variant="outline" onClick={() => {
-                if (!app) return;
-                const blob = new Blob([JSON.stringify(app, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${app.id || 'application'}.json`;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                URL.revokeObjectURL(url);
-              }}>Download Application Copy</Button>
-            </div>
           </CardContent>
         </Card>
+
+        {/* Review Stage Cards */}
+        <div className="space-y-4 mb-6">
+          {stages.map((stage) => {
+            const isCompleted = stage.status === 'completed';
+            const isInProgress = stage.status === 'in-progress';
+
+            return (
+              <Card key={stage.id} className="rounded-2xl shadow-lg bg-white">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold mb-1">{stage.name} Review</h3>
+                      <p className="text-sm text-gray-600">{stage.admin}</p>
+                    </div>
+                    <span className={`px-4 py-1.5 rounded-full text-sm font-semibold ${
+                      isCompleted 
+                        ? 'bg-green-100 text-green-700' 
+                        : isInProgress 
+                        ? 'bg-blue-100 text-blue-700' 
+                        : 'bg-pink-100 text-pink-700'
+                    }`}>
+                      {isCompleted ? 'Approved' : isInProgress ? 'In Progress' : 'Pending'}
+                    </span>
+                  </div>
+                  
+                  {isInProgress && (
+                    <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                      <div className="flex gap-3">
+                        <Info className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-yellow-800">
+                          Your application is currently being reviewed. You will be notified once this stage is complete.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Waiting for Approval Info */}
+        <Card className="rounded-2xl shadow-lg mb-6 bg-blue-50 border-blue-200">
+          <CardContent className="p-6">
+            <h3 className="text-lg font-bold text-blue-900 mb-2">Waiting for Approval</h3>
+            <p className="text-sm text-blue-800">
+              Your application is currently under review. Once all approval stages are complete, you'll be redirected to the payment section to complete your membership.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Back Button */}
+        <Button 
+          variant="outline"
+          className="w-full bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 py-6 text-lg font-semibold rounded-2xl"
+          onClick={() => navigate('/member/dashboard')}
+        >
+          Back to Dashboard
+        </Button>
       </div>
     </div>
   );
