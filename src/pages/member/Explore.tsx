@@ -74,7 +74,7 @@ const Explore = () => {
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-5 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-5 mb-6 md:mb-8">
               <Card
                 onClick={() => setSelected("events")}
                 className={`cursor-pointer transition-colors duration-300 rounded-2xl border-0 ${selected === "events"
