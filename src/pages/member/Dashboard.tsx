@@ -227,7 +227,7 @@ const MemberDashboard = () => {
                     </div>
                     <p className="text-sm opacity-90 mb-4">View and manage your business profile and settings</p>
                     <div className="mt-4">
-                      <Button className="bg-white text-purple-600 hover:bg-gray-100 font-semibold px-8 py-2" onClick={() => navigate('/member/business-profile')}>
+                      <Button className="bg-white text-purple-600 hover:bg-gray-100 font-semibold px-8 py-2" onClick={() => navigate('/business/create-profile')}>
                         Create Account
                       </Button>
                     </div>

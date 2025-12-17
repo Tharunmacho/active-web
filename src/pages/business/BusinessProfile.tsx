@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Menu, Upload, ImagePlus, Building2, MapPin, Phone, FileText, Briefcase } from "lucide-react";
 import { toast } from "sonner";
-import MemberSidebar from "./MemberSidebar";
+import BusinessSidebar from "./BusinessSidebar";
 
 const BusinessProfile = () => {
     const navigate = useNavigate();
@@ -24,15 +24,15 @@ const BusinessProfile = () => {
         logo: null as File | null,
     });
 
-    // Load existing business profile on mount
+    // Load active company on mount
     useEffect(() => {
-        const loadBusinessProfile = async () => {
+        const loadActiveCompany = async () => {
             try {
                 const token = localStorage.getItem("token");
                 if (!token) return;
 
-                console.log("🔍 Loading business profile...");
-                const response = await fetch("http://localhost:4000/api/business-profile", {
+                console.log("🔍 Loading active company...");
+                const response = await fetch("http://localhost:4000/api/companies/active", {
                     headers: {
                         "Authorization": `Bearer ${token}`,
                         "Content-Type": "application/json"
@@ -41,7 +41,7 @@ const BusinessProfile = () => {
 
                 if (response.ok) {
                     const result = await response.json();
-                    console.log("📥 Business profile loaded:", result);
+                    console.log("📥 Active company loaded:", result);
                     
                     if (result.data) {
                         setFormData({
@@ -58,13 +58,15 @@ const BusinessProfile = () => {
                             setLogoPreview(result.data.logo);
                         }
                     }
+                } else {
+                    console.log("ℹ️ No active company found, creating new one");
                 }
             } catch (error) {
-                console.error("❌ Error loading business profile:", error);
+                console.error("❌ Error loading active company:", error);
             }
         };
 
-        loadBusinessProfile();
+        loadActiveCompany();
     }, []);
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,7 +97,7 @@ const BusinessProfile = () => {
             }
 
             // Prepare data to send
-            const profileData = {
+            const companyData = {
                 businessName: formData.businessName,
                 description: formData.description,
                 businessType: formData.businessType,
@@ -105,43 +107,42 @@ const BusinessProfile = () => {
                 logo: logoPreview || "" // Store base64 string
             };
 
-            console.log("📤 Submitting business profile:", profileData);
+            console.log("📤 Submitting company profile:", companyData);
 
-            const response = await fetch("http://localhost:4000/api/business-profile", {
+            // Save to companies collection (will be set as active if it's the first company)
+            const response = await fetch("http://localhost:4000/api/companies", {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${token}`,
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify(profileData)
+                body: JSON.stringify(companyData)
             });
 
             console.log("📡 Response status:", response.status);
             const result = await response.json();
             console.log("📥 Response data:", result);
 
-            if (response.ok) {
-                // Also save to localStorage for backward compatibility
-                localStorage.setItem("businessProfile", JSON.stringify(formData));
-                toast.success("Business profile saved successfully!");
+            if (response.ok || result.success) {
+                toast.success("Company profile created successfully!");
                 navigate("/business/dashboard");
             } else {
-                toast.error(result.message || "Failed to save business profile");
+                toast.error(result.message || "Failed to save company profile");
             }
         } catch (error) {
-            console.error("❌ Error saving business profile:", error);
-            toast.error("Failed to save business profile");
+            console.error("❌ Error saving company profile:", error);
+            toast.error("Failed to save company profile");
         }
     };
 
     const handleCancel = () => {
-        navigate("/member/dashboard");
+        navigate("/business/dashboard");
     };
 
     return (
         <div className="min-h-screen flex">
             {/* Sidebar */}
-            <MemberSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+            <BusinessSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
             {/* Main content */}
             <div className="flex-1 flex flex-col">

@@ -78,19 +78,32 @@ const MemberLogin = () => {
     try {
       // Fallback for old localStorage-based login if needed
       try {
+        console.log('🔐 Attempting login with:', data.email);
         const res = await fetch('http://localhost:4000/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ identifier: data.email, password: data.password }),
+          body: JSON.stringify({ email: data.email, password: data.password }),
         });
 
+        console.log('📡 Login response status:', res.status);
+        
         if (res.ok) {
           const json = await res.json();
-          const found = json.user;
+          console.log('✅ Login response:', json);
+          const found = json.data?.user || json.user;
+          
+          // Store token
+          if (json.data?.token) {
+            localStorage.setItem('token', json.data.token);
+          }
+          
+          // Set memberId for compatibility
+          const memberId = found.id || found._id || found.memberId;
+          localStorage.setItem('memberId', memberId);
 
           // Fetch full profile from backend
           try {
-            const profileRes = await fetch(`http://localhost:4000/api/profile/${found.memberId}`);
+            const profileRes = await fetch(`http://localhost:4000/api/profile/${memberId}`);
             if (profileRes.ok) {
               const profileJson = await profileRes.json();
               if (profileJson.profile) {
@@ -159,8 +172,7 @@ const MemberLogin = () => {
             localStorage.setItem('registrationData', JSON.stringify(found));
           }
 
-          localStorage.setItem('userName', found.firstName || found.email || data.email);
-          localStorage.setItem('memberId', found.memberId || found.email);
+          localStorage.setItem('userName', found.fullName || found.firstName || found.email || data.email);
           const fromEmail = emailToRole(found.email || '');
           const fromId = idToRole(found.memberId || data.email);
           const roleDerived = (typeof found.role === 'string' && found.role)
@@ -177,9 +189,17 @@ const MemberLogin = () => {
             navigate('/member/dashboard');
           }
           return;
+        } else {
+          // Login failed - show error from backend
+          const errorJson = await res.json();
+          console.error('❌ Login failed:', errorJson);
+          toast.error(errorJson.message || 'Login failed. Please check your credentials.');
+          return;
         }
       } catch (err) {
-        // ignore and fall back to localStorage
+        console.error('❌ Login error:', err);
+        toast.error('Unable to connect to server. Please try again.');
+        return;
       }
 
       const usersJson = localStorage.getItem("users");

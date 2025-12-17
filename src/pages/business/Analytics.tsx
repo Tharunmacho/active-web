@@ -1,27 +1,130 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Calendar, BarChart3, PieChart, Activity } from "lucide-react";
 import BusinessSidebar from "./BusinessSidebar";
 
 const Analytics = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [products, setProducts] = useState<any[]>([]);
+    const [companies, setCompanies] = useState<any[]>([]);
+
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const loadData = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            
+            const [productsRes, companiesRes] = await Promise.all([
+                fetch('http://localhost:4000/api/products', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }),
+                fetch('http://localhost:4000/api/companies', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+            ]);
+
+            const productsData = await productsRes.json();
+            const companiesData = await companiesRes.json();
+
+            if (productsData.success) {
+                setProducts(productsData.data);
+            }
+            if (companiesData.success) {
+                setCompanies(companiesData.data);
+            }
+        } catch (error) {
+            console.error('Error loading data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Get category breakdown from real products
+    const getCategoryBreakdown = () => {
+        const categoryCounts: { [key: string]: number } = {};
+        products.forEach(product => {
+            const category = product.category || 'Other';
+            categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+        });
+        
+        const total = products.length || 1;
+        return Object.entries(categoryCounts)
+            .map(([category, count]) => ({
+                category,
+                percentage: Math.round((count / total) * 100)
+            }))
+            .sort((a, b) => b.percentage - a.percentage)
+            .slice(0, 4);
+    };
+
+    // Get recent activity from products
+    const getRecentActivity = () => {
+        return products
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(0, 4)
+            .map(product => ({
+                action: `New product added: ${product.productName}`,
+                time: getTimeAgo(product.createdAt),
+                type: 'product'
+            }));
+    };
+
+    const getTimeAgo = (date: string) => {
+        const now = new Date();
+        const created = new Date(date);
+        const diffMs = now.getTime() - created.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 60) return `${diffMins} minutes ago`;
+        if (diffHours < 24) return `${diffHours} hours ago`;
+        return `${diffDays} days ago`;
+    };
 
     const stats = [
-        { label: "Total Views", value: "1,234", change: "+12.5%", borderColor: "border-l-blue-500" },
-        { label: "Profile Visits", value: "456", change: "+8.2%", borderColor: "border-l-purple-500" },
-        { label: "Product Views", value: "789", change: "+15.7%", borderColor: "border-l-blue-500" },
-        { label: "Engagement Rate", value: "23.4%", change: "+5.3%", borderColor: "border-l-purple-500" },
+        { 
+            label: "Total Products", 
+            value: products.length.toString(), 
+            change: products.length > 0 ? "Active" : "None", 
+            borderColor: "border-l-blue-500" 
+        },
+        { 
+            label: "Companies", 
+            value: companies.length.toString(), 
+            change: companies.filter(c => c.isActive).length > 0 ? "Active" : "None", 
+            borderColor: "border-l-purple-500" 
+        },
+        { 
+            label: "Categories", 
+            value: new Set(products.map(p => p.category)).size.toString(), 
+            change: "Unique", 
+            borderColor: "border-l-blue-500" 
+        },
+        { 
+            label: "In Stock", 
+            value: products.filter(p => p.status === 'in_stock').length.toString(), 
+            change: `${products.length} Total`, 
+            borderColor: "border-l-purple-500" 
+        },
     ];
 
-    const weeklyData = [
-        { day: "Mon", views: 45, visits: 23 },
-        { day: "Tue", views: 52, visits: 31 },
-        { day: "Wed", views: 38, visits: 19 },
-        { day: "Thu", views: 67, visits: 42 },
-        { day: "Fri", views: 71, visits: 39 },
-        { day: "Sat", views: 55, visits: 28 },
-        { day: "Sun", views: 48, visits: 25 },
-    ];
+    const categoryBreakdown = getCategoryBreakdown();
+    const recentActivity = getRecentActivity();
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex bg-white items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading analytics...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen flex bg-gradient-to-br from-gray-50 to-white">
@@ -64,27 +167,36 @@ const Analytics = () => {
 
                         {/* Charts Section */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6">
-                            {/* Weekly Trends */}
+                            {/* Product Stock Status */}
                             <div className="p-5 md:p-6 rounded-xl bg-white border-0 shadow-lg">
                                 <div className="mb-6">
-                                    <h3 className="text-lg md:text-xl font-bold text-blue-600">Weekly Trends</h3>
-                                    <p className="text-sm text-gray-500 mt-1">Daily views overview</p>
+                                    <h3 className="text-lg md:text-xl font-bold text-blue-600">Stock Status</h3>
+                                    <p className="text-sm text-gray-500 mt-1">Product availability overview</p>
                                 </div>
 
                                 <div className="space-y-3">
-                                    {weeklyData.map((data, index) => (
-                                        <div key={index} className="flex items-center gap-3">
-                                            <span className="w-10 text-sm font-medium text-gray-600">{data.day}</span>
-                                            <div className="flex-1 flex gap-2 items-center">
-                                                <div className="flex-1 bg-gray-100 rounded-lg h-8 overflow-hidden">
-                                                    <div className="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-sm transition-all"
-                                                        style={{ width: `${(data.views / 80) * 100}%` }}>
+                                    {products.length > 0 ? (
+                                        products.slice(0, 7).map((product, index) => (
+                                            <div key={index} className="flex items-center gap-3">
+                                                <span className="w-24 text-sm font-medium text-gray-600 truncate">{product.productName}</span>
+                                                <div className="flex-1 flex gap-2 items-center">
+                                                    <div className="flex-1 bg-gray-100 rounded-lg h-8 overflow-hidden">
+                                                        <div 
+                                                            className={`h-full rounded-lg shadow-sm transition-all ${
+                                                                product.stockQuantity > 50 ? 'bg-gradient-to-r from-green-500 to-green-600' :
+                                                                product.stockQuantity > 20 ? 'bg-gradient-to-r from-yellow-500 to-yellow-600' :
+                                                                'bg-gradient-to-r from-red-500 to-red-600'
+                                                            }`}
+                                                            style={{ width: `${Math.min((product.stockQuantity / 100) * 100, 100)}%` }}>
+                                                        </div>
                                                     </div>
+                                                    <span className="w-12 text-sm font-semibold text-blue-600 text-right">{product.stockQuantity}</span>
                                                 </div>
-                                                <span className="w-12 text-sm font-semibold text-blue-600 text-right">{data.views}</span>
                                             </div>
-                                        </div>
-                                    ))}
+                                        ))
+                                    ) : (
+                                        <p className="text-center text-gray-500 py-8">No products found</p>
+                                    )}
                                 </div>
                             </div>
 
@@ -92,24 +204,28 @@ const Analytics = () => {
                             <div className="p-5 md:p-6 rounded-xl bg-white border-0 shadow-lg">
                                 <div className="mb-6">
                                     <h3 className="text-lg md:text-xl font-bold text-blue-600">Top Categories</h3>
-                                    <p className="text-sm text-gray-500 mt-1">Performance by category</p>
+                                    <p className="text-sm text-gray-500 mt-1">Product distribution by category</p>
                                 </div>
 
                                 <div className="space-y-4">
-                                    {["Technology", "Retail", "Food & Beverage", "Healthcare"].map((category, index) => (
-                                        <div key={index}>
-                                            <div className="flex items-center justify-between mb-2">
-                                                <span className="text-sm font-medium text-gray-700">{category}</span>
-                                                <span className="text-sm font-bold text-purple-600">{90 - index * 15}%</span>
+                                    {categoryBreakdown.length > 0 ? (
+                                        categoryBreakdown.map((item, index) => (
+                                            <div key={index}>
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="text-sm font-medium text-gray-700">{item.category}</span>
+                                                    <span className="text-sm font-bold text-purple-600">{item.percentage}%</span>
+                                                </div>
+                                                <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all"
+                                                        style={{ width: `${item.percentage}%` }}
+                                                    ></div>
+                                                </div>
                                             </div>
-                                            <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all"
-                                                    style={{ width: `${90 - index * 15}%` }}
-                                                ></div>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        ))
+                                    ) : (
+                                        <p className="text-center text-gray-500 py-8">No categories found</p>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -118,24 +234,23 @@ const Analytics = () => {
                         <div className="p-5 md:p-6 rounded-xl bg-white border-0 shadow-lg">
                             <div className="mb-6">
                                 <h3 className="text-lg md:text-xl font-bold text-blue-600">Recent Activity</h3>
-                                <p className="text-sm text-gray-500 mt-1">Latest updates and events</p>
+                                <p className="text-sm text-gray-500 mt-1">Latest product additions</p>
                             </div>
 
                             <div className="space-y-3">
-                                {[
-                                    { action: "New profile view", time: "2 hours ago", type: "view" },
-                                    { action: "Product inquiry received", time: "4 hours ago", type: "inquiry" },
-                                    { action: "Profile updated", time: "1 day ago", type: "update" },
-                                    { action: "New follower", time: "2 days ago", type: "follower" },
-                                ].map((activity, index) => (
-                                    <div key={index} className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-100">
-                                        <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
-                                        <div className="flex-1">
-                                            <p className="font-semibold text-gray-800 text-sm">{activity.action}</p>
-                                            <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
+                                {recentActivity.length > 0 ? (
+                                    recentActivity.map((activity, index) => (
+                                        <div key={index} className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-100">
+                                            <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
+                                            <div className="flex-1">
+                                                <p className="font-semibold text-gray-800 text-sm">{activity.action}</p>
+                                                <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))
+                                ) : (
+                                    <p className="text-center text-gray-500 py-8">No recent activity</p>
+                                )}
                             </div>
                         </div>
                     </div>

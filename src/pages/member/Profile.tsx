@@ -34,6 +34,7 @@ type ProfileData = {
   businessYear?: string;
   employees?: string;
   chamber?: string;
+  chamberDetails?: string;
   govtOrgs?: string[];
   
   // Step 3: Financial & Compliance
@@ -77,6 +78,7 @@ const defaultProfile: ProfileData = {
   businessYear: "",
   employees: "",
   chamber: "",
+  chamberDetails: "",
   govtOrgs: [],
   pan: "",
   gst: "",
@@ -191,6 +193,40 @@ export default function Profile() {
               }
             }
             return;
+          }
+        }
+
+        // Load business form data
+        console.log("Fetching business form data...");
+        const businessFormResponse = await fetch("http://localhost:4000/api/business-form", {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+
+        console.log("Business form response status:", businessFormResponse.status);
+        
+        if (businessFormResponse.ok) {
+          const businessResult = await businessFormResponse.json();
+          console.log("Business form result:", businessResult);
+          
+          if (businessResult.data) {
+            const businessData = businessResult.data;
+            console.log("Loading business form from backend:", businessData);
+            
+            reset(prev => ({
+              ...prev,
+              doingBusiness: businessData.doingBusiness || "",
+              organization: businessData.organization || "",
+              constitution: businessData.constitution || "",
+              businessTypes: businessData.businessTypes || [],
+              businessYear: businessData.businessYear || "",
+              employees: businessData.employees || "",
+              chamber: businessData.chamber || "",
+              chamberDetails: businessData.chamberDetails || "",
+              govtOrgs: businessData.govtOrgs || []
+            }));
           }
         }
       } catch (error) {
@@ -441,7 +477,7 @@ export default function Profile() {
           return;
         }
         
-        // Save business form to "additional form for business 2" collection
+        // Save business form to business_profiles collection
         try {
           const token = localStorage.getItem("token");
           if (token) {
@@ -458,6 +494,10 @@ export default function Profile() {
               govtOrgs: data.govtOrgs || []
             };
             
+            console.log("📤 Submitting business form data:", businessData);
+            
+            console.log("🚀 Sending POST request to /api/business-form");
+            
             const response = await fetch("http://localhost:4000/api/business-form", {
               method: "POST",
               headers: {
@@ -467,11 +507,17 @@ export default function Profile() {
               body: JSON.stringify(businessData)
             });
             
+            console.log("📡 Response status:", response.status);
+            const result = await response.json();
+            console.log("📥 Response data:", result);
+            
             if (!response.ok) {
+              console.error("❌ Failed to save:", result);
               toast.error("Failed to save business information");
               return;
             }
             
+            console.log("✅ Business form saved successfully!");
             toast.success("Business information saved!");
           }
         } catch (error) {
@@ -1058,6 +1104,7 @@ export default function Profile() {
                           <div>
                             <textarea
                               placeholder="Please specify chamber/association details"
+                              {...register("chamberDetails")}
                               className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md min-h-[80px]"
                             />
                           </div>

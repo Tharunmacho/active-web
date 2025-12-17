@@ -71,10 +71,10 @@ export const authenticateAdmin = async (adminId: string, password: string): Prom
     }
     
     // If not default credentials, try backend authentication
-    const res = await fetch("http://localhost:4000/api/login", {
+    const res = await fetch("http://localhost:4000/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ identifier: adminId, password }),
+      body: JSON.stringify({ email: adminId, password }),
     });
 
     if (!res.ok) {
@@ -82,9 +82,11 @@ export const authenticateAdmin = async (adminId: string, password: string): Prom
     }
 
     const json = await res.json();
-    const role = json.user?.role;
+    const role = json.data?.user?.role || json.user?.role;
     
-    return { success: true, role };
+    // Only return success if the user has an admin role
+    const isAdmin = role && ['super_admin', 'state_admin', 'district_admin', 'block_admin'].includes(role);
+    return { success: isAdmin, role };
   } catch (err) {
     console.error("Authentication error:", err);
     return { success: false };

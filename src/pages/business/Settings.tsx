@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,16 @@ const Settings = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("account");
+    const [loading, setLoading] = useState(true);
+    const [userData, setUserData] = useState<any>(null);
+    const [activeCompany, setActiveCompany] = useState<any>(null);
+    const [formData, setFormData] = useState({
+        businessName: "",
+        email: "",
+        phone: "",
+        location: "",
+        description: ""
+    });
     const [notifications, setNotifications] = useState({
         email: true,
         push: true,
@@ -20,8 +30,83 @@ const Settings = () => {
         updates: true,
     });
 
-    const handleSave = () => {
-        toast.success("Settings saved successfully!");
+    useEffect(() => {
+        loadUserData();
+    }, []);
+
+    const loadUserData = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            
+            // Load active company
+            const companyRes = await fetch('http://localhost:4000/api/companies/active', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const companyResult = await companyRes.json();
+            
+            if (companyResult.success && companyResult.data) {
+                const company = companyResult.data;
+                setActiveCompany(company);
+                setFormData({
+                    businessName: company.companyName || "",
+                    email: company.contactEmail || "",
+                    phone: company.contactPhone || "",
+                    location: `${company.city || ""}, ${company.state || ""}`,
+                    description: company.businessCategory || ""
+                });
+            }
+        } catch (error) {
+            console.error('Error loading user data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSave = async () => {
+        if (!activeCompany) {
+            toast.error("No active company found");
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token');
+            
+            // Extract city and state from location
+            const [city, state] = formData.location.split(',').map(s => s.trim());
+            
+            const updateData = {
+                companyName: formData.businessName,
+                contactEmail: formData.email,
+                contactPhone: formData.phone,
+                city: city || activeCompany.city,
+                state: state || activeCompany.state,
+                businessCategory: formData.description || activeCompany.businessCategory
+            };
+
+            const response = await fetch(`http://localhost:4000/api/companies/${activeCompany._id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(updateData)
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                toast.success("Settings saved successfully!");
+                loadUserData(); // Reload data
+            } else {
+                toast.error(result.message || "Failed to save settings");
+            }
+        } catch (error) {
+            console.error('Error saving settings:', error);
+            toast.error("An error occurred while saving settings");
+        }
     };
 
     const handleLogout = () => {
@@ -37,6 +122,17 @@ const Settings = () => {
         { id: "billing", label: "Billing", icon: CreditCard },
         { id: "preferences", label: "Preferences", icon: Globe },
     ];
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex bg-white items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading settings...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen flex bg-gradient-to-br from-gray-50 to-white">
@@ -118,7 +214,8 @@ const Settings = () => {
                                                     </Label>
                                                     <Input
                                                         placeholder="Enter business name"
-                                                        defaultValue="My Business"
+                                                        value={formData.businessName}
+                                                        onChange={(e) => setFormData({...formData, businessName: e.target.value})}
                                                         className="h-11 rounded-lg border-2 border-gray-200 focus:border-blue-500"
                                                     />
                                                 </div>
@@ -131,7 +228,8 @@ const Settings = () => {
                                                     <Input
                                                         type="email"
                                                         placeholder="business@example.com"
-                                                        defaultValue="business@company.com"
+                                                        value={formData.email}
+                                                        onChange={(e) => setFormData({...formData, email: e.target.value})}
                                                         className="h-11 rounded-lg border-2 border-gray-200 focus:border-blue-500"
                                                     />
                                                 </div>
@@ -144,7 +242,8 @@ const Settings = () => {
                                                     <Input
                                                         type="tel"
                                                         placeholder="+91 98765 43210"
-                                                        defaultValue="+91 98765 43210"
+                                                        value={formData.phone}
+                                                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
                                                         className="h-11 rounded-lg border-2 border-gray-200 focus:border-blue-500"
                                                     />
                                                 </div>
@@ -156,7 +255,8 @@ const Settings = () => {
                                                     </Label>
                                                     <Input
                                                         placeholder="City, State"
-                                                        defaultValue="Mumbai, Maharashtra"
+                                                        value={formData.location}
+                                                        onChange={(e) => setFormData({...formData, location: e.target.value})}
                                                         className="h-11 rounded-lg border-2 border-gray-200 focus:border-blue-500"
                                                     />
                                                 </div>
@@ -164,11 +264,12 @@ const Settings = () => {
                                         </div>
 
                                         <div className="bg-white rounded-xl border-0 shadow-lg p-5 md:p-6">
-                                            <h3 className="text-lg font-bold text-gray-800 mb-4">Business Description</h3>
-                                            <textarea
-                                                className="w-full h-32 p-4 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:outline-none resize-none"
-                                                placeholder="Describe your business..."
-                                                defaultValue="Leading provider of innovative business solutions..."
+                                            <h3 className="text-lg font-bold text-gray-800 mb-4">Business Category</h3>
+                                            <Input
+                                                placeholder="e.g., Technology, Retail, Food & Beverage"
+                                                value={formData.description}
+                                                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                                                className="h-11 rounded-lg border-2 border-gray-200 focus:border-blue-500"
                                             />
                                         </div>
                                     </div>

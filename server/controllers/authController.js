@@ -15,10 +15,12 @@ const generateToken = (id) => {
 // @access  Public
 export const register = async (req, res, next) => {
   try {
+    console.log('📥 Registration request body:', req.body);
     const { fullName, email, phoneNumber, password, confirmPassword, state, district, block, city } = req.body;
 
     // Validation
     if (!fullName || !email || !phoneNumber || !password) {
+      console.log('❌ Missing fields:', { fullName, email, phoneNumber, password: password ? '***' : undefined });
       return res.status(400).json({
         success: false,
         message: 'Please provide all required fields'
@@ -48,16 +50,23 @@ export const register = async (req, res, next) => {
       });
     }
 
-    // Create user in "web auth" collection (email + password only)
+    // Create user in "web auth" collection with all required fields
     const user = await WebUser.create({
+      fullName,
       email,
-      password
+      phoneNumber,
+      password,
+      state,
+      district,
+      block,
+      city
     });
 
     // Create user profile in "web users" collection (all other details)
     await WebUserProfile.create({
       userId: user._id,
       fullName,
+      email,
       phoneNumber,
       state,
       district,

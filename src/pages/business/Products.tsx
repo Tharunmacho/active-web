@@ -10,40 +10,63 @@ const Products = () => {
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [products, setProducts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
-        // Load products from localStorage
-        const savedProducts = localStorage.getItem("businessProducts");
-        if (savedProducts) {
-            setProducts(JSON.parse(savedProducts));
-        } else {
-            // Default product
-            setProducts([
-                {
-                    id: 1,
-                    name: "Premium Soap Box",
-                    description: "High-quality handmade soap with natural ingredients",
-                    category: "Beauty & Personal Care",
-                    price: "100",
-                    stock: 50,
-                    sku: "SOAP-001",
-                    image: "https://images.unsplash.com/photo-1585909695284-32d2985ac9c0?w=400&h=300&fit=crop",
-                },
-            ]);
-        }
+        loadProducts();
     }, []);
 
-    const handleDelete = (id: number) => {
-        const updatedProducts = products.filter((p) => p.id !== id);
-        setProducts(updatedProducts);
-        localStorage.setItem("businessProducts", JSON.stringify(updatedProducts));
-        toast.success("Product deleted successfully");
+    const loadProducts = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:4000/api/products', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const result = await response.json();
+            console.log('📦 Products loaded:', result);
+
+            if (result.success) {
+                setProducts(result.data);
+            }
+        } catch (error) {
+            console.error('❌ Error loading products:', error);
+            toast.error('Failed to load products');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:4000/api/products/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                toast.success('Product deleted successfully');
+                loadProducts();
+            } else {
+                toast.error(result.message || 'Failed to delete product');
+            }
+        } catch (error) {
+            console.error('❌ Error deleting product:', error);
+            toast.error('Failed to delete product');
+        }
     };
 
     const filteredProducts = products.filter(product =>
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.category.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -57,7 +80,9 @@ const Products = () => {
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div>
                             <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">Products & Services</h1>
-                            <p className="text-gray-600 text-sm md:text-base">{products.length} items in your catalog</p>
+                            <p className="text-gray-600 text-sm md:text-base">
+                                {loading ? 'Loading...' : `${products.length} items in your catalog`}
+                            </p>
                         </div>
                         <Button
                             className="h-11 px-6 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-md hover:shadow-lg"
@@ -124,72 +149,91 @@ const Products = () => {
                                 </div>
 
                                 {/* Product Cards */}
-                                {filteredProducts.map((product) => (
-                                    <div key={product.id} className="group">
-                                        <div className="h-full rounded-xl bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
-                                            {/* Product Image */}
-                                            <div className="h-48 relative overflow-hidden bg-gray-100">
-                                                {product.image ? (
-                                                    <img
-                                                        src={product.image}
-                                                        alt={product.name}
-                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
-                                                        <Package className="h-16 w-16 text-gray-300" strokeWidth={1.5} />
-                                                    </div>
-                                                )}
-                                                <div className="absolute top-3 right-3">
-                                                    <div className="px-3 py-1 rounded-full bg-white/90 backdrop-blur-sm shadow-md">
-                                                        <span className="text-xs font-semibold text-blue-600">₹{product.price}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Product Details */}
-                                            <div className="p-5">
-                                                <h3 className="font-bold text-base text-gray-800 line-clamp-1 mb-2">{product.name}</h3>
-                                                <p className="text-sm text-gray-600 mb-4 line-clamp-2 min-h-[40px]">{product.description}</p>
-
-                                                <div className="space-y-2 mb-4">
-                                                    <div className="flex items-center justify-between text-sm">
-                                                        <span className="text-gray-500">Category</span>
-                                                        <span className="font-medium text-gray-700 text-xs">{product.category}</span>
-                                                    </div>
-                                                    {product.stock !== undefined && (
-                                                        <div className="flex items-center justify-between text-sm">
-                                                            <span className="text-gray-500">Stock</span>
-                                                            <span className={`font-medium text-xs ${product.stock > 10 ? 'text-green-600' : 'text-orange-600'}`}>
-                                                                {product.stock} units
-                                                            </span>
+                                {loading ? (
+                                    <div className="col-span-full flex justify-center items-center py-20">
+                                        <div className="text-center">
+                                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                                            <p className="text-gray-600">Loading products...</p>
+                                        </div>
+                                    </div>
+                                ) : filteredProducts.length === 0 ? (
+                                    <div className="col-span-full text-center py-20">
+                                        <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                                        <p className="text-gray-600 font-medium">No products found</p>
+                                        <p className="text-gray-500 text-sm mt-1">Add your first product to get started</p>
+                                    </div>
+                                ) : (
+                                    filteredProducts.map((product) => (
+                                        <div key={product._id} className="group">
+                                            <div className="h-full rounded-xl bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+                                                {/* Product Image */}
+                                                <div className="h-48 relative overflow-hidden bg-gray-100">
+                                                    {product.productImage ? (
+                                                        <img
+                                                            src={product.productImage}
+                                                            alt={product.productName}
+                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+                                                            <Package className="h-16 w-16 text-gray-300" strokeWidth={1.5} />
                                                         </div>
                                                     )}
+                                                    <div className="absolute top-3 right-3">
+                                                        <div className="px-3 py-1 rounded-full bg-white/90 backdrop-blur-sm shadow-md">
+                                                            <span className="text-xs font-semibold text-blue-600">₹{product.price}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
 
-                                                {/* Actions */}
-                                                <div className="flex gap-2">
-                                                    <Button
-                                                        variant="outline"
-                                                        className="flex-1 rounded-lg border-2 border-blue-200 text-blue-600 hover:bg-blue-50 font-medium h-9 text-xs"
-                                                        onClick={() => navigate(`/business/edit-product/${product.id}`)}
-                                                    >
-                                                        <Edit className="h-3.5 w-3.5 mr-1" />
-                                                        Edit
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        className="flex-1 rounded-lg border-2 border-red-200 text-red-600 hover:bg-red-50 font-medium h-9 text-xs"
-                                                        onClick={() => handleDelete(product.id)}
-                                                    >
-                                                        <Trash2 className="h-3.5 w-3.5 mr-1" />
-                                                        Delete
-                                                    </Button>
+                                                {/* Product Details */}
+                                                <div className="p-5">
+                                                    <h3 className="font-bold text-base text-gray-800 line-clamp-1 mb-2">{product.productName}</h3>
+                                                    <p className="text-sm text-gray-600 mb-4 line-clamp-2 min-h-[40px]">{product.description || 'No description'}</p>
+
+                                                    <div className="space-y-2 mb-4">
+                                                        <div className="flex items-center justify-between text-sm">
+                                                            <span className="text-gray-500">Category</span>
+                                                            <span className="font-medium text-gray-700 text-xs">{product.category}</span>
+                                                        </div>
+                                                        <div className="flex items-center justify-between text-sm">
+                                                            <span className="text-gray-500">Stock</span>
+                                                            <span className={`font-medium text-xs ${product.stockQuantity > 10 ? 'text-green-600' : product.stockQuantity > 0 ? 'text-orange-600' : 'text-red-600'}`}>
+                                                                {product.stockQuantity} units
+                                                            </span>
+                                                        </div>
+                                                        {product.sku && (
+                                                            <div className="flex items-center justify-between text-sm">
+                                                                <span className="text-gray-500">SKU</span>
+                                                                <span className="font-medium text-gray-700 text-xs">{product.sku}</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Actions */}
+                                                    <div className="flex gap-2">
+                                                        <Button
+                                                            variant="outline"
+                                                            className="flex-1 rounded-lg border-2 border-blue-200 text-blue-600 hover:bg-blue-50 font-medium h-9 text-xs"
+                                                            onClick={() => navigate(`/business/edit-product/${product._id}`)}
+                                                        >
+                                                            <Edit className="h-3.5 w-3.5 mr-1" />
+                                                            Edit
+                                                        </Button>
+                                                        <Button
+                                                            variant="outline"
+                                                            className="flex-1 rounded-lg border-2 border-red-200 text-red-600 hover:bg-red-50 font-medium h-9 text-xs"
+                                                            onClick={() => handleDelete(product._id)}
+                                                        >
+                                                            <Trash2 className="h-3.5 w-3.5 mr-1" />
+                                                            Delete
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))
+                                )}
                             </div>
                         ) : (
                             /* List View */

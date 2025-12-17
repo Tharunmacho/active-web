@@ -38,19 +38,27 @@ export const saveBusinessForm = async (req, res) => {
     const userId = req.user.id;
     const formData = req.body;
     
+    console.log('📝 Saving business form for userId:', userId);
+    console.log('📦 Form data received:', JSON.stringify(formData, null, 2));
+    
     let form = await BusinessForm.findOne({ userId });
+    console.log('🔍 Existing form found:', form ? 'Yes' : 'No');
     
     if (!form) {
       form = await BusinessForm.create({
         userId,
         ...formData
       });
+      console.log('✅ New business form created:', form._id);
     } else {
       Object.keys(formData).forEach(key => {
         form[key] = formData[key];
       });
       await form.save();
+      console.log('✅ Existing business form updated:', form._id);
     }
+    
+    console.log('💾 Final saved data:', JSON.stringify(form, null, 2));
     
     res.status(200).json({
       success: true,

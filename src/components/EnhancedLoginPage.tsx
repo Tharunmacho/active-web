@@ -95,22 +95,24 @@ export default function EnhancedLoginPage() {
     try {
       // Try backend login first
       try {
-        const res = await fetch('http://localhost:4000/api/login', {
+        const res = await fetch('http://localhost:4000/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ identifier, password }),
+          body: JSON.stringify({ email: identifier, password }),
         });
 
         if (res.ok) {
           const json = await res.json();
-          const found = json.user;
-          localStorage.setItem('userName', found.firstName || found.email || found.memberId);
-          localStorage.setItem('memberId', found.memberId);
-          if (found && found.role) localStorage.setItem('role', found.role);
+          const found = json.data?.user || json.user;
+          localStorage.setItem('userName', found.fullName || found.firstName || found.email || found.memberId);
+          localStorage.setItem('memberId', found.id || found._id || found.memberId);
+          localStorage.setItem('token', json.data?.token || json.token);
+          const role = found.role || 'member';
+          localStorage.setItem('role', role);
           localStorage.setItem('isLoggedIn', 'true');
 
-          const isAdmin = ['super_admin', 'state_admin', 'district_admin', 'block_admin'].includes(found.role);
-          const adminPath = found.role === 'block_admin' ? '/admin/block/dashboard' : '/admin/dashboard';
+          const isAdmin = ['super_admin', 'state_admin', 'district_admin', 'block_admin'].includes(role);
+          const adminPath = role === 'block_admin' ? '/admin/block/dashboard' : '/admin/dashboard';
           navigate(isAdmin ? adminPath : '/member/dashboard');
           return;
         }
@@ -187,18 +189,19 @@ export default function EnhancedLoginPage() {
 
       // Member/backend authentication
       try {
-        const res = await fetch('http://localhost:4000/api/login', {
+        const res = await fetch('http://localhost:4000/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ identifier, password }),
+          body: JSON.stringify({ email: identifier, password }),
         });
         if (res.ok) {
           const json = await res.json();
-          const found = json.user;
-          localStorage.setItem('userName', found.firstName || found.email || found.memberId);
-          localStorage.setItem('memberId', found.memberId);
-          const role = (typeof found.role === 'string' && found.role) || '';
-          localStorage.setItem('role', role || 'member');
+          const found = json.data?.user || json.user;
+          localStorage.setItem('userName', found.fullName || found.firstName || found.email || found.memberId);
+          localStorage.setItem('memberId', found.id || found._id || found.memberId);
+          localStorage.setItem('token', json.data?.token || json.token);
+          const role = (typeof found.role === 'string' && found.role) || 'member';
+          localStorage.setItem('role', role);
           localStorage.setItem('isLoggedIn', 'true');
           const isAdmin = ['super_admin', 'state_admin', 'district_admin', 'block_admin'].includes(role);
           const adminPath = role === 'block_admin' ? '/admin/block/dashboard' : '/admin/dashboard';
