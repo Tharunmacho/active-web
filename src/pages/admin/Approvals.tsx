@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CheckCircle, XCircle, Clock, FileText } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
@@ -118,36 +118,79 @@ const Approvals = () => {
   };
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
+    <div className="min-h-screen flex bg-gradient-to-br from-gray-50 to-white">
       {/* Sidebar - always visible */}
-      <div className="w-16 lg:w-64 border-r bg-white">
+      <div className="w-16 lg:w-64 border-r bg-white shadow-sm">
         <AdminSidebar />
       </div>
 
       {/* Main content */}
       <div className="flex-1 flex flex-col">
-        <div className="flex-1 p-4 md:p-6 overflow-auto bg-background">
-          <div className="w-full max-w-6xl mx-auto space-y-6">
-            <h1 className="text-2xl font-bold">Approvals</h1>
+        <div className="flex-1 p-4 md:p-6 overflow-auto">
+          <div className="w-full max-w-7xl mx-auto space-y-5 md:space-y-6">
+            {/* Header */}
+            <div className="bg-white shadow-lg p-5 md:p-6 rounded-xl border-0">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Application Approvals</h1>
+              <p className="text-sm md:text-base text-gray-600 mt-1">Review and manage member applications</p>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
+              <Card className="shadow-lg border-0 border-l-4 border-l-blue-500 hover:shadow-xl transition-shadow">
+                <CardContent className="pt-5 md:pt-6">
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium mb-2">Total</p>
+                    <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">{stats.total}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-lg border-0 border-l-4 border-l-amber-500 hover:shadow-xl transition-shadow">
+                <CardContent className="pt-5 md:pt-6">
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium mb-2">Pending</p>
+                    <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-amber-600 to-amber-700 bg-clip-text text-transparent">{stats.pending}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-lg border-0 border-l-4 border-l-green-500 hover:shadow-xl transition-shadow">
+                <CardContent className="pt-5 md:pt-6">
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium mb-2">Approved</p>
+                    <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-green-600 to-green-700 bg-clip-text text-transparent">{stats.approved}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-lg border-0 border-l-4 border-l-red-500 hover:shadow-xl transition-shadow">
+                <CardContent className="pt-5 md:pt-6">
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium mb-2">Rejected</p>
+                    <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent">{stats.rejected}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Tabs */}
             <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="w-full">
-              <TabsList className="grid w-full grid-cols-3 max-w-md">
-                <TabsTrigger value="pending">Pending</TabsTrigger>
-                <TabsTrigger value="approved">Approved</TabsTrigger>
-                <TabsTrigger value="rejected">Rejected</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-3 max-w-md bg-white border-2 border-gray-200 p-1 rounded-lg">
+                <TabsTrigger value="pending" className="rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">Pending</TabsTrigger>
+                <TabsTrigger value="approved" className="rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">Approved</TabsTrigger>
+                <TabsTrigger value="rejected" className="rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">Rejected</TabsTrigger>
               </TabsList>
 
               <TabsContent value="pending" className="mt-6">
                 {buckets.pending.length === 0 ? (
-                  <Card className="shadow-medium border-0">
+                  <Card className="shadow-lg border-0">
                     <CardContent className="pt-12 pb-12">
                       <div className="flex flex-col items-center justify-center text-center">
-                        <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                          <Clock className="w-8 h-8 text-gray-400" />
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center mb-4">
+                          <Clock className="w-8 h-8 text-blue-600" />
                         </div>
-                        <h3 className="text-lg font-semibold mb-2">No pending approvals</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <h3 className="text-lg font-bold text-gray-800 mb-2">No pending approvals</h3>
+                        <p className="text-sm text-gray-600">
                           All applications have been reviewed.
                         </p>
                       </div>
@@ -175,14 +218,14 @@ const Approvals = () => {
 
               <TabsContent value="approved" className="mt-6">
                 {buckets.approved.length === 0 ? (
-                  <Card className="shadow-medium border-0">
+                  <Card className="shadow-lg border-0">
                     <CardContent className="pt-12 pb-12">
                       <div className="flex flex-col items-center justify-center text-center">
-                        <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                          <CheckCircle className="w-8 h-8 text-gray-400" />
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center mb-4">
+                          <CheckCircle className="w-8 h-8 text-green-600" />
                         </div>
-                        <h3 className="text-lg font-semibold mb-2">No approved applications</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <h3 className="text-lg font-bold text-gray-800 mb-2">No approved applications</h3>
+                        <p className="text-sm text-gray-600">
                           Approved applications will appear here.
                         </p>
                       </div>
@@ -191,10 +234,21 @@ const Approvals = () => {
                 ) : (
                   <div className="space-y-4">
                     {buckets.approved.map(app => (
-                      <Card key={app.id} className="shadow-medium border-0">
-                        <CardHeader>
-                          <CardTitle>{app.profile?.profile?.profile?.firstName || app.userId}</CardTitle>
-                          <CardDescription>Approved</CardDescription>
+                      <Card key={app.id} className="shadow-lg border-0 border-l-4 border-l-green-500">
+                        <CardHeader className="p-5 md:p-6">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-10 h-10 ring-2 ring-green-100">
+                              <AvatarFallback className="bg-gradient-to-r from-green-600 to-green-700 text-white font-bold">
+                                {(app.profile?.profile?.profile?.firstName || app.userId).substring(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <CardTitle className="text-base md:text-lg">{app.profile?.profile?.profile?.firstName || app.userId}</CardTitle>
+                              <CardDescription className="text-sm">
+                                <Badge className="bg-green-500 hover:bg-green-600 text-white">Approved</Badge>
+                              </CardDescription>
+                            </div>
+                          </div>
                         </CardHeader>
                       </Card>
                     ))}
@@ -204,14 +258,14 @@ const Approvals = () => {
 
               <TabsContent value="rejected" className="mt-6">
                 {buckets.rejected.length === 0 ? (
-                  <Card className="shadow-medium border-0">
+                  <Card className="shadow-lg border-0">
                     <CardContent className="pt-12 pb-12">
                       <div className="flex flex-col items-center justify-center text-center">
-                        <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                          <XCircle className="w-8 h-8 text-gray-400" />
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center mb-4">
+                          <XCircle className="w-8 h-8 text-red-600" />
                         </div>
-                        <h3 className="text-lg font-semibold mb-2">No rejected applications</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <h3 className="text-lg font-bold text-gray-800 mb-2">No rejected applications</h3>
+                        <p className="text-sm text-gray-600">
                           Rejected applications will appear here.
                         </p>
                       </div>
@@ -220,10 +274,21 @@ const Approvals = () => {
                 ) : (
                   <div className="space-y-4">
                     {buckets.rejected.map(app => (
-                      <Card key={app.id} className="shadow-medium border-0">
-                        <CardHeader>
-                          <CardTitle>{app.profile?.profile?.profile?.firstName || app.userId}</CardTitle>
-                          <CardDescription>Rejected</CardDescription>
+                      <Card key={app.id} className="shadow-lg border-0 border-l-4 border-l-red-500">
+                        <CardHeader className="p-5 md:p-6">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-10 h-10 ring-2 ring-red-100">
+                              <AvatarFallback className="bg-gradient-to-r from-red-600 to-red-700 text-white font-bold">
+                                {(app.profile?.profile?.profile?.firstName || app.userId).substring(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <CardTitle className="text-base md:text-lg">{app.profile?.profile?.profile?.firstName || app.userId}</CardTitle>
+                              <CardDescription className="text-sm">
+                                <Badge className="bg-red-500 hover:bg-red-600 text-white">Rejected</Badge>
+                              </CardDescription>
+                            </div>
+                          </div>
                         </CardHeader>
                       </Card>
                     ))}

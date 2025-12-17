@@ -29,6 +29,7 @@ const Products = () => {
                     price: "100",
                     stock: 50,
                     sku: "SOAP-001",
+                    image: "https://images.unsplash.com/photo-1585909695284-32d2985ac9c0?w=400&h=300&fit=crop",
                 },
             ]);
         }
@@ -47,19 +48,19 @@ const Products = () => {
     );
 
     return (
-        <div className="min-h-screen flex bg-white">
+        <div className="min-h-screen flex bg-gradient-to-br from-gray-50 to-white">
             <BusinessSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
             <div className="flex-1 flex flex-col">
                 {/* Header */}
-                <div className="p-6 bg-gray-50 border-b border-gray-200">
-                    <div className="flex items-center justify-between">
+                <div className="p-5 md:p-6 bg-white border-b border-gray-200 shadow-sm">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-800 mb-1">Products & Services</h1>
-                            <p className="text-gray-600">{products.length} items in your catalog</p>
+                            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">Products & Services</h1>
+                            <p className="text-gray-600 text-sm md:text-base">{products.length} items in your catalog</p>
                         </div>
                         <Button
-                            className="h-11 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg"
+                            className="h-11 px-6 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-md hover:shadow-lg"
                             onClick={() => navigate("/business/add-product")}
                         >
                             <Plus className="h-4 w-4 mr-2" />
@@ -69,31 +70,31 @@ const Products = () => {
                 </div>
 
                 {/* Toolbar */}
-                <div className="p-6 bg-white border-b border-gray-200">
-                    <div className="flex items-center gap-4">
+                <div className="p-4 md:p-6 bg-white border-b border-gray-200">
+                    <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
                         <div className="flex-1 relative">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                             <Input
-                                placeholder="Search products by name or category..."
+                                placeholder="Search products..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-12 h-11 rounded-xl border-2 border-gray-200 focus:border-blue-500"
+                                className="pl-12 h-11 rounded-lg border-2 border-gray-200 focus:border-blue-500"
                             />
                         </div>
-                        <Button variant="outline" className="h-11 px-4 rounded-xl border-2 border-gray-200">
+                        <Button variant="outline" className="h-11 px-4 rounded-lg border-2 border-gray-200 hover:bg-gray-50">
                             <Filter className="h-4 w-4 mr-2" />
                             Filter
                         </Button>
-                        <div className="flex gap-2 border-2 border-gray-200 rounded-xl p-1">
+                        <div className="flex gap-2 border-2 border-gray-200 rounded-lg p-1">
                             <button
                                 onClick={() => setViewMode("grid")}
-                                className={`p-2 rounded-lg transition-colors ${viewMode === "grid" ? "bg-blue-100 text-blue-600" : "text-gray-600 hover:bg-gray-100"}`}
+                                className={`p-2 rounded transition-colors ${viewMode === "grid" ? "bg-blue-100 text-blue-600" : "text-gray-600 hover:bg-gray-100"}`}
                             >
                                 <Grid3x3 className="h-4 w-4" />
                             </button>
                             <button
                                 onClick={() => setViewMode("list")}
-                                className={`p-2 rounded-lg transition-colors ${viewMode === "list" ? "bg-purple-100 text-purple-600" : "text-gray-600 hover:bg-gray-100"}`}
+                                className={`p-2 rounded transition-colors ${viewMode === "list" ? "bg-blue-100 text-blue-600" : "text-gray-600 hover:bg-gray-100"}`}
                             >
                                 <List className="h-4 w-4" />
                             </button>
@@ -102,21 +103,21 @@ const Products = () => {
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 p-6 overflow-auto bg-gray-50">
+                <div className="flex-1 p-4 md:p-6 overflow-auto">
                     <div className="max-w-7xl mx-auto">
                         {viewMode === "grid" ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
                                 {/* Add New Product Card */}
                                 <div
                                     className="group cursor-pointer"
                                     onClick={() => navigate("/business/add-product")}
                                 >
-                                    <div className="h-full rounded-2xl bg-white border-2 border-dashed border-gray-300 hover:border-blue-400 transition-all duration-300 flex items-center justify-center min-h-[320px] hover:shadow-lg">
+                                    <div className="h-full rounded-xl bg-white border-2 border-dashed border-gray-300 hover:border-blue-500 transition-all duration-300 flex items-center justify-center min-h-[360px] hover:shadow-lg">
                                         <div className="text-center p-8">
-                                            <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                                            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                                                 <Plus className="h-8 w-8 text-blue-600" strokeWidth={2} />
                                             </div>
-                                            <p className="text-gray-800 font-semibold text-lg">Add New Product</p>
+                                            <p className="text-gray-800 font-semibold text-base">Add New Product</p>
                                             <p className="text-gray-500 text-sm mt-1">Showcase your offerings</p>
                                         </div>
                                     </div>
@@ -125,38 +126,41 @@ const Products = () => {
                                 {/* Product Cards */}
                                 {filteredProducts.map((product) => (
                                     <div key={product.id} className="group">
-                                        <div className="h-full rounded-2xl bg-white border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
+                                        <div className="h-full rounded-xl bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
                                             {/* Product Image */}
-                                            <div className="h-48 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center relative overflow-hidden">
-                                                <Package className="h-16 w-16 text-purple-400/50" strokeWidth={1.5} />
+                                            <div className="h-48 relative overflow-hidden bg-gray-100">
+                                                {product.image ? (
+                                                    <img
+                                                        src={product.image}
+                                                        alt={product.name}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+                                                        <Package className="h-16 w-16 text-gray-300" strokeWidth={1.5} />
+                                                    </div>
+                                                )}
                                                 <div className="absolute top-3 right-3">
-                                                    <div className="px-3 py-1 rounded-full bg-purple-100 shadow-sm">
-                                                        <Tag className="h-4 w-4 text-purple-600" />
+                                                    <div className="px-3 py-1 rounded-full bg-white/90 backdrop-blur-sm shadow-md">
+                                                        <span className="text-xs font-semibold text-blue-600">₹{product.price}</span>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             {/* Product Details */}
                                             <div className="p-5">
-                                                <div className="flex items-start justify-between mb-3">
-                                                    <h3 className="font-bold text-lg text-gray-800 line-clamp-1">{product.name}</h3>
-                                                </div>
-
+                                                <h3 className="font-bold text-base text-gray-800 line-clamp-1 mb-2">{product.name}</h3>
                                                 <p className="text-sm text-gray-600 mb-4 line-clamp-2 min-h-[40px]">{product.description}</p>
 
                                                 <div className="space-y-2 mb-4">
                                                     <div className="flex items-center justify-between text-sm">
                                                         <span className="text-gray-500">Category</span>
-                                                        <span className="font-medium text-gray-700">{product.category}</span>
-                                                    </div>
-                                                    <div className="flex items-center justify-between text-sm">
-                                                        <span className="text-gray-500">Price</span>
-                                                        <span className="font-bold text-purple-600 text-lg">₹{product.price}</span>
+                                                        <span className="font-medium text-gray-700 text-xs">{product.category}</span>
                                                     </div>
                                                     {product.stock !== undefined && (
                                                         <div className="flex items-center justify-between text-sm">
                                                             <span className="text-gray-500">Stock</span>
-                                                            <span className={`font-medium ${product.stock > 10 ? 'text-green-600' : 'text-orange-600'}`}>
+                                                            <span className={`font-medium text-xs ${product.stock > 10 ? 'text-green-600' : 'text-orange-600'}`}>
                                                                 {product.stock} units
                                                             </span>
                                                         </div>
@@ -167,18 +171,18 @@ const Products = () => {
                                                 <div className="flex gap-2">
                                                     <Button
                                                         variant="outline"
-                                                        className="flex-1 rounded-xl border-2 border-blue-200 text-blue-600 hover:bg-blue-50 font-medium h-10"
+                                                        className="flex-1 rounded-lg border-2 border-blue-200 text-blue-600 hover:bg-blue-50 font-medium h-9 text-xs"
                                                         onClick={() => navigate(`/business/edit-product/${product.id}`)}
                                                     >
-                                                        <Edit className="h-4 w-4 mr-1" />
+                                                        <Edit className="h-3.5 w-3.5 mr-1" />
                                                         Edit
                                                     </Button>
                                                     <Button
                                                         variant="outline"
-                                                        className="flex-1 rounded-xl border-2 border-red-200 text-red-600 hover:bg-red-50 font-medium h-10"
+                                                        className="flex-1 rounded-lg border-2 border-red-200 text-red-600 hover:bg-red-50 font-medium h-9 text-xs"
                                                         onClick={() => handleDelete(product.id)}
                                                     >
-                                                        <Trash2 className="h-4 w-4 mr-1" />
+                                                        <Trash2 className="h-3.5 w-3.5 mr-1" />
                                                         Delete
                                                     </Button>
                                                 </div>

@@ -8,7 +8,8 @@ import { FaGoogle, FaFacebook, FaLinkedin } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { authenticateAdmin, setAdminSession } from "@/utils/authService";
-import activLogo from "@/logo_ACTIVian-removebg-preview.png";
+
+const activLogo = "/logo_ACTIVian-removebg-preview.png";
 
 export default function EnhancedLoginPage() {
   const [userType, setUserType] = useState<"member" | "admin">("member");
@@ -16,6 +17,7 @@ export default function EnhancedLoginPage() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
 
   const navigate = useNavigate();
 
@@ -55,7 +57,7 @@ export default function EnhancedLoginPage() {
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     if (!identifier || !password) {
       toast.error("Please enter both ID and password");
       setIsLoading(false);
@@ -65,14 +67,14 @@ export default function EnhancedLoginPage() {
     try {
       // For admin login, we use the authenticateAdmin function
       const result = await authenticateAdmin(identifier, password);
-      
+
       if (result.success) {
         // Set admin session flags
         const role = getRoleFromCategory(adminCategory);
         setAdminSession(identifier, role, `${role.split('_')[0].charAt(0).toUpperCase() + role.split('_')[0].slice(1)} Admin ${identifier.split('_')[2]}`);
-        
+
         toast.success("Login successful!");
-        
+
         // Navigate to appropriate dashboard
         const adminPath = role === "block_admin" ? "/admin/block/dashboard" : "/admin/dashboard";
         navigate(adminPath);
@@ -89,7 +91,7 @@ export default function EnhancedLoginPage() {
   const handleMemberLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
       // Try backend login first
       try {
@@ -106,8 +108,8 @@ export default function EnhancedLoginPage() {
           localStorage.setItem('memberId', found.memberId);
           if (found && found.role) localStorage.setItem('role', found.role);
           localStorage.setItem('isLoggedIn', 'true');
-          
-          const isAdmin = ['super_admin','state_admin','district_admin','block_admin'].includes(found.role);
+
+          const isAdmin = ['super_admin', 'state_admin', 'district_admin', 'block_admin'].includes(found.role);
           const adminPath = found.role === 'block_admin' ? '/admin/block/dashboard' : '/admin/dashboard';
           navigate(isAdmin ? adminPath : '/member/dashboard');
           return;
@@ -142,8 +144,8 @@ export default function EnhancedLoginPage() {
       localStorage.setItem('memberId', found.memberId);
       if (found && found.role) localStorage.setItem('role', found.role);
       localStorage.setItem('isLoggedIn', 'true');
-      
-      const isAdminFallback = ['super_admin','state_admin','district_admin','block_admin'].includes(found.role);
+
+      const isAdminFallback = ['super_admin', 'state_admin', 'district_admin', 'block_admin'].includes(found.role);
       const adminPath = found.role === 'block_admin' ? '/admin/block/dashboard' : '/admin/dashboard';
       navigate(isAdminFallback ? adminPath : '/member/dashboard');
     } catch (err) {
@@ -154,7 +156,7 @@ export default function EnhancedLoginPage() {
     }
   };
 
-  
+
   // Unified login: try admin auth first, then member flow
   const handleUnifiedSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -181,7 +183,7 @@ export default function EnhancedLoginPage() {
           toast.success('Login successful!');
           return;
         }
-      } catch {}
+      } catch { }
 
       // Member/backend authentication
       try {
@@ -198,12 +200,12 @@ export default function EnhancedLoginPage() {
           const role = (typeof found.role === 'string' && found.role) || '';
           localStorage.setItem('role', role || 'member');
           localStorage.setItem('isLoggedIn', 'true');
-          const isAdmin = ['super_admin','state_admin','district_admin','block_admin'].includes(role);
+          const isAdmin = ['super_admin', 'state_admin', 'district_admin', 'block_admin'].includes(role);
           const adminPath = role === 'block_admin' ? '/admin/block/dashboard' : '/admin/dashboard';
           navigate(isAdmin ? adminPath : '/member/dashboard');
           return;
         }
-      } catch {}
+      } catch { }
 
       // Local users fallback
       const usersJson = localStorage.getItem('users');
@@ -229,7 +231,7 @@ export default function EnhancedLoginPage() {
       const role = (typeof found.role === 'string' && found.role) || '';
       localStorage.setItem('role', role || 'member');
       localStorage.setItem('isLoggedIn', 'true');
-      const isAdminFallback = ['super_admin','state_admin','district_admin','block_admin'].includes(role);
+      const isAdminFallback = ['super_admin', 'state_admin', 'district_admin', 'block_admin'].includes(role);
       const adminPath = role === 'block_admin' ? '/admin/block/dashboard' : '/admin/dashboard';
       navigate(isAdminFallback ? adminPath : '/member/dashboard');
     } catch (err) {
@@ -273,9 +275,9 @@ export default function EnhancedLoginPage() {
           <h1 className="text-2xl font-bold text-gray-900">ACTIV Portal</h1>
           <p className="text-gray-500">Sign in to your account or create a new one</p>
         </div>
-        
+
         <div className="space-y-4">
-          
+
 
           {userType === "admin" && (
             <div className="space-y-4">
@@ -293,7 +295,7 @@ export default function EnhancedLoginPage() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="bg-blue-50 p-3 rounded-md">
                 <p className="text-sm text-blue-800">
                   <strong>Default Credentials:</strong> {getDefaultCredentials(adminCategory).id} / {getDefaultCredentials(adminCategory).password}
@@ -364,8 +366,8 @@ export default function EnhancedLoginPage() {
                 Forget Password?
               </a>
             </div>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full bg-blue-600 text-white"
               disabled={isLoading}
             >

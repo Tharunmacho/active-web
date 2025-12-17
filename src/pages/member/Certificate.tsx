@@ -132,7 +132,7 @@ const MemberCertificate = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-gradient-to-br from-gray-50 to-white">
       {/* Sidebar for desktop */}
 
       {/* Mobile menu */}
@@ -141,52 +141,69 @@ const MemberCertificate = () => {
       {/* Main content */}
       <div className="flex-1 flex flex-col">
         {/* Mobile header */}
-        <div className="md:hidden flex items-center justify-between p-4 bg-white border-b">
+        <div className="md:hidden flex items-center justify-between p-4 bg-white border-b shadow-sm">
           <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)} className="p-2">
             <Menu className="h-6 w-6" />
           </Button>
-          <h1 className="text-xl font-bold">Certificates</h1>
+          <h1 className="text-xl font-bold text-gray-800">Certificates</h1>
           <div className="w-10" />
         </div>
 
         {/* Main content */}
-        <div className="flex-1 p-3 md:p-4 overflow-auto bg-white">
-          <div className="w-full space-y-4">
+        <div className="flex-1 p-4 md:p-5 overflow-auto">
+          <div className="max-w-6xl mx-auto space-y-5">
             {/* Header */}
-            <div>
-              <h1 className="text-2xl font-bold mb-1">My Certificates</h1>
-              <p className="text-gray-600">View, download, and manage your certificates</p>
+            <div className="mb-4">
+              <h1 className="text-xl md:text-2xl font-bold mb-1 text-gray-800">My Certificates</h1>
+              <p className="text-gray-600 text-sm">View, download, and manage your professional certificates</p>
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-3">
-              <Card className="rounded-xl border-0 shadow-md">
-                <CardContent className="pt-5 pb-4">
+            <div className="grid grid-cols-3 gap-4 md:gap-5">
+              <Card className="rounded-2xl border-0 shadow-lg bg-white hover:shadow-xl transition-shadow">
+                <CardContent className="p-4 md:p-6">
                   <div className="text-center">
-                    <p className="text-3xl font-bold text-green-600">
+                    <div className="w-14 h-14 md:w-16 md:h-16 mx-auto mb-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl flex items-center justify-center">
+                      <svg className="w-8 h-8 md:w-10 md:h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <p className="text-2xl md:text-4xl font-bold text-green-600 mb-1">
                       {certificates.filter((c) => c.status === "valid").length}
                     </p>
-                    <p className="text-xs text-gray-600 mt-1">Valid Certificates</p>
+                    <p className="text-xs md:text-sm text-gray-600 font-medium">Valid</p>
                   </div>
                 </CardContent>
               </Card>
-              <Card className="rounded-xl border-0 shadow-md">
-                <CardContent className="pt-5 pb-4">
+
+              <Card className="rounded-2xl border-0 shadow-lg bg-white hover:shadow-xl transition-shadow">
+                <CardContent className="p-4 md:p-6">
                   <div className="text-center">
-                    <p className="text-3xl font-bold text-red-600">
+                    <div className="w-14 h-14 md:w-16 md:h-16 mx-auto mb-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl flex items-center justify-center">
+                      <svg className="w-8 h-8 md:w-10 md:h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <p className="text-2xl md:text-4xl font-bold text-red-600 mb-1">
                       {certificates.filter((c) => c.status === "expired").length}
                     </p>
-                    <p className="text-xs text-gray-600 mt-1">Expired Certificates</p>
+                    <p className="text-xs md:text-sm text-gray-600 font-medium">Expired</p>
                   </div>
                 </CardContent>
               </Card>
-              <Card className="rounded-xl border-0 shadow-md">
-                <CardContent className="pt-5 pb-4">
+
+              <Card className="rounded-2xl border-0 shadow-lg bg-white hover:shadow-xl transition-shadow">
+                <CardContent className="p-4 md:p-6">
                   <div className="text-center">
-                    <p className="text-3xl font-bold text-yellow-600">
+                    <div className="w-14 h-14 md:w-16 md:h-16 mx-auto mb-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl flex items-center justify-center">
+                      <svg className="w-8 h-8 md:w-10 md:h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <p className="text-2xl md:text-4xl font-bold text-orange-600 mb-1">
                       {certificates.filter((c) => c.status === "pending").length}
                     </p>
-                    <p className="text-xs text-gray-600 mt-1">Pending Certificates</p>
+                    <p className="text-xs md:text-sm text-gray-600 font-medium">Pending</p>
                   </div>
                 </CardContent>
               </Card>
@@ -196,27 +213,30 @@ const MemberCertificate = () => {
             {certificates.length > 0 ? (
               <div className="space-y-3">
                 {certificates.map((cert) => (
-                  <Card key={cert.id} className="overflow-hidden hover:shadow-lg transition-shadow rounded-xl border-0 shadow-md">
-                    <CardContent className="p-5">
+                  <Card key={cert.id} className="overflow-hidden hover:shadow-xl transition-shadow rounded-xl border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
+                    <CardContent className="p-4 md:p-5">
                       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                         <div className="flex-1">
-                          <div className="flex items-start gap-3">
-                            <div className="bg-blue-100 p-2 rounded-lg">
-                              <FileText className="w-5 h-5 text-blue-600" />
+                          <div className="flex items-start gap-4">
+                            <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100">
+                              <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
                             </div>
                             <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-semibold text-base">{cert.title}</h3>
-                                <Badge className={getStatusColor(cert.status)}>
+                              <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                                <h3 className="font-bold text-sm md:text-base text-gray-900">{cert.title}</h3>
+                                <Badge className={`${getStatusColor(cert.status)} font-semibold px-2 py-0.5 text-xs`}>
                                   {cert.status.charAt(0).toUpperCase() + cert.status.slice(1)}
                                 </Badge>
                               </div>
-                              <p className="text-xs text-gray-600 mb-1">
-                                Certificate #: <span className="font-mono">{cert.certificateNumber}</span>
+                              <p className="text-xs text-gray-700 mb-1.5 font-medium">
+                                Certificate #: <span className="font-mono text-blue-600">{cert.certificateNumber}</span>
                               </p>
-                              <p className="text-xs text-gray-500">
-                                Issued: {new Date(cert.issueDate).toLocaleDateString()} • Expires:{" "}
-                                {new Date(cert.expiryDate).toLocaleDateString()}
+                              <p className="text-xs text-gray-600">
+                                <span className="font-semibold">📅 Issued:</span> {new Date(cert.issueDate).toLocaleDateString()}
+                                <span className="mx-2">•</span>
+                                <span className="font-semibold">⏰ Expires:</span> {new Date(cert.expiryDate).toLocaleDateString()}
                               </p>
                             </div>
                           </div>
@@ -228,18 +248,17 @@ const MemberCertificate = () => {
                             size="sm"
                             variant="outline"
                             onClick={() => handleDownload(cert)}
-                            className="flex-1 md:flex-none"
+                            className="flex-1 md:flex-none shadow-sm hover:shadow-md transition-shadow text-xs font-medium px-3 py-2"
                           >
-                            <Download className="w-4 h-4 mr-2" />
+                            <Download className="w-3.5 h-3.5 mr-1.5" />
                             Download
                           </Button>
                           <Button
                             size="sm"
-                            variant="outline"
+                            className="flex-1 md:flex-none bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:shadow-lg text-xs font-medium px-3 py-2"
                             onClick={() => handlePrint(cert)}
-                            className="flex-1 md:flex-none"
                           >
-                            <Printer className="w-4 h-4 mr-2" />
+                            <Printer className="w-3.5 h-3.5 mr-1.5" />
                             Print
                           </Button>
                         </div>
@@ -249,11 +268,15 @@ const MemberCertificate = () => {
                 ))}
               </div>
             ) : (
-              <Card>
+              <Card className="rounded-xl border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
                 <CardContent className="pt-6 text-center py-12">
-                  <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4 opacity-50" />
-                  <p className="text-lg font-medium mb-2">No certificates yet</p>
-                  <p className="text-muted-foreground">
+                  <div className="w-20 h-20 mx-auto mb-5 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl flex items-center justify-center">
+                    <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <p className="text-lg font-bold mb-2 text-gray-800">No certificates yet</p>
+                  <p className="text-gray-600 text-sm">
                     Complete courses and programs to earn certificates
                   </p>
                 </CardContent>

@@ -40,6 +40,7 @@ const MemberEvents = () => {
         attendees: 45,
         capacity: 100,
         registered: false,
+        image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=400&fit=crop",
       },
       {
         id: "2",
@@ -53,6 +54,7 @@ const MemberEvents = () => {
         attendees: 32,
         capacity: 50,
         registered: false,
+        image: "https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=800&h=400&fit=crop",
       },
       {
         id: "3",
@@ -66,6 +68,7 @@ const MemberEvents = () => {
         attendees: 78,
         capacity: 120,
         registered: false,
+        image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=400&fit=crop",
       },
       {
         id: "4",
@@ -79,6 +82,7 @@ const MemberEvents = () => {
         attendees: 56,
         capacity: 75,
         registered: false,
+        image: "https://images.unsplash.com/photo-1551650975-87deedd944c3?w=800&h=400&fit=crop",
       },
       {
         id: "5",
@@ -92,6 +96,7 @@ const MemberEvents = () => {
         attendees: 89,
         capacity: 100,
         registered: false,
+        image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop",
       },
       {
         id: "6",
@@ -105,6 +110,7 @@ const MemberEvents = () => {
         attendees: 120,
         capacity: 150,
         registered: false,
+        image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=400&fit=crop",
       },
     ];
 
@@ -185,7 +191,7 @@ const MemberEvents = () => {
   const categories = ["all", "Workshop", "Course", "Seminar", "Webinar", "registered"];
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-gradient-to-br from-gray-50 to-white">
       {/* Sidebar for desktop */}
 
       {/* Mobile menu */}
@@ -194,21 +200,21 @@ const MemberEvents = () => {
       {/* Main content */}
       <div className="flex-1 flex flex-col">
         {/* Mobile header */}
-        <div className="md:hidden flex items-center justify-between p-4 bg-white border-b">
+        <div className="md:hidden flex items-center justify-between p-4 bg-white border-b shadow-sm">
           <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)} className="p-2">
             <Menu className="h-6 w-6" />
           </Button>
-          <h1 className="text-xl font-bold">Events</h1>
+          <h1 className="text-xl font-bold text-gray-800">Events</h1>
           <div className="w-10" />
         </div>
 
         {/* Main content */}
-        <div className="flex-1 p-3 md:p-4 overflow-auto bg-white">
-          <div className="w-full space-y-4">
+        <div className="flex-1 p-4 md:p-5 overflow-auto">
+          <div className="max-w-7xl mx-auto space-y-5">
             {/* Header */}
-            <div>
-              <h1 className="text-2xl font-bold mb-1">Upcoming Events</h1>
-              <p className="text-gray-600">
+            <div className="mb-4">
+              <h1 className="text-xl md:text-2xl font-bold mb-1 text-gray-800">Upcoming Events</h1>
+              <p className="text-gray-600 text-sm">
                 Discover and register for events, workshops, and seminars
               </p>
             </div>
@@ -221,7 +227,10 @@ const MemberEvents = () => {
                   variant={filter === category ? "default" : "outline"}
                   onClick={() => setFilter(category)}
                   size="sm"
-                  className={filter === category ? "bg-blue-600 text-white" : ""}
+                  className={`font-medium transition-all ${filter === category
+                    ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg"
+                    : "hover:shadow-md"
+                    }`}
                 >
                   {category === "registered"
                     ? "My Events"
@@ -234,32 +243,40 @@ const MemberEvents = () => {
             {filteredEvents.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredEvents.map((event) => (
-                  <Card key={event.id} className="overflow-hidden hover:shadow-lg transition-all rounded-2xl border-0 shadow-md flex flex-col">
-                    <div className="h-32 bg-gradient-to-r from-blue-500 to-purple-600 relative flex items-end p-4">
-                      <Badge className={`${getCategoryColor(event.category)} font-medium`}>{event.category}</Badge>
+                  <Card key={event.id} className="overflow-hidden hover:shadow-xl transition-shadow rounded-xl border-0 shadow-lg flex flex-col bg-gradient-to-br from-white to-gray-50">
+                    <div className="h-40 relative overflow-hidden">
+                      <img
+                        src={event.image}
+                        alt={event.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                      <div className="absolute bottom-4 left-4">
+                        <Badge className={`${getCategoryColor(event.category)} font-semibold px-3 py-1 shadow-md`}>{event.category}</Badge>
+                      </div>
                     </div>
 
-                    <CardHeader className="flex-1 pb-3">
-                      <CardTitle className="text-base">{event.title}</CardTitle>
-                      <CardDescription className="line-clamp-2 text-sm">
+                    <CardHeader className="flex-1 pb-3 px-4 pt-4">
+                      <CardTitle className="text-sm md:text-base font-bold text-gray-900">{event.title}</CardTitle>
+                      <CardDescription className="line-clamp-2 text-xs md:text-sm mt-1">
                         {event.description}
                       </CardDescription>
                     </CardHeader>
 
-                    <CardContent className="space-y-3 pt-0">
+                    <CardContent className="space-y-3 pt-0 px-4 pb-4">
                       {/* Event Details */}
-                      <div className="space-y-2 text-xs">
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Calendar className="w-4 h-4" />
-                          <span>{new Date(event.date).toLocaleDateString()} at {event.time}</span>
+                      <div className="space-y-1.5 text-xs">
+                        <div className="flex items-center gap-2 text-gray-700">
+                          <Calendar className="w-3.5 h-3.5 flex-shrink-0 text-blue-600" />
+                          <span className="font-medium">{new Date(event.date).toLocaleDateString()} at {event.time}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <MapPin className="w-4 h-4" />
-                          <span>{event.location}</span>
+                        <div className="flex items-center gap-2 text-gray-700">
+                          <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-green-600" />
+                          <span className="font-medium">{event.location}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Users className="w-4 h-4" />
-                          <span>
+                        <div className="flex items-center gap-2 text-gray-700">
+                          <Users className="w-3.5 h-3.5 flex-shrink-0 text-purple-600" />
+                          <span className="font-medium">
                             {event.attendees} / {event.capacity} attendees
                           </span>
                         </div>
@@ -267,15 +284,15 @@ const MemberEvents = () => {
 
                       {/* Capacity Bar */}
                       <div className="space-y-1">
-                        <div className="w-full bg-gray-200 rounded-full h-1.5">
+                        <div className="w-full bg-gray-200 rounded-full h-2 shadow-inner">
                           <div
-                            className="h-1.5 rounded-full bg-blue-600"
+                            className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 shadow-sm transition-all"
                             style={{
                               width: `${(event.attendees / event.capacity) * 100}%`,
                             }}
                           />
                         </div>
-                        <p className="text-xs text-gray-500 text-right">
+                        <p className="text-xs text-gray-600 text-right font-medium">
                           {event.capacity - event.attendees} spots left
                         </p>
                       </div>
@@ -283,26 +300,28 @@ const MemberEvents = () => {
                       {/* Register Button */}
                       <Button
                         onClick={() => handleRegister(event.id)}
-                        className={`w-full text-sm ${event.registered
-                          ? "bg-red-600 hover:bg-red-700 text-white"
-                          : "bg-blue-600 hover:bg-blue-700 text-white"
+                        className={`w-full text-xs font-semibold shadow-md hover:shadow-lg transition-all ${event.registered
+                          ? "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white"
+                          : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
                           }`}
                         disabled={!event.registered && event.attendees >= event.capacity}
                       >
-                        {event.registered ? "Unregister" : "Register"}
+                        {event.registered ? "✓ Registered - Click to Unregister" : "Register Now"}
                       </Button>
                     </CardContent>
                   </Card>
                 ))}
               </div>
             ) : (
-              <Card>
+              <Card className="rounded-xl border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
                 <CardContent className="pt-6 text-center py-12">
-                  <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4 opacity-50" />
-                  <p className="text-lg font-medium mb-2">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-gray-300 to-gray-400 rounded-full flex items-center justify-center">
+                    <Calendar className="w-8 h-8 text-white" />
+                  </div>
+                  <p className="text-lg font-bold mb-2 text-gray-800">
                     {filter === "registered" ? "No registrations yet" : "No events found"}
                   </p>
-                  <p className="text-muted-foreground">
+                  <p className="text-gray-600 text-sm">
                     {filter === "registered"
                       ? "Register for events to see them here"
                       : "Check back soon for more events"}

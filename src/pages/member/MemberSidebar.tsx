@@ -55,10 +55,10 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                 </div>
 
                 <div className="flex items-center gap-3 mt-4">
-                    <Avatar className="w-12 h-12">
-                        <AvatarImage src="/placeholder.svg" />
-                        <AvatarFallback className="bg-primary text-primary-foreground">
-                            {userName ? userName.split(" ").map(n => n[0]).join("") : "SD"}
+                    <Avatar className="w-12 h-12 ring-2 ring-blue-100">
+                        <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=96&h=96&fit=crop&crop=face" className="object-cover" />
+                        <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold">
+                            {userName ? userName.split(" ").map(n => n[0]).join("").toUpperCase() : "SD"}
                         </AvatarFallback>
                     </Avatar>
                     <div>
@@ -76,8 +76,8 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                             key={item.to}
                             to={item.to}
                             className={`flex items-center gap-3 px-4 py-3 rounded-lg mb-1 transition-all ${active
-                                    ? 'bg-blue-600 text-white shadow-md'
-                                    : 'text-gray-700 hover:bg-gray-100'
+                                ? 'bg-blue-600 text-white shadow-md'
+                                : 'text-gray-700 hover:bg-gray-100'
                                 }`}
                             onClick={onClose}
                         >
