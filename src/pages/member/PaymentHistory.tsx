@@ -7,20 +7,14 @@ export default function PaymentHistory() {
 
   useEffect(() => {
     async function load() {
-      const memberId = localStorage.getItem('memberId');
       let apps: any[] = [];
-      if (memberId) {
-        try {
-          const res = await fetch(`http://localhost:4000/api/users/${encodeURIComponent(memberId)}/applications`);
-          if (res.ok) {
-            const data = await res.json();
-            apps = Array.isArray(data.applications) ? data.applications : [];
-          }
-        } catch (_) {}
+      // Get applications from local storage
+      try { 
+        apps = JSON.parse(localStorage.getItem('applications') || '[]'); 
+      } catch (_) { 
+        apps = []; 
       }
-      if (!apps.length) {
-        try { apps = JSON.parse(localStorage.getItem('applications') || '[]'); } catch (_) { apps = []; }
-      }
+      
       const list = apps
         .filter(a => a.payment && a.payment.status)
         .map(a => ({ id: a.id, ...a.payment }))

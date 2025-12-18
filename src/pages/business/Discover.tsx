@@ -51,7 +51,7 @@ const Discover = () => {
     };
 
     const filteredCompanies = companies.filter(company =>
-        company.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (company.companyName && company.companyName.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (company.businessCategory && company.businessCategory.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (company.city && company.city.toLowerCase().includes(searchQuery.toLowerCase()))
     );
@@ -70,60 +70,89 @@ const Discover = () => {
     }
 
     return (
-        <div className="min-h-screen flex bg-gradient-to-br from-gray-50 to-white">
+        <div className="min-h-screen flex bg-gradient-to-br from-blue-50 to-purple-50">
             <BusinessSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
             <div className="flex-1 flex flex-col">
                 {/* Header */}
-                <div className="p-5 md:p-6 bg-white border-b border-gray-200 shadow-sm">
+                <div className="p-5 md:p-6 bg-white border-b border-gray-200">
                     <div>
-                        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">Discover Businesses</h1>
-                        <p className="text-gray-600 text-sm md:text-base">Connect with other businesses in your network</p>
+                        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">Discover</h1>
+                        <p className="text-gray-600 text-sm md:text-base">Find companies and products</p>
                     </div>
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 p-4 md:p-6 overflow-auto">
-                    <div className="max-w-7xl mx-auto space-y-5">
-                        {/* Stats Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
-                            <div className="p-5 md:p-6 rounded-xl bg-white border-0 shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-blue-500">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <span className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">{companies.length}</span>
-                                </div>
-                                <p className="text-gray-600 text-sm font-medium">Total Companies</p>
-                            </div>
-
-                            <div className="p-5 md:p-6 rounded-xl bg-white border-0 shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-purple-500">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <span className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent">{uniqueCategories.size}</span>
-                                </div>
-                                <p className="text-gray-600 text-sm font-medium">Categories</p>
-                            </div>
-
-                            <div className="p-5 md:p-6 rounded-xl bg-white border-0 shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-blue-500">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <span className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{companies.filter(c => c.isActive).length}</span>
-                                </div>
-                                <p className="text-gray-600 text-sm font-medium">Active</p>
-                            </div>
-                        </div>
-
+                    <div className="max-w-4xl mx-auto">
                         {/* Search Bar */}
-                        <div className="relative">
-                            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                            <Input
-                                placeholder="Search companies by name, category, or location..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-12 h-12 rounded-xl border-2 border-gray-200 focus:border-blue-500"
-                            />
+                        <div className="mb-8">
+                            <div className="relative">
+                                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                <Input
+                                    type="text"
+                                    placeholder="Search companies, products..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="pl-12 pr-4 py-6 text-base rounded-xl border-gray-200 bg-white shadow-sm focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
                         </div>
 
-                        {/* Company Cards Grid */}
-                        {filteredCompanies.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
-                                {filteredCompanies.map((company, index) => {
+                        {/* Empty State or Results */}
+                        {companies.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-20 px-4">
+                                <div className="w-32 h-32 mb-6 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                                    <Search className="w-16 h-16 text-gray-400" />
+                                </div>
+                                <h3 className="text-xl md:text-2xl font-semibold text-gray-800 mb-2 text-center">
+                                    Search for companies and products
+                                </h3>
+                                <p className="text-gray-500 text-center max-w-md">
+                                    Start typing to discover businesses
+                                </p>
+                            </div>
+                        ) : filteredCompanies.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-20 px-4">
+                                <div className="w-32 h-32 mb-6 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                                    <Search className="w-16 h-16 text-gray-400" />
+                                </div>
+                                <h3 className="text-xl md:text-2xl font-semibold text-gray-800 mb-2 text-center">
+                                    No results found
+                                </h3>
+                                <p className="text-gray-500 text-center max-w-md">
+                                    Try adjusting your search terms
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-5">
+                                {/* Stats Cards - Only show when searching */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 mb-6">
+                                    <div className="p-5 md:p-6 rounded-xl bg-white border-0 shadow-md hover:shadow-lg transition-shadow">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <span className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">{companies.length}</span>
+                                        </div>
+                                        <p className="text-gray-600 text-sm font-medium">Total Companies</p>
+                                    </div>
+
+                                    <div className="p-5 md:p-6 rounded-xl bg-white border-0 shadow-md hover:shadow-lg transition-shadow">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <span className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent">{uniqueCategories.size}</span>
+                                        </div>
+                                        <p className="text-gray-600 text-sm font-medium">Categories</p>
+                                    </div>
+
+                                    <div className="p-5 md:p-6 rounded-xl bg-white border-0 shadow-md hover:shadow-lg transition-shadow">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <span className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-green-600 to-green-700 bg-clip-text text-transparent">{companies.filter(c => c.isActive).length}</span>
+                                        </div>
+                                        <p className="text-gray-600 text-sm font-medium">Active</p>
+                                    </div>
+                                </div>
+
+                                {/* Company Cards Grid */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+                                    {filteredCompanies.map((company, index) => {
                                     const Icon = getCategoryIcon(company.businessCategory);
                                     const colors = getCategoryColor(index);
                                     return (
@@ -172,14 +201,7 @@ const Discover = () => {
                                         </div>
                                     );
                                 })}
-                            </div>
-                        ) : (
-                            <div className="text-center py-12">
-                                <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                                <p className="text-gray-500 text-lg">No companies found</p>
-                                <p className="text-gray-400 text-sm mt-2">
-                                    {searchQuery ? 'Try adjusting your search' : 'Create your first company to get started'}
-                                </p>
+                                </div>
                             </div>
                         )}
                     </div>

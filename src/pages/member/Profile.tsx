@@ -450,26 +450,83 @@ export default function Profile() {
       }
     } else if (currentStep === 2) {
       if (data.doingBusiness === "no") {
-        // Save business form with "no" status before submission
-        try {
-          const token = localStorage.getItem("token");
-          if (token) {
-            await fetch("http://localhost:4000/api/business-form", {
-              method: "POST",
-              headers: {
-                "Authorization": `Bearer ${token}`,
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({ doingBusiness: "no" })
-            });
-          }
-        } catch (error) {
-          console.error("Error saving business form:", error);
+        // Check if declaration is accepted
+        if (!data.declarationAccepted) {
+          toast.error("Please accept the declaration to continue");
+          return;
         }
         
-        // Navigate to Application Submitted page for aspirants
-        toast.success("Registered as Aspirant!");
-        navigate("/member/application-submitted?id=APP-" + new Date().getFullYear() + "-" + Math.random().toString(36).substr(2, 5).toUpperCase());
+        // Save business form with "no" status (Aspirant)
+        const token = localStorage.getItem("token");
+        if (!token) {
+          toast.error("Authentication required");
+          return;
+        }
+        
+        try {
+          console.log("💾 Saving business form for ASPIRANT (doingBusiness: no)");
+          
+          const businessResponse = await fetch("http://localhost:4000/api/business-form", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ doingBusiness: "no" })
+          });
+          
+          console.log("📡 Business form save response status:", businessResponse.status);
+          const businessResult = await businessResponse.json();
+          console.log("📥 Business form save result:", businessResult);
+          
+          if (!businessResponse.ok) {
+            console.error("❌ Failed to save business form:", businessResult);
+            toast.error("Failed to save business information");
+            return;
+          }
+          
+          console.log("✅ Business form saved successfully for aspirant!");
+          
+          // Also save declaration form for aspirant
+          console.log("💾 Saving declaration form for ASPIRANT");
+          
+          const declarationResponse = await fetch("http://localhost:4000/api/declaration-form", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              remarks: "Aspirant application",
+              declarationAccepted: true
+            })
+          });
+          
+          console.log("📡 Declaration form save response status:", declarationResponse.status);
+          const declarationResult = await declarationResponse.json();
+          console.log("📥 Declaration form save result:", declarationResult);
+          
+          if (!declarationResponse.ok) {
+            console.error("❌ Failed to save declaration:", declarationResult);
+            toast.error("Failed to submit declaration");
+            return;
+          }
+          
+          console.log("✅ Declaration saved successfully for aspirant!");
+          
+        } catch (error) {
+          console.error("❌ Error saving forms:", error);
+          toast.error("Failed to save information");
+          return;
+        }
+        
+        toast.success("Application submitted successfully!");
+        saveCurrentStepData(data);
+        
+        // Generate application ID and redirect to application submitted screen
+        const applicationId = `APP-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+        localStorage.setItem('applicationId', applicationId);
+        navigate('/member/application-submitted');
         return;
       } else if (data.doingBusiness === "yes") {
         if (!data.organization || !data.constitution || !data.businessTypes?.length) {
@@ -614,7 +671,11 @@ export default function Profile() {
     }
 
     toast.success("Application submitted successfully!");
-    navigate("/member/application-submitted?id=APP-" + new Date().getFullYear() + "-" + Math.random().toString(36).substr(2, 5).toUpperCase());
+    
+    // Generate application ID and store it, then redirect to application submitted screen
+    const applicationId = `APP-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    localStorage.setItem('applicationId', applicationId);
+    navigate('/member/application-submitted');
   };
 
   const toggleBusinessType = (type: string) => {
@@ -1133,21 +1194,50 @@ export default function Profile() {
                     )}
 
                     {watch("doingBusiness") === "no" && (
-                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div className="flex items-start gap-3">
-                          <div className="text-blue-600 mt-1">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                            </svg>
-                          </div>
-                          <div>
-                            <h4 className="font-semibold text-blue-900 mb-1">Registering as Aspirant</h4>
-                            <p className="text-sm text-blue-800">
-                              You are registering as an Aspirant (Student / Non-business member). Steps 3 and 4 are not required.
-                            </p>
+                      <>
+                        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
+                          <div className="flex items-start gap-3">
+                            <div className="text-blue-600 mt-1">
+                              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                              </svg>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-blue-900 mb-1">Registering as Aspirant</h4>
+                              <p className="text-sm text-blue-800">
+                                You are registering as an Aspirant (Student / Non-business member). Financial information is not required.
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
+
+                        {/* Declaration for Aspirants */}
+                        <div className="p-6 bg-amber-50 border-2 border-amber-200 rounded-xl">
+                          <div className="flex items-start gap-3 mb-4">
+                            <div className="text-amber-600 mt-1">
+                              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-bold text-amber-900 mb-2">Declaration</h4>
+                              <p className="text-sm text-amber-800 mb-3">
+                                This application is under the Verification and Screening Process. We have every right to ACCEPT or REJECT this application according to our membership policy.
+                              </p>
+                              <div className="flex items-start gap-3 p-3 bg-white rounded-lg">
+                                <input
+                                  type="checkbox"
+                                  {...register("declarationAccepted")}
+                                  className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                />
+                                <label className="text-sm text-gray-700">
+                                  I hereby declare that all the information provided above is true and correct to the best of my knowledge. I understand that providing false information may result in rejection of my application.
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </>
                     )}
 
                     <div className="border-t pt-6 flex gap-4">
@@ -1160,10 +1250,10 @@ export default function Profile() {
                       </Button>
                       <Button
                         type="button"
-                        onClick={watch("doingBusiness") === "no" ? handleFinalSubmit : handleNext}
+                        onClick={handleNext}
                         className="flex-1 bg-blue-600 hover:bg-blue-700"
                       >
-                        {watch("doingBusiness") === "no" ? "✓ Submit" : "Next →"}
+                        {watch("doingBusiness") === "no" ? "Next →" : "Next →"}
                       </Button>
                     </div>
                   </div>

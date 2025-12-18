@@ -50,23 +50,17 @@ export const register = async (req, res, next) => {
       });
     }
 
-    // Create user in "web auth" collection with all required fields
+    // Create user in "web auth" collection - ONLY email and password for authentication
     const user = await WebUser.create({
-      fullName,
       email,
-      phoneNumber,
-      password,
-      state,
-      district,
-      block,
-      city
+      password
     });
 
-    // Create user profile in "web users" collection (all other details)
+    // Create user profile in "web users" collection - ALL other user details
     await WebUserProfile.create({
       userId: user._id,
-      fullName,
       email,
+      fullName,
       phoneNumber,
       state,
       district,
@@ -152,6 +146,16 @@ export const login = async (req, res, next) => {
       });
     }
 
+    // Get user profile details from "web users" collection
+    const userProfile = await WebUserProfile.findOne({ userId: user._id });
+
+    if (!userProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'User profile not found'
+      });
+    }
+
     // Generate token
     const token = generateToken(user._id);
 
@@ -161,10 +165,10 @@ export const login = async (req, res, next) => {
       data: {
         user: {
           id: user._id,
-          fullName: user.fullName,
-          email: user.email,
-          phoneNumber: user.phoneNumber,
-          role: user.role
+          fullName: userProfile.fullName,
+          email: userProfile.email,
+          phoneNumber: userProfile.phoneNumber,
+          role: userProfile.role
         },
         token
       }
@@ -179,11 +183,19 @@ export const login = async (req, res, next) => {
 // @access  Private
 export const getMe = async (req, res, next) => {
   try {
-    const user = await WebUser.findById(req.user.id);
+    // Get user profile from "web users" collection
+    const userProfile = await WebUserProfile.findOne({ userId: req.user.id });
+
+    if (!userProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'User profile not found'
+      });
+    }
 
     res.status(200).json({
       success: true,
-      data: user
+      data: userProfile
     });
   } catch (error) {
     next(error);

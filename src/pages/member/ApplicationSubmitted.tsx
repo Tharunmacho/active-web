@@ -9,9 +9,10 @@ function useQuery() {
 }
 
 export default function ApplicationSubmitted() {
-  const q = useQuery();
-  const id = q.get('id');
   const navigate = useNavigate();
+  
+  // Get application ID from localStorage (set after profile completion)
+  const id = localStorage.getItem('applicationId');
 
   if (!id) {
     return (

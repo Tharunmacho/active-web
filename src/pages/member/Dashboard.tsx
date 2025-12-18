@@ -33,29 +33,15 @@ const MemberDashboard = () => {
 
   // Load latest application from backend (fallback to localStorage)
   useEffect(() => {
-    const userId = localStorage.getItem("memberId");
     async function loadApplications() {
       let apps: any[] = [];
-      // backend first
-      if (userId) {
-        try {
-          const res = await fetch(`http://localhost:4000/api/users/${encodeURIComponent(userId)}/applications`);
-          if (res.ok) {
-            const data = await res.json();
-            apps = Array.isArray(data.applications) ? data.applications : [];
-          }
-        } catch (_) {
-          // ignore
-        }
+      // Get applications from local storage
+      try {
+        apps = JSON.parse(localStorage.getItem('applications') || '[]');
+      } catch (_) {
+        apps = [];
       }
-      // fallback to local
-      if (!apps.length) {
-        try {
-          apps = JSON.parse(localStorage.getItem('applications') || '[]');
-        } catch (_) {
-          apps = [];
-        }
-      }
+      
       if (apps.length) {
         const sorted = [...apps].sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
         setLatestApplication(sorted[0]);
@@ -66,74 +52,126 @@ const MemberDashboard = () => {
     loadApplications();
   }, []);
 
-  const computeProfileCompletion = (): number => {
-    // Combine the base profile and the additional user details (saved separately)
-    const rawMain = localStorage.getItem("userProfile") || localStorage.getItem("registrationData");
-    const rawExtra = localStorage.getItem("userProfileDetails");
+  const [completionPercentage, setCompletionPercentage] = useState(0);
+  const [formsCompleted, setFormsCompleted] = useState<string[]>([]);
+  const [isFullyCompleted, setIsFullyCompleted] = useState(false);
+  const [totalFormsRequired, setTotalFormsRequired] = useState(4);
+  const [memberType, setMemberType] = useState<'business' | 'aspirant'>('business');
 
-    if (!rawMain && !rawExtra) return 0;
+  // Load profile completion from backend
+  useEffect(() => {
+    const loadProfileCompletion = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
 
-    let main = {} as Record<string, any>;
-    let extra = {} as Record<string, any>;
+      try {
+        const completed: string[] = [];
+        let isDoingBusiness = true;
+        let totalForms = 4; // Default: Personal, Business, Financial, Declaration
 
-    try {
-      if (rawMain) main = JSON.parse(rawMain);
-    } catch (e) {
-      main = {} as any;
-    }
+        // Check Personal Form
+        const personalRes = await fetch("http://localhost:4000/api/personal-form", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (personalRes.ok) {
+          const data = await personalRes.json();
+          if (data.data && data.data.isLocked) {
+            completed.push("Personal Details");
+          }
+        }
 
-    try {
-      if (rawExtra) extra = JSON.parse(rawExtra);
-    } catch (e) {
-      extra = {} as any;
-    }
+        // Check Business Form
+        const businessRes = await fetch("http://localhost:4000/api/business-form", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (businessRes.ok) {
+          const data = await businessRes.json();
+          console.log("📊 Business Form Data:", data.data);
+          if (data.data) {
+            console.log("🔍 doingBusiness value:", data.data.doingBusiness);
+            
+            // Check if user said "no" to doing business (aspirant)
+            if (data.data.doingBusiness === "no") {
+              console.log("✅ User is an ASPIRANT - totalForms = 3");
+              isDoingBusiness = false;
+              totalForms = 3; // Personal, Business (No), Declaration only
+            } else {
+              console.log("💼 User is DOING BUSINESS - totalForms = 4");
+            }
+            
+            // Count as complete if doingBusiness field is set
+            if (data.data.doingBusiness) {
+              completed.push("Business Information");
+              console.log("✓ Business Information marked as complete");
+            }
+          }
+        } else {
+          console.log("⚠️ Business form not found or error:", businessRes.status);
+        }
 
-    // Fields to consider for completion percentage
-    const fields = [
-      main.firstName,
-      main.lastName,
-      main.email,
-      main.phone,
-      main.dateOfBirth,
-      main.gender,
-      main.state,
-      main.district,
-      main.block,
-      main.address,
+        // Check Financial Form (only if doing business)
+        if (isDoingBusiness) {
+          const financialRes = await fetch("http://localhost:4000/api/financial-form", {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          if (financialRes.ok) {
+            const data = await financialRes.json();
+            if (data.data && data.data.pan) {
+              completed.push("Financial Details");
+            }
+          }
+        }
 
-      // extra details
-      extra.aadhaar,
-      extra.street,
-      extra.education,
-      extra.religion,
-      extra.socialCategory,
+        // Check Declaration Form
+        const declarationRes = await fetch("http://localhost:4000/api/declaration-form", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (declarationRes.ok) {
+          const data = await declarationRes.json();
+          if (data.data && data.data.declarationAccepted) {
+            completed.push("Declaration");
+          }
+        }
 
-      extra.organization,
-      extra.constitution,
-      (extra.businessType || []).length ? 'has' : '',
-      extra.businessYear,
-      extra.employees,
+        const percentage = Math.round((completed.length / totalForms) * 100);
+        
+        console.log("📈 Dashboard Calculation:");
+        console.log("  - Completed forms:", completed);
+        console.log("  - Total forms required:", totalForms);
+        console.log("  - Member type:", isDoingBusiness ? 'business' : 'aspirant');
+        console.log("  - Percentage:", percentage + "%");
+        
+        setCompletionPercentage(percentage);
+        setFormsCompleted(completed);
+        setTotalFormsRequired(totalForms);
+        setMemberType(isDoingBusiness ? 'business' : 'aspirant');
+        
+        const fullyCompleted = percentage === 100;
+        setIsFullyCompleted(fullyCompleted);
 
-      extra.pan,
-      extra.gst,
-      extra.udyam,
-      extra.filedITR,
-      extra.itrYears,
-      extra.turnover,
-      extra.turnover1,
-      extra.turnover2,
-      extra.turnover3,
+        // If 100% and not yet submitted, create submission record
+        if (fullyCompleted && !localStorage.getItem("applicationSubmission")) {
+          const userName = localStorage.getItem("userName") || "Member";
+          const applicationId = `APP-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+          
+          const submissionData = {
+            applicationId,
+            userName,
+            submittedAt: new Date().toISOString(),
+            status: "under_review",
+            formsCompleted: completed,
+            memberType: isDoingBusiness ? "business" : "aspirant"
+          };
+          
+          localStorage.setItem("applicationSubmission", JSON.stringify(submissionData));
+        }
+      } catch (error) {
+        console.error("Error loading profile completion:", error);
+      }
+    };
 
-      extra.sisterConcerns,
-      extra.companyNames,
-      extra.declaration,
-    ];
-
-    const filled = fields.filter((f: any) => !!f && `${f}`.trim() !== "").length;
-    return Math.round((filled / fields.length) * 100) || 0;
-  };
-
-  const completionPercentage = computeProfileCompletion();
+    loadProfileCompletion();
+  }, []);
 
   let business: any = {};
   try {
@@ -191,26 +229,75 @@ const MemberDashboard = () => {
             </div>
 
             {/* Complete Your Profile Card - Professional Blue */}
-            <Card className="shadow-lg border-0 w-full mb-6 bg-blue-600 text-white">
+            <Card className={`shadow-lg border-0 w-full mb-6 ${isFullyCompleted ? 'bg-green-600' : 'bg-blue-600'} text-white`}>
               <CardContent className="p-6 md:p-8">
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
                   <div className="flex-1">
-                    <h3 className="text-2xl md:text-3xl font-bold mb-3">Complete Your Profile</h3>
+                    <h3 className="text-2xl md:text-3xl font-bold mb-3">
+                      {isFullyCompleted ? 'Profile Complete!' : 'Complete Your Profile'}
+                    </h3>
                     <div className="flex items-center gap-3 mb-3">
                       <div className="text-4xl font-bold">{completionPercentage}%</div>
                       <span className="text-sm opacity-90">completed</span>
                     </div>
-                    <p className="text-sm opacity-90 mb-4">Unlock all features by completing your profile.</p>
-                    <div className="mt-4">
-                      <Button className="bg-white text-blue-600 hover:bg-gray-100 font-semibold px-8 py-2" onClick={() => navigate('/member/profile')}>
-                        Complete Profile
-                      </Button>
-                    </div>
+                    {isFullyCompleted ? (
+                      <>
+                        <p className="text-sm opacity-90 mb-2">Your application has been submitted!</p>
+                        <div className="text-sm opacity-90 mb-4">
+                          <div className="font-semibold mb-1">Forms Completed:</div>
+                          <ul className="list-disc list-inside space-y-1">
+                            {formsCompleted.map((form, index) => (
+                              <li key={index}>{form}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div className="mt-4">
+                          <Button 
+                            className="bg-white text-green-600 hover:bg-gray-100 font-semibold px-8 py-2" 
+                            onClick={() => {
+                              const submissionData = JSON.parse(localStorage.getItem("applicationSubmission") || "{}");
+                              const appId = submissionData.applicationId || `APP-${Date.now()}`;
+                              navigate(`/member/application-status?id=${appId}`);
+                            }}
+                          >
+                            View Application Status
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm opacity-90 mb-2">Unlock all features by completing your profile.</p>
+                        <div className="text-sm opacity-90 mb-4">
+                          <div className="font-semibold mb-1">
+                            Completed: {formsCompleted.length}/{totalFormsRequired} forms
+                            {memberType === 'aspirant' && <span className="ml-2 text-xs">(Aspirant)</span>}
+                          </div>
+                          {formsCompleted.length > 0 && (
+                            <ul className="list-disc list-inside">
+                              {formsCompleted.map((form, index) => (
+                                <li key={index}>{form}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                        <div className="mt-4">
+                          <Button className="bg-white text-blue-600 hover:bg-gray-100 font-semibold px-8 py-2" onClick={() => navigate('/member/profile')}>
+                            Complete Profile
+                          </Button>
+                        </div>
+                      </>
+                    )}
                   </div>
-                    <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-xl flex items-center justify-center shadow-lg">
-                      <svg className="w-12 h-12 md:w-16 md:h-16 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
+                    <div className={`w-20 h-20 md:w-24 md:h-24 bg-white rounded-xl flex items-center justify-center shadow-lg`}>
+                      {isFullyCompleted ? (
+                        <svg className="w-12 h-12 md:w-16 md:h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-12 h-12 md:w-16 md:h-16 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      )}
                     </div>
                 </div>
               </CardContent>

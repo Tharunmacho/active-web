@@ -1,12 +1,8 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
+// Web Auth collection - Only for authentication (email + password)
 const webUserSchema = new mongoose.Schema({
-  fullName: {
-    type: String,
-    required: [true, 'Please provide full name'],
-    trim: true
-  },
   email: {
     type: String,
     required: [true, 'Please provide email'],
@@ -15,37 +11,11 @@ const webUserSchema = new mongoose.Schema({
     trim: true,
     match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
   },
-  phoneNumber: {
-    type: String,
-    required: [true, 'Please provide phone number'],
-    trim: true
-  },
   password: {
     type: String,
     required: [true, 'Please provide password'],
     minlength: [6, 'Password must be at least 6 characters'],
     select: false
-  },
-  state: {
-    type: String,
-    trim: true
-  },
-  district: {
-    type: String,
-    trim: true
-  },
-  block: {
-    type: String,
-    trim: true
-  },
-  city: {
-    type: String,
-    trim: true
-  },
-  role: {
-    type: String,
-    enum: ['member', 'block_admin', 'district_admin', 'state_admin', 'super_admin'],
-    default: 'member'
   },
   isActive: {
     type: Boolean,

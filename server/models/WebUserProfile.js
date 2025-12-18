@@ -1,11 +1,19 @@
 import mongoose from 'mongoose';
 
+// Web Users collection - Stores all user profile details
 const webUserProfileSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'WebUser',
     required: true,
     unique: true
+  },
+  email: {
+    type: String,
+    required: [true, 'Please provide email'],
+    unique: true,
+    lowercase: true,
+    trim: true
   },
   fullName: {
     type: String,

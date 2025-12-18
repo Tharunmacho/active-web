@@ -17,9 +17,6 @@ import { errorHandler } from './middleware/errorHandler.js';
 // Load env vars
 dotenv.config();
 
-// Connect to database
-connectDB();
-
 const app = express();
 
 // Middleware
@@ -53,7 +50,32 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 4000;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+// Start server only after database connection
+const startServer = async () => {
+  try {
+    // Connect to database first
+    await connectDB();
+    
+    // Then start the server
+    const server = app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`📡 Server is ready to accept connections`);
+    });
+
+    server.on('error', (error) => {
+      console.error('❌ Server error:', error);
+      process.exit(1);
+    });
+
+    process.on('unhandledRejection', (error) => {
+      console.error('❌ Unhandled Promise Rejection:', error);
+      server.close(() => process.exit(1));
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
