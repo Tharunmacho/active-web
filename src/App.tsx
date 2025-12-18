@@ -8,10 +8,7 @@ import NotFound from "./pages/NotFound";
 import EnhancedLoginPage from "./components/EnhancedLoginPage";
 import MemberLogin from "./pages/member/Login";
 import ForgotPassword from "./pages/member/ForgotPassword";
-import BlockLogin from "./pages/admin/BlockLogin";
-import DistrictLogin from "./pages/admin/DistrictLogin";
-import StateLogin from "./pages/admin/StateLogin";
-import SuperAdminLogin from "./pages/admin/SuperAdminLogin";
+
 import MemberRegister from "./pages/member/Register";
 import MemberDashboard from "./pages/member/Dashboard";
 import Explore from "./pages/member/Explore";
@@ -42,12 +39,30 @@ import AddEditCompany from "./pages/business/AddEditCompany";
 import CompanyDetails from "./pages/business/CompanyDetails";
 import Account from "./pages/member/Account";
 import PaymentHistory from "./pages/member/PaymentHistory";
-import AdminDashboard from "./pages/admin/Dashboard";
-import Approvals from "./pages/admin/Approvals";
-import Members from "./pages/admin/Members";
-import AdminSettings from "./pages/admin/Settings";
-import ApplicationView from "./pages/admin/ApplicationView";
-import SuperAdminGenerate from "./pages/admin/SuperAdminGenerate";
+// Block Admin Imports
+import BlockDashboard from "./pages/block-admin/Dashboard";
+import BlockApprovals from "./pages/block-admin/Approvals";
+import BlockMembers from "./pages/block-admin/Members";
+import BlockSettings from "./pages/block-admin/Settings";
+
+// District Admin Imports
+import DistrictDashboard from "./pages/district-admin/Dashboard";
+import DistrictApprovals from "./pages/district-admin/Approvals";
+import DistrictMembers from "./pages/district-admin/Members";
+import DistrictSettings from "./pages/district-admin/Settings";
+
+// State Admin Imports
+import StateDashboard from "./pages/state-admin/Dashboard";
+import StateApprovals from "./pages/state-admin/Approvals";
+import StateMembers from "./pages/state-admin/Members";
+import StateSettings from "./pages/state-admin/Settings";
+
+// Super Admin Imports
+import SuperDashboard from "./pages/super-admin/Dashboard";
+import SuperApprovals from "./pages/super-admin/Approvals";
+import SuperMembers from "./pages/super-admin/Members";
+import SuperSettings from "./pages/super-admin/Settings";
+
 
 const queryClient = new QueryClient();
 
@@ -66,11 +81,7 @@ const App = () => (
           <Route path="/member/forgot-password" element={<ForgotPassword />} />
           <Route path="/register" element={<MemberRegister />} />
 
-          {/* Admin Login Routes */}
-          <Route path="/admin/block/login" element={<BlockLogin />} />
-          <Route path="/admin/district/login" element={<DistrictLogin />} />
-          <Route path="/admin/state/login" element={<StateLogin />} />
-          <Route path="/admin/super/login" element={<SuperAdminLogin />} />
+
 
           {/* Member Routes */}
           <Route path="/member/dashboard" element={<MemberDashboard />} />
@@ -106,17 +117,42 @@ const App = () => (
           <Route path="/business/companies/edit/:id" element={<AddEditCompany />} />
           <Route path="/business/companies/:id" element={<CompanyDetails />} />
 
-          {/* Admin Routes */}
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/block/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/applications" element={<Approvals />} />
-          <Route path="/admin/approvals" element={<Approvals />} />
-          <Route path="/admin/members" element={<Members />} />
-          <Route path="/admin/settings" element={<Settings />} />
-          <Route path="/admin/application/:id" element={<ApplicationView />} />
+          {/* Block Admin Routes */}
+          <Route path="/block-admin/dashboard" element={<BlockDashboard />} />
+          <Route path="/block-admin/approvals" element={<BlockApprovals />} />
+          <Route path="/block-admin/applications" element={<BlockApprovals />} />
+          <Route path="/block-admin/members" element={<BlockMembers />} />
+          <Route path="/block-admin/settings" element={<BlockSettings />} />
+
+          {/* District Admin Routes */}
+          <Route path="/district-admin/dashboard" element={<DistrictDashboard />} />
+          <Route path="/district-admin/approvals" element={<DistrictApprovals />} />
+          <Route path="/district-admin/applications" element={<DistrictApprovals />} />
+          <Route path="/district-admin/members" element={<DistrictMembers />} />
+          <Route path="/district-admin/settings" element={<DistrictSettings />} />
+
+          {/* State Admin Routes */}
+          <Route path="/state-admin/dashboard" element={<StateDashboard />} />
+          <Route path="/state-admin/approvals" element={<StateApprovals />} />
+          <Route path="/state-admin/applications" element={<StateApprovals />} />
+          <Route path="/state-admin/members" element={<StateMembers />} />
+          <Route path="/state-admin/settings" element={<StateSettings />} />
 
           {/* Super Admin Routes */}
-          <Route path="/admin/super/generate" element={<SuperAdminGenerate />} />
+          <Route path="/super-admin/dashboard" element={<SuperDashboard />} />
+          <Route path="/super-admin/approvals" element={<SuperApprovals />} />
+          <Route path="/super-admin/applications" element={<SuperApprovals />} />
+          <Route path="/super-admin/members" element={<SuperMembers />} />
+          <Route path="/super-admin/settings" element={<SuperSettings />} />
+
+          {/* Legacy Admin Routes - Redirect to Block Admin */}
+          <Route path="/admin/dashboard" element={<BlockDashboard />} />
+          <Route path="/admin/block/dashboard" element={<BlockDashboard />} />
+          <Route path="/admin/applications" element={<BlockApprovals />} />
+          <Route path="/admin/approvals" element={<BlockApprovals />} />
+          <Route path="/admin/members" element={<BlockMembers />} />
+          <Route path="/admin/settings" element={<BlockSettings />} />
+
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

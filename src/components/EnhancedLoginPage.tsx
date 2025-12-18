@@ -1,163 +1,25 @@
 ﻿import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Card } from "./ui/card";
-import { Label } from "./ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { FaGoogle, FaFacebook, FaLinkedin } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { FaGoogle, FaFacebook, FaApple } from "react-icons/fa";
+import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { authenticateAdmin, setAdminSession } from "@/utils/authService";
 
 const activLogo = "/logo_ACTIVian-removebg-preview.png";
 
 export default function EnhancedLoginPage() {
-  const [userType, setUserType] = useState<"member" | "admin">("member");
-  const [adminCategory, setAdminCategory] = useState<"block" | "district" | "state" | "super">("block");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
+  const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
 
-  // Map admin category to role
-  const getRoleFromCategory = (category: string): string => {
-    switch (category) {
-      case "block": return "block_admin";
-      case "district": return "district_admin";
-      case "state": return "state_admin";
-      case "super": return "super_admin";
-      default: return "member";
-    }
-  };
-
-  // Get default credentials for each admin category
-  const getDefaultCredentials = (category: string): { id: string, password: string } => {
-    switch (category) {
-      case "block":
-        return { id: "block_admin_001", password: "block_pass_123" };
-      case "district":
-        return { id: "district_admin_001", password: "district_pass_123" };
-      case "state":
-        return { id: "state_admin_001", password: "state_pass_123" };
-      case "super":
-        return { id: "super_admin_001", password: "super_pass_123" };
-      default:
-        return { id: "", password: "" };
-    }
-  };
-
   const handleSocialLogin = (provider: string) => {
-    // Implement social login logic here
     console.log(`Logging in with ${provider}`);
-    toast.info(`Social login with ${provider} would be implemented here`);
+    toast.info(`Social login with ${provider} coming soon!`);
   };
-
-  const handleAdminLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    if (!identifier || !password) {
-      toast.error("Please enter both ID and password");
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      // For admin login, we use the authenticateAdmin function
-      const result = await authenticateAdmin(identifier, password);
-
-      if (result.success) {
-        // Set admin session flags
-        const role = getRoleFromCategory(adminCategory);
-        setAdminSession(identifier, role, `${role.split('_')[0].charAt(0).toUpperCase() + role.split('_')[0].slice(1)} Admin ${identifier.split('_')[2]}`);
-
-        toast.success("Login successful!");
-
-        // Navigate to appropriate dashboard
-        const adminPath = role === "block_admin" ? "/admin/block/dashboard" : "/admin/dashboard";
-        navigate(adminPath);
-      } else {
-        toast.error("Invalid credentials");
-      }
-    } catch (err) {
-      toast.error("Unable to reach backend. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleMemberLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      // Try backend login first
-      try {
-        const res = await fetch('http://localhost:4000/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: identifier, password }),
-        });
-
-        if (res.ok) {
-          const json = await res.json();
-          const found = json.data?.user || json.user;
-          localStorage.setItem('userName', found.fullName || found.firstName || found.email || found.memberId);
-          localStorage.setItem('memberId', found.id || found._id || found.memberId);
-          localStorage.setItem('token', json.data?.token || json.token);
-          const role = found.role || 'member';
-          localStorage.setItem('role', role);
-          localStorage.setItem('isLoggedIn', 'true');
-
-          const isAdmin = ['super_admin', 'state_admin', 'district_admin', 'block_admin'].includes(role);
-          const adminPath = role === 'block_admin' ? '/admin/block/dashboard' : '/admin/dashboard';
-          navigate(isAdmin ? adminPath : '/member/dashboard');
-          return;
-        }
-      } catch (err) {
-        // no backend â€” fallback to localStorage
-      }
-
-      const usersJson = localStorage.getItem('users');
-      if (!usersJson) {
-        toast.error('No registered users found. Please register first.');
-        setIsLoading(false);
-        return;
-      }
-
-      const users = JSON.parse(usersJson) as Array<any>;
-      // allow login by email or memberId
-      const found = users.find((u) => u.email === identifier || u.memberId === identifier);
-      if (!found) {
-        toast.error('No account matches that email or member ID');
-        setIsLoading(false);
-        return;
-      }
-
-      if (found.password !== password) {
-        toast.error('Invalid credentials');
-        setIsLoading(false);
-        return;
-      }
-
-      localStorage.setItem('userName', found.firstName || found.email || found.memberId);
-      localStorage.setItem('memberId', found.memberId);
-      if (found && found.role) localStorage.setItem('role', found.role);
-      localStorage.setItem('isLoggedIn', 'true');
-
-      const isAdminFallback = ['super_admin', 'state_admin', 'district_admin', 'block_admin'].includes(found.role);
-      const adminPath = found.role === 'block_admin' ? '/admin/block/dashboard' : '/admin/dashboard';
-      navigate(isAdminFallback ? adminPath : '/member/dashboard');
-    } catch (err) {
-      console.error(err);
-      toast.error('Login failed. Please try again later.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
 
   // Unified login: try admin auth first, then member flow
   const handleUnifiedSubmit = async (e: React.FormEvent) => {
@@ -180,7 +42,13 @@ export default function EnhancedLoginPage() {
             role || 'member',
             `${label.charAt(0).toUpperCase() + label.slice(1)} Admin`
           );
-          const adminPath = role === 'block_admin' ? '/admin/block/dashboard' : '/admin/dashboard';
+
+          // Navigate to the appropriate admin dashboard based on role
+          let adminPath = '/block-admin/dashboard';
+          if (role === 'district_admin') adminPath = '/district-admin/dashboard';
+          else if (role === 'state_admin') adminPath = '/state-admin/dashboard';
+          else if (role === 'super_admin') adminPath = '/super-admin/dashboard';
+
           navigate(adminPath);
           toast.success('Login successful!');
           return;
@@ -204,7 +72,12 @@ export default function EnhancedLoginPage() {
           localStorage.setItem('role', role);
           localStorage.setItem('isLoggedIn', 'true');
           const isAdmin = ['super_admin', 'state_admin', 'district_admin', 'block_admin'].includes(role);
-          const adminPath = role === 'block_admin' ? '/admin/block/dashboard' : '/admin/dashboard';
+
+          let adminPath = '/block-admin/dashboard';
+          if (role === 'district_admin') adminPath = '/district-admin/dashboard';
+          else if (role === 'state_admin') adminPath = '/state-admin/dashboard';
+          else if (role === 'super_admin') adminPath = '/super-admin/dashboard';
+
           navigate(isAdmin ? adminPath : '/member/dashboard');
           return;
         }
@@ -235,7 +108,12 @@ export default function EnhancedLoginPage() {
       localStorage.setItem('role', role || 'member');
       localStorage.setItem('isLoggedIn', 'true');
       const isAdminFallback = ['super_admin', 'state_admin', 'district_admin', 'block_admin'].includes(role);
-      const adminPath = role === 'block_admin' ? '/admin/block/dashboard' : '/admin/dashboard';
+
+      let adminPath = '/block-admin/dashboard';
+      if (role === 'district_admin') adminPath = '/district-admin/dashboard';
+      else if (role === 'state_admin') adminPath = '/state-admin/dashboard';
+      else if (role === 'super_admin') adminPath = '/super-admin/dashboard';
+
       navigate(isAdminFallback ? adminPath : '/member/dashboard');
     } catch (err) {
       console.error(err);
@@ -250,144 +128,195 @@ export default function EnhancedLoginPage() {
     const logged = localStorage.getItem('isLoggedIn');
     if (logged === 'true') {
       const role = localStorage.getItem('role') || '';
-      const adminPath = role === 'block_admin' ? '/admin/block/dashboard' : '/admin/dashboard';
+      let adminPath = '/block-admin/dashboard';
+      if (role === 'district_admin') adminPath = '/district-admin/dashboard';
+      else if (role === 'state_admin') adminPath = '/state-admin/dashboard';
+      else if (role === 'super_admin') adminPath = '/super-admin/dashboard';
+
       navigate(role.endsWith('_admin') ? adminPath : '/member/dashboard');
     }
   }, [navigate]);
 
-  // Fill default credentials when admin category changes
-  useEffect(() => {
-    if (userType === "admin") {
-      const creds = getDefaultCredentials(adminCategory);
-      setIdentifier(creds.id);
-      setPassword(creds.password);
-    }
-  }, [adminCategory, userType]);
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-md p-8 space-y-6 bg-white/95 backdrop-blur shadow-xl rounded-2xl">
-        <div className="text-center space-y-2">
-          <div className="inline-block p-2 rounded-full bg-blue-100 mb-2">
+    <div className="h-screen flex flex-col md:flex-row overflow-hidden">
+      {/* Left Panel - Blue Welcome Section */}
+      <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 p-8 flex-col justify-between text-white relative overflow-hidden">
+        {/* Background decorative elements */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full filter blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full filter blur-3xl"></div>
+
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-6">
             <img
               src={activLogo}
               alt="ACTIV logo"
-              className="w-12 h-12 object-contain"
+              className="w-20 h-20 object-contain brightness-0 invert"
             />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">ACTIV Portal</h1>
-          <p className="text-gray-500">Sign in to your account or create a new one</p>
+
+          <div className="space-y-4">
+            <div>
+              <h1 className="text-4xl font-bold mb-3">
+                Welcome to <br />ACTIVian Platform! 👋
+              </h1>
+              <p className="text-lg text-blue-100 italic">
+                "Empowering Communities, Simplifying Lives"
+              </p>
+            </div>
+
+            <div className="text-blue-100 text-base">
+              <p className="leading-relaxed">
+                Our digital platform connects communities with essential services and resources.
+                Whether you're managing applications, accessing member benefits, or exploring business
+                opportunities, we're here to make your journey seamless and transparent.
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="relative z-10 text-blue-100 text-xs">
+          © Copyright 2024 - All rights Reserved
+        </div>
+      </div>
 
+      {/* Right Panel - Login Form */}
+      <div className="flex-1 flex items-center justify-center p-6 bg-gradient-to-br from-gray-50 to-white overflow-auto">
+        <div className="w-full max-w-md space-y-6">
+          {/* Mobile Logo */}
+          <div className="md:hidden text-center">
+            <img
+              src={activLogo}
+              alt="ACTIV logo"
+              className="w-20 h-20 object-contain mx-auto mb-3"
+            />
+          </div>
 
-          {userType === "admin" && (
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="admin-category">Admin Category</Label>
-                <Select value={adminCategory} onValueChange={(value: "block" | "district" | "state" | "super") => setAdminCategory(value)}>
-                  <SelectTrigger id="admin-category">
-                    <SelectValue placeholder="Select admin category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="block">Block Admin</SelectItem>
-                    <SelectItem value="district">District Admin</SelectItem>
-                    <SelectItem value="state">State Admin</SelectItem>
-                    <SelectItem value="super">Super Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="bg-blue-50 p-3 rounded-md">
-                <p className="text-sm text-blue-800">
-                  <strong>Default Credentials:</strong> {getDefaultCredentials(adminCategory).id} / {getDefaultCredentials(adminCategory).password}
-                </p>
-              </div>
+          {/* Logo and Title */}
+          <div className="text-center space-y-3">
+            <div className="hidden md:flex items-center justify-center gap-3 mb-3">
+              <img
+                src={activLogo}
+                alt="ACTIV logo"
+                className="w-14 h-14 object-contain"
+              />
             </div>
-          )}
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900">Log In to your Account</h2>
+          </div>
 
-          {/* Social Media Login Buttons */}
-          <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-3">
-              <Button
-                variant="outline"
-                className="w-full hover:bg-transparent"
-                onClick={() => handleSocialLogin("Google")}
-              >
-                <FaGoogle className="w-5 h-5 text-red-500" />
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full hover:bg-transparent"
-                onClick={() => handleSocialLogin("Facebook")}
-              >
-                <FaFacebook className="w-5 h-5 text-blue-600" />
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full hover:bg-transparent"
-                onClick={() => handleSocialLogin("LinkedIn")}
-              >
-                <FaLinkedin className="w-5 h-5 text-blue-700" />
-              </Button>
+          {/* Login Form */}
+          <form onSubmit={handleUnifiedSubmit} className="space-y-4">
+            {/* Email Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Email or Member ID
+              </label>
+              <Input
+                type="text"
+                placeholder="Enter your email or ID"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                className="w-full h-11 px-4 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                required
+              />
             </div>
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
+            {/* Password Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Password
+              </label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full h-11 px-4 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
-              </div>
+            </div>
+
+            {/* Forgot Password */}
+            <div className="flex justify-end">
+              <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700">
+                Forgot Password?
+              </Link>
+            </div>
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+              disabled={isLoading}
+            >
+              {isLoading ? "Logging in..." : "Continue"}
+            </Button>
+
+            {/* Terms and Privacy */}
+            <p className="text-xs text-center text-gray-500 leading-relaxed">
+              By clicking on proceed, you have read and agree to the{" "}
+              <Link to="/terms" className="text-blue-600 hover:underline">
+                Terms of Use
+              </Link>{" "}
+              &{" "}
+              <Link to="/privacy" className="text-blue-600 hover:underline">
+                Privacy Policy
+              </Link>
+            </p>
+          </form>
+
+          {/* Social Login Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-white text-gray-500">Or Login with</span>
             </div>
           </div>
 
-          <form onSubmit={handleUnifiedSubmit} className="space-y-4">
-            <div>
-              <Input
-                type="text"
-                placeholder="Enter email or ID"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                className="w-full"
-                required
-              />
-            </div>
-            <div>
-              <Input
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full"
-                required
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <a href="#" className="text-sm text-blue-600 hover:text-blue-500">
-                Forget Password?
-              </a>
-            </div>
-            <Button
-              type="submit"
-              className="w-full bg-blue-600 text-white"
-              disabled={isLoading}
+          {/* Social Login Buttons */}
+          <div className="flex justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => handleSocialLogin("Google")}
+              className="w-11 h-11 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
             >
-              {isLoading ? "Signing In..." : "Sign In"}
-            </Button>
-          </form>
-        </div>
+              <FaGoogle className="w-5 h-5 text-red-500" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSocialLogin("Facebook")}
+              className="w-11 h-11 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
+            >
+              <FaFacebook className="w-5 h-5 text-blue-600" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSocialLogin("Apple")}
+              className="w-11 h-11 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
+            >
+              <FaApple className="w-5 h-5 text-gray-900" />
+            </button>
+          </div>
 
-        <div className="text-center text-sm text-gray-500">
-          Don't have an account?{" "}
-          <a href="/register" className="text-blue-600 hover:text-blue-500">
-            Register as member
-          </a>
+          {/* Register Link */}
+          <p className="text-center text-sm text-gray-600">
+            Don't have an account?{" "}
+            <Link to="/register" className="text-blue-600 hover:text-blue-700 font-semibold">
+              Create new account now
+            </Link>
+          </p>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
-
-

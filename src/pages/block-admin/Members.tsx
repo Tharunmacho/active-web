@@ -5,7 +5,7 @@ import { Search, Filter, Users, Mail, Phone, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
-import AdminSidebar from "@/components/AdminSidebar";
+import AdminSidebar from "./AdminSidebar";
 
 const Members = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -86,27 +86,29 @@ const Members = () => {
       )}
 
       {/* Sidebar - Responsive */}
-      <div className={`
-        w-80 border-r bg-white shadow-lg fixed left-0 top-0 bottom-0 z-30 
-        transform transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0 lg:w-64
-      `}>
-        <AdminSidebar onClose={() => setSidebarOpen(false)} />
-      </div>
-
-      {/* Mobile Menu Button - Fixed at top level */}
-      <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl shadow-2xl text-white hover:shadow-xl transition-all"
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
+      <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col lg:ml-64">
+      <div className="flex-1 flex flex-col">
+        {/* Mobile Header - Only visible on mobile */}
+        <div className="md:hidden flex items-center justify-between p-4 bg-white border-b shadow-sm">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <h1 className="text-xl font-bold text-gray-900">Members</h1>
+          <Avatar className="w-10 h-10 ring-2 ring-blue-100">
+            <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop&crop=face" className="object-cover" />
+            <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold">
+              {(localStorage.getItem('userName') || 'A').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+        </div>
+
         <div className="flex-1 p-4 md:p-6 overflow-auto">
           <div className="w-full max-w-6xl mx-auto space-y-6 pt-12 lg:pt-0">
             <div className="bg-gradient-to-br from-blue-600 to-blue-700 shadow-xl p-6 rounded-2xl border border-blue-500">
