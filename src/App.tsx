@@ -43,7 +43,6 @@ import CompanyDetails from "./pages/business/CompanyDetails";
 import Account from "./pages/member/Account";
 import PaymentHistory from "./pages/member/PaymentHistory";
 import AdminDashboard from "./pages/admin/Dashboard";
-import AdminSidebarPage from "./pages/admin/SidebarPage";
 import Approvals from "./pages/admin/Approvals";
 import Members from "./pages/admin/Members";
 import AdminSettings from "./pages/admin/Settings";
@@ -111,7 +110,6 @@ const App = () => (
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/block/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/applications" element={<Approvals />} />
-          <Route path="/admin/sidebar" element={<AdminSidebarPage />} />
           <Route path="/admin/approvals" element={<Approvals />} />
           <Route path="/admin/members" element={<Members />} />
           <Route path="/admin/settings" element={<Settings />} />

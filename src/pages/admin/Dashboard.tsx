@@ -9,14 +9,13 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
-import AdminMobileMenu from "@/components/AdminMobileMenu";
 
 const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const recentApplications = [
-    { id: "Actv2024001", name: "John Doe", status: "approved", date: "2024-01-15", image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=96&h=96&fit=crop&crop=face" },
-    { id: "Actv2024002", name: "Jane Smith", status: "pending", date: "2024-01-14", image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop&crop=face" },
-    { id: "Actv2024003", name: "Robert Brown", status: "approved", date: "2024-01-13", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop&crop=face" },
+    { id: "Actv2024001", name: "John Doe", status: "approved", date: "2024-01-15", image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=96&h=96&fit=crop&crop=face", size: "12 MB" },
+    { id: "Actv2024002", name: "Jane Smith", status: "pending", date: "2024-01-14", image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop&crop=face", size: "8 MB" },
+    { id: "Actv2024003", name: "Robert Brown", status: "approved", date: "2024-01-13", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop&crop=face", size: "15 MB" },
   ];
 
   const role = (typeof window !== 'undefined' ? localStorage.getItem('role') : '') || '';
@@ -64,116 +63,155 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-gray-50 to-white">
-      {/* Sidebar - always visible */}
-      <div className="w-16 lg:w-64 border-r bg-white shadow-sm">
-        <AdminSidebar />
+    <div className="min-h-screen flex bg-gradient-to-br from-gray-100 to-gray-50">
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        ></div>
+      )}
+
+      {/* Sidebar - Responsive */}
+      <div className={`
+        w-80 border-r bg-white shadow-lg fixed left-0 top-0 bottom-0 z-30 
+        transform transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        lg:translate-x-0 lg:w-64
+      `}>
+        <AdminSidebar onClose={() => setSidebarOpen(false)} />
       </div>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col">
-        <div className="flex-1 p-4 md:p-6 overflow-auto">
-          <div className="w-full max-w-7xl mx-auto space-y-5 md:space-y-6">
-            {/* Header */}
-            <div className="bg-white shadow-lg p-5 md:p-6 rounded-xl border-0">
-              <div className="flex items-center gap-3 md:gap-4">
-                <Avatar className="w-12 h-12 md:w-14 md:h-14 ring-2 ring-blue-100">
+      {/* Mobile Menu Button - Fixed at top level */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl shadow-2xl text-white hover:shadow-xl transition-all"
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
+      {/* Main Content - Scrollable */}
+      <div className="flex-1 flex flex-col overflow-auto lg:ml-64">
+        {/* TOP SECTION - White Header with Shadow */}
+        <div className="bg-white p-6 lg:p-10 shadow-lg">
+          <div className="max-w-7xl mx-auto pt-12 lg:pt-0">
+
+            {/* Header Section */}
+            <div className="mb-8">
+              <div className="flex flex-col md:flex-row items-center md:items-start gap-4 text-center md:text-left">
+                <Avatar className="w-16 h-16 ring-4 ring-blue-100">
                   <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop&crop=face" className="object-cover" />
-                  <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-lg">
+                  <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold text-2xl">
                     {avatarInitials}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h1 className="text-xl md:text-2xl font-bold text-gray-800">{dashboardTitle}</h1>
-                  <p className="text-sm md:text-base text-gray-600">{dashboardSubtitle}</p>
+                  <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{dashboardTitle}</h1>
+                  <p className="text-gray-600 text-base md:text-lg">{dashboardSubtitle}</p>
                 </div>
               </div>
             </div>
 
-            {/* Statistics Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
-              <Card className="shadow-lg border-0 border-l-4 border-l-blue-500 hover:shadow-xl transition-shadow">
-                <CardContent className="pt-5 md:pt-6">
-                  <div>
-                    <p className="text-sm text-gray-500 font-medium mb-2">Total Members</p>
-                    <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">{stats.totalMembers}</p>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Statistics Section */}
+            <div>
+              <h2 className="text-xl font-semibold mb-4 text-gray-900">Overview Statistics</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-6 border border-blue-500 shadow-xl hover:shadow-2xl transition-all duration-300">
+                  <p className="text-blue-100 text-sm mb-1 font-medium">Total Members</p>
+                  <p className="text-4xl font-bold text-white">{stats.totalMembers}</p>
+                </div>
+                <div className="bg-gradient-to-br from-purple-600 to-purple-700 rounded-2xl p-6 border border-purple-500 shadow-xl hover:shadow-2xl transition-all duration-300">
+                  <p className="text-purple-100 text-sm mb-1 font-medium">Pending</p>
+                  <p className="text-4xl font-bold text-white">{stats.pending}</p>
+                </div>
+                <div className="bg-gradient-to-br from-cyan-600 to-cyan-700 rounded-2xl p-6 border border-cyan-500 shadow-xl hover:shadow-2xl transition-all duration-300">
+                  <p className="text-cyan-100 text-sm mb-1 font-medium">Approved</p>
+                  <p className="text-4xl font-bold text-white">{stats.approved}</p>
+                </div>
+                <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-2xl p-6 border border-indigo-500 shadow-xl hover:shadow-2xl transition-all duration-300">
+                  <p className="text-indigo-100 text-sm mb-1 font-medium">Rejected</p>
+                  <p className="text-4xl font-bold text-white">{stats.rejected}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-              <Card className="shadow-lg border-0 border-l-4 border-l-amber-500 hover:shadow-xl transition-shadow">
-                <CardContent className="pt-5 md:pt-6">
-                  <div>
-                    <p className="text-sm text-gray-500 font-medium mb-2">Pending</p>
-                    <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-amber-600 to-amber-700 bg-clip-text text-transparent">{stats.pending}</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-lg border-0 border-l-4 border-l-green-500 hover:shadow-xl transition-shadow">
-                <CardContent className="pt-5 md:pt-6">
-                  <div>
-                    <p className="text-sm text-gray-500 font-medium mb-2">Approved</p>
-                    <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-green-600 to-green-700 bg-clip-text text-transparent">{stats.approved}</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-lg border-0 border-l-4 border-l-red-500 hover:shadow-xl transition-shadow">
-                <CardContent className="pt-5 md:pt-6">
-                  <div>
-                    <p className="text-sm text-gray-500 font-medium mb-2">Rejected</p>
-                    <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent">{stats.rejected}</p>
-                  </div>
-                </CardContent>
-              </Card>
+        {/* MAIN CONTENT - Light Background */}
+        <div className="bg-gradient-to-br from-gray-50 to-white p-6 lg:p-10">
+          <div className="max-w-7xl mx-auto space-y-6">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Recent Activity</h2>
+                <p className="text-gray-600 text-sm">Latest application submissions</p>
+              </div>
+              <Link to="/admin/applications">
+                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg px-6 shadow-lg">
+                  View All
+                </Button>
+              </Link>
             </div>
 
-            {/* Recent Applications */}
-            <Card className="shadow-lg border-0">
-              <CardHeader className="p-5 md:p-6">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                  <div>
-                    <CardTitle className="text-lg md:text-xl text-blue-600">Recent ADF Approvals</CardTitle>
-                    <CardDescription className="text-sm text-gray-500 mt-1">Latest application submissions</CardDescription>
-                  </div>
-                  <Link to="/admin/applications">
-                    <Button variant="outline" size="sm" className="rounded-lg border-2 hover:bg-blue-50 hover:border-blue-300">View All</Button>
-                  </Link>
-                </div>
-              </CardHeader>
-              <CardContent className="p-5 md:p-6 pt-0">
-                <div className="space-y-3">
-                  {recentApplications.map((app) => (
-                    <div key={app.id} className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 md:p-5 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-100">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="w-10 h-10 ring-2 ring-blue-100">
-                          <AvatarImage src={app.image} className="object-cover" />
-                          <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold">
-                            {app.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-semibold text-gray-800 text-sm md:text-base">{app.name}</p>
-                          <p className="text-xs md:text-sm text-gray-600">{app.id}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Badge
-                          variant={app.status === "approved" ? "default" : "outline"}
-                          className={app.status === "approved" ? "bg-green-500 hover:bg-green-600 text-white" : "border-amber-500 text-amber-700"}
-                        >
-                          {app.status === "approved" ? "Approved" : "Pending"}
-                        </Badge>
-                        <Link to={`/admin/application/${app.id}`}>
-                          <Button size="sm" variant="outline" className="rounded-lg border-2 hover:bg-blue-50 hover:border-blue-300">View</Button>
-                        </Link>
+            {/* Applications Table/List */}
+            <div className="bg-white rounded-2xl p-6 shadow-2xl border border-gray-100">
+              <div className="hidden md:grid grid-cols-4 gap-4 px-4 py-3 text-sm font-semibold text-gray-700 border-b border-gray-200 mb-4">
+                <div>Name</div>
+                <div>Status</div>
+                <div>Size</div>
+                <div>Modified</div>
+              </div>
+
+              <div className="space-y-3">
+                {recentApplications.map((app) => (
+                  <div
+                    key={app.id}
+                    className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-all duration-200 shadow-sm border border-blue-100"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-10 h-10 ring-2 ring-blue-200">
+                        <AvatarImage src={app.image} className="object-cover" />
+                        <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold text-sm">
+                          {app.name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-semibold text-gray-900 text-sm">{app.name}</p>
+                        <p className="text-xs text-gray-600">{app.id}</p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    <div>
+                      <Badge
+                        variant={app.status === "approved" ? "default" : "outline"}
+                        className={
+                          app.status === "approved"
+                            ? "bg-green-500 text-white hover:bg-green-600 border-0 shadow-md"
+                            : "bg-orange-500 text-white border-0 shadow-md"
+                        }
+                      >
+                        {app.status === "approved" ? "Approved" : "Pending"}
+                      </Badge>
+                    </div>
+                    <div className="text-sm text-gray-700 font-medium">{app.size}</div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-700 font-medium">{app.date}</span>
+                      <Link to={`/admin/application/${app.id}`}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-blue-600 hover:bg-blue-50 font-medium"
+                        >
+                          View
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         </div>
       </div>

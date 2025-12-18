@@ -229,100 +229,49 @@ const MemberDashboard = () => {
             </div>
 
             {/* Complete Your Profile Card - Professional Blue */}
-            <Card className={`shadow-lg border-0 w-full mb-6 ${isFullyCompleted ? 'bg-green-600' : 'bg-blue-600'} text-white`}>
+            <Card className="shadow-lg border-0 w-full mb-6 bg-blue-600 text-white">
               <CardContent className="p-6 md:p-8">
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
                   <div className="flex-1">
-                    <h3 className="text-2xl md:text-3xl font-bold mb-3">
-                      {isFullyCompleted ? 'Profile Complete!' : 'Complete Your Profile'}
-                    </h3>
+                    <h3 className="text-2xl md:text-3xl font-bold mb-3">Complete Your Profile</h3>
                     <div className="flex items-center gap-3 mb-3">
                       <div className="text-4xl font-bold">{completionPercentage}%</div>
                       <span className="text-sm opacity-90">completed</span>
                     </div>
-                    {isFullyCompleted ? (
-                      <>
-                        <p className="text-sm opacity-90 mb-2">Your application has been submitted!</p>
-                        <div className="text-sm opacity-90 mb-4">
-                          <div className="font-semibold mb-1">Forms Completed:</div>
-                          <ul className="list-disc list-inside space-y-1">
-                            {formsCompleted.map((form, index) => (
-                              <li key={index}>{form}</li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div className="mt-4">
-                          <Button 
-                            className="bg-white text-green-600 hover:bg-gray-100 font-semibold px-8 py-2" 
-                            onClick={() => {
-                              const submissionData = JSON.parse(localStorage.getItem("applicationSubmission") || "{}");
-                              const appId = submissionData.applicationId || `APP-${Date.now()}`;
-                              navigate(`/member/application-status?id=${appId}`);
-                            }}
-                          >
-                            View Application Status
-                          </Button>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-sm opacity-90 mb-2">Unlock all features by completing your profile.</p>
-                        <div className="text-sm opacity-90 mb-4">
-                          <div className="font-semibold mb-1">
-                            Completed: {formsCompleted.length}/{totalFormsRequired} forms
-                            {memberType === 'aspirant' && <span className="ml-2 text-xs">(Aspirant)</span>}
-                          </div>
-                          {formsCompleted.length > 0 && (
-                            <ul className="list-disc list-inside">
-                              {formsCompleted.map((form, index) => (
-                                <li key={index}>{form}</li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                        <div className="mt-4">
-                          <Button className="bg-white text-blue-600 hover:bg-gray-100 font-semibold px-8 py-2" onClick={() => navigate('/member/profile')}>
-                            Complete Profile
-                          </Button>
-                        </div>
-                      </>
-                    )}
+                    <p className="text-sm opacity-90 mb-4">Unlock all features by completing your profile.</p>
+                    <div className="mt-4">
+                      <Button className="bg-white text-blue-600 hover:bg-gray-100 font-semibold px-8 py-2" onClick={() => navigate('/member/profile')}>
+                        Complete Profile
+                      </Button>
+                    </div>
                   </div>
-                    <div className={`w-20 h-20 md:w-24 md:h-24 bg-white rounded-xl flex items-center justify-center shadow-lg`}>
-                      {isFullyCompleted ? (
-                        <svg className="w-12 h-12 md:w-16 md:h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      ) : (
-                        <svg className="w-12 h-12 md:w-16 md:h-16 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      )}
+                    <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-xl flex items-center justify-center shadow-lg">
+                      <svg className="w-12 h-12 md:w-16 md:h-16 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
                     </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Your Business Account Card - Professional Purple */}
-            <Card className="shadow-lg border-0 w-full mb-6 bg-purple-600 text-white">
-              <CardContent className="p-6 md:p-8">
-                <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+            <Card className="shadow-lg border-0 w-full mb-4 md:mb-6 bg-purple-600 text-white">
+              <CardContent className="p-5 md:p-8">
+                <div className="flex flex-row items-center gap-4 md:gap-6">
                   <div className="flex-1">
-                    <h3 className="text-2xl md:text-3xl font-bold mb-3">Your Business Account</h3>
-                    <div className="mb-3">
-                      <span className="inline-block text-sm font-semibold bg-white bg-opacity-20 rounded-full px-4 py-2">Pending</span>
+                    <h3 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 md:mb-3">Your Business Account</h3>
+                    <div className="mb-2 md:mb-3">
+                      <span className="inline-block text-xs md:text-sm font-semibold bg-white bg-opacity-20 rounded-full px-3 md:px-4 py-1.5 md:py-2">Pending</span>
                     </div>
                     <p className="text-sm opacity-90 mb-4">View and manage your business profile and settings</p>
                     <div className="mt-4">
-                      <Button className="bg-white text-purple-600 hover:bg-gray-100 font-semibold px-8 py-2" onClick={() => navigate('/business/create-profile')}>
+                      <Button className="bg-white text-purple-600 hover:bg-gray-100 font-semibold px-8 py-2" onClick={() => navigate('/member/business-profile')}>
                         Create Account
                       </Button>
                     </div>
                   </div>
-                    <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-xl flex items-center justify-center shadow-lg">
-                      <svg className="w-12 h-12 md:w-16 md:h-16 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
+                  <div className="hidden sm:flex w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 bg-white rounded-xl items-center justify-center shadow-lg flex-shrink-0">
+                    <Briefcase className="w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 text-purple-600" />
                   </div>
                 </div>
               </CardContent>

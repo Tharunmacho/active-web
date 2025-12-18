@@ -76,14 +76,52 @@ const Approvals = () => {
   }), [applications.length, buckets.pending.length, buckets.approved.length, buckets.rejected.length]);
 
   const load = async () => {
-    try {
-      const res = await fetch('http://localhost:4000/api/applications');
-      if (!res.ok) throw new Error('Failed');
-      const json = await res.json();
-      setApplications(json.applications || []);
-    } catch {
-      toast.error('Unable to fetch applications');
-    }
+    // Dummy data for testing
+    const dummyApplications: ApplicationRec[] = [
+      {
+        id: 'APP001',
+        userId: 'user001',
+        submittedAt: '2024-01-15T10:30:00Z',
+        status: 'Under Review',
+        stage: 1,
+        stages: [
+          { id: 1, key: 'block', title: 'Block Review', reviewer: 'Block Admin', status: 'Under Review', reviewDate: null, notes: '' },
+          { id: 2, key: 'district', title: 'District Review', reviewer: '', status: 'Pending', reviewDate: null, notes: '' },
+          { id: 3, key: 'state', title: 'State Review', reviewer: '', status: 'Pending', reviewDate: null, notes: '' },
+          { id: 4, key: 'payment', title: 'Payment', reviewer: '', status: 'Pending', reviewDate: null, notes: '' },
+        ],
+        profile: { profile: { profile: { firstName: 'John Doe', email: 'john@example.com' } } }
+      },
+      {
+        id: 'APP002',
+        userId: 'user002',
+        submittedAt: '2024-01-14T09:20:00Z',
+        status: 'Under Review',
+        stage: 1,
+        stages: [
+          { id: 1, key: 'block', title: 'Block Review', reviewer: 'Block Admin', status: 'Under Review', reviewDate: null, notes: '' },
+          { id: 2, key: 'district', title: 'District Review', reviewer: '', status: 'Pending', reviewDate: null, notes: '' },
+          { id: 3, key: 'state', title: 'State Review', reviewer: '', status: 'Pending', reviewDate: null, notes: '' },
+          { id: 4, key: 'payment', title: 'Payment', reviewer: '', status: 'Pending', reviewDate: null, notes: '' },
+        ],
+        profile: { profile: { profile: { firstName: 'Jane Smith', email: 'jane@example.com' } } }
+      },
+      {
+        id: 'APP003',
+        userId: 'user003',
+        submittedAt: '2024-01-13T14:45:00Z',
+        status: 'Under Review',
+        stage: 1,
+        stages: [
+          { id: 1, key: 'block', title: 'Block Review', reviewer: 'Block Admin', status: 'Approved', reviewDate: '2024-01-13', notes: '' },
+          { id: 2, key: 'district', title: 'District Review', reviewer: '', status: 'Pending', reviewDate: null, notes: '' },
+          { id: 3, key: 'state', title: 'State Review', reviewer: '', status: 'Pending', reviewDate: null, notes: '' },
+          { id: 4, key: 'payment', title: 'Payment', reviewer: '', status: 'Pending', reviewDate: null, notes: '' },
+        ],
+        profile: { profile: { profile: { firstName: 'Robert Brown', email: 'robert@example.com' } } }
+      },
+    ];
+    setApplications(dummyApplications);
   };
 
   useEffect(() => { load(); }, []);
@@ -117,60 +155,69 @@ const Approvals = () => {
     }
   };
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-gray-50 to-white">
-      {/* Sidebar - always visible */}
-      <div className="w-16 lg:w-64 border-r bg-white shadow-sm">
-        <AdminSidebar />
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        ></div>
+      )}
+
+      {/* Sidebar - Responsive */}
+      <div className={`
+        w-80 border-r bg-white shadow-lg fixed left-0 top-0 bottom-0 z-30 
+        transform transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        lg:translate-x-0 lg:w-64
+      `}>
+        <AdminSidebar onClose={() => setSidebarOpen(false)} />
       </div>
 
+      {/* Mobile Menu Button - Fixed at top level */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl shadow-2xl text-white hover:shadow-xl transition-all"
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
       {/* Main content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col lg:ml-64">
         <div className="flex-1 p-4 md:p-6 overflow-auto">
-          <div className="w-full max-w-7xl mx-auto space-y-5 md:space-y-6">
+          <div className="w-full max-w-7xl mx-auto space-y-5 md:space-y-6 pt-12 lg:pt-0">
             {/* Header */}
-            <div className="bg-white shadow-lg p-5 md:p-6 rounded-xl border-0">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Application Approvals</h1>
-              <p className="text-sm md:text-base text-gray-600 mt-1">Review and manage member applications</p>
+            <div className="bg-gradient-to-br from-blue-600 to-blue-700 shadow-xl p-6 rounded-2xl border border-blue-500">
+              <h1 className="text-3xl font-bold text-white">Application Approvals</h1>
+              <p className="text-blue-100 mt-1">Review and manage member applications</p>
             </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
-              <Card className="shadow-lg border-0 border-l-4 border-l-blue-500 hover:shadow-xl transition-shadow">
-                <CardContent className="pt-5 md:pt-6">
-                  <div>
-                    <p className="text-sm text-gray-500 font-medium mb-2">Total</p>
-                    <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">{stats.total}</p>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-6 border border-blue-500 shadow-xl hover:shadow-2xl transition-all duration-300">
+                <p className="text-blue-100 text-sm mb-2 font-medium">Total</p>
+                <p className="text-4xl font-bold text-white">{stats.total}</p>
+              </div>
 
-              <Card className="shadow-lg border-0 border-l-4 border-l-amber-500 hover:shadow-xl transition-shadow">
-                <CardContent className="pt-5 md:pt-6">
-                  <div>
-                    <p className="text-sm text-gray-500 font-medium mb-2">Pending</p>
-                    <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-amber-600 to-amber-700 bg-clip-text text-transparent">{stats.pending}</p>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="bg-gradient-to-br from-purple-600 to-purple-700 rounded-2xl p-6 border border-purple-500 shadow-xl hover:shadow-2xl transition-all duration-300">
+                <p className="text-purple-100 text-sm mb-2 font-medium">Pending</p>
+                <p className="text-4xl font-bold text-white">{stats.pending}</p>
+              </div>
 
-              <Card className="shadow-lg border-0 border-l-4 border-l-green-500 hover:shadow-xl transition-shadow">
-                <CardContent className="pt-5 md:pt-6">
-                  <div>
-                    <p className="text-sm text-gray-500 font-medium mb-2">Approved</p>
-                    <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-green-600 to-green-700 bg-clip-text text-transparent">{stats.approved}</p>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="bg-gradient-to-br from-cyan-600 to-cyan-700 rounded-2xl p-6 border border-cyan-500 shadow-xl hover:shadow-2xl transition-all duration-300">
+                <p className="text-cyan-100 text-sm mb-2 font-medium">Approved</p>
+                <p className="text-4xl font-bold text-white">{stats.approved}</p>
+              </div>
 
-              <Card className="shadow-lg border-0 border-l-4 border-l-red-500 hover:shadow-xl transition-shadow">
-                <CardContent className="pt-5 md:pt-6">
-                  <div>
-                    <p className="text-sm text-gray-500 font-medium mb-2">Rejected</p>
-                    <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent">{stats.rejected}</p>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-2xl p-6 border border-indigo-500 shadow-xl hover:shadow-2xl transition-all duration-300">
+                <p className="text-indigo-100 text-sm mb-2 font-medium">Rejected</p>
+                <p className="text-4xl font-bold text-white">{stats.rejected}</p>
+              </div>
             </div>
 
             {/* Tabs */}
