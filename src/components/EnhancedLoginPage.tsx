@@ -4,7 +4,7 @@ import { Input } from "./ui/input";
 import { FaGoogle, FaFacebook, FaApple } from "react-icons/fa";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
-import { authenticateAdmin, setAdminSession } from "@/utils/authService";
+import { adminLogin } from "@/services/adminApi";
 
 const activLogo = "/logo_ACTIVian-removebg-preview.png";
 
@@ -30,40 +30,57 @@ export default function EnhancedLoginPage() {
       setIsLoading(false);
       return;
     }
+    
+    console.log('🔐 Attempting login with:', identifier);
+    
     try {
-      // Attempt admin authentication (supports IDs like block_admin_001)
-      try {
-        const adminAuth = await authenticateAdmin(identifier, password);
-        if (adminAuth.success) {
-          const role = (adminAuth.role as string) || '';
-          const label = (role.split('_')[0] || 'Admin');
-          setAdminSession(
-            identifier,
-            role || 'member',
-            `${label.charAt(0).toUpperCase() + label.slice(1)} Admin`
-          );
+      // First try admin authentication if email looks like admin format
+      if (identifier.includes('@activ.com') || identifier.includes('admin')) {
+        console.log('🔍 Detected admin email format, trying admin login...');
+        try {
+          const response = await adminLogin(identifier, password);
+          console.log('✅ Admin login successful:', response);
+          
+          if (response.success && response.data?.admin) {
+            const admin = response.data.admin;
+            
+            // Store admin data
+            localStorage.setItem('role', admin.role);
+            localStorage.setItem('userName', admin.fullName);
+            localStorage.setItem('isLoggedIn', 'true');
 
-          // Navigate to the appropriate admin dashboard based on role
-          let adminPath = '/block-admin/dashboard';
-          if (role === 'district_admin') adminPath = '/district-admin/dashboard';
-          else if (role === 'state_admin') adminPath = '/state-admin/dashboard';
-          else if (role === 'super_admin') adminPath = '/super-admin/dashboard';
+            // Navigate to appropriate dashboard
+            const role = admin.role;
+            let adminPath = '/block-admin/dashboard';
+            if (role === 'district_admin') adminPath = '/district-admin/dashboard';
+            else if (role === 'state_admin') adminPath = '/state-admin/dashboard';
+            else if (role === 'super_admin') adminPath = '/super-admin/dashboard';
 
-          navigate(adminPath);
-          toast.success('Login successful!');
-          return;
+            toast.success(`Welcome ${admin.fullName}!`);
+            setIsLoading(false);
+            navigate(adminPath);
+            return;
+          }
+        } catch (adminErr: any) {
+          console.error('❌ Admin login failed:', adminErr);
+          console.log('Trying member authentication...');
         }
-      } catch { }
+      }
 
       // Member/backend authentication
+      console.log('🔍 Trying member login...');
       try {
         const res = await fetch('http://localhost:4000/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: identifier, password }),
         });
+        
+        console.log('Member API response status:', res.status);
+        
         if (res.ok) {
           const json = await res.json();
+          console.log('✅ Member login successful:', json);
           const found = json.data?.user || json.user;
           localStorage.setItem('userName', found.fullName || found.firstName || found.email || found.memberId);
           localStorage.setItem('memberId', found.id || found._id || found.memberId);
@@ -71,54 +88,53 @@ export default function EnhancedLoginPage() {
           const role = (typeof found.role === 'string' && found.role) || 'member';
           localStorage.setItem('role', role);
           localStorage.setItem('isLoggedIn', 'true');
-          const isAdmin = ['super_admin', 'state_admin', 'district_admin', 'block_admin'].includes(role);
 
-          let adminPath = '/block-admin/dashboard';
-          if (role === 'district_admin') adminPath = '/district-admin/dashboard';
-          else if (role === 'state_admin') adminPath = '/state-admin/dashboard';
-          else if (role === 'super_admin') adminPath = '/super-admin/dashboard';
-
-          navigate(isAdmin ? adminPath : '/member/dashboard');
+          toast.success(`Welcome ${found.fullName || found.firstName || 'Member'}!`);
+          setIsLoading(false);
+          navigate('/member/dashboard');
           return;
+        } else {
+          const errorData = await res.json().catch(() => ({}));
+          console.log('❌ Member login failed:', errorData);
         }
-      } catch { }
+      } catch (memberErr) {
+        console.error('❌ Member login error:', memberErr);
+      }
 
       // Local users fallback
+      console.log('🔍 Trying localStorage fallback...');
       const usersJson = localStorage.getItem('users');
       if (!usersJson) {
-        toast.error('No registered users found. Please register first.');
+        toast.error('Invalid email or password. Please check your credentials.');
         setIsLoading(false);
         return;
       }
       const users = JSON.parse(usersJson) as Array<any>;
       const found = users.find((u) => u.email === identifier || u.memberId === identifier);
       if (!found) {
-        toast.error('No account matches that email or member ID');
+        toast.error('Invalid email or password. Please check your credentials.');
         setIsLoading(false);
         return;
       }
       if (found.password !== password) {
-        toast.error('Invalid credentials');
+        toast.error('Invalid password. Please try again.');
         setIsLoading(false);
         return;
       }
+      
+      console.log('✅ LocalStorage login successful');
       localStorage.setItem('userName', found.firstName || found.email || found.memberId);
       localStorage.setItem('memberId', found.memberId);
       const role = (typeof found.role === 'string' && found.role) || '';
       localStorage.setItem('role', role || 'member');
       localStorage.setItem('isLoggedIn', 'true');
-      const isAdminFallback = ['super_admin', 'state_admin', 'district_admin', 'block_admin'].includes(role);
 
-      let adminPath = '/block-admin/dashboard';
-      if (role === 'district_admin') adminPath = '/district-admin/dashboard';
-      else if (role === 'state_admin') adminPath = '/state-admin/dashboard';
-      else if (role === 'super_admin') adminPath = '/super-admin/dashboard';
-
-      navigate(isAdminFallback ? adminPath : '/member/dashboard');
+      toast.success(`Welcome ${found.firstName}!`);
+      setIsLoading(false);
+      navigate('/member/dashboard');
     } catch (err) {
-      console.error(err);
+      console.error('❌ Login error:', err);
       toast.error('Login failed. Please try again later.');
-    } finally {
       setIsLoading(false);
     }
   };

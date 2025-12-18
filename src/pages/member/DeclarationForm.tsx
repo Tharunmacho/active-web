@@ -104,6 +104,90 @@ const DeclarationForm = () => {
       if (response.ok) {
         toast.success("Declaration submitted successfully!");
         setStatus("submitted");
+        
+        // Create application submission record
+        const userName = localStorage.getItem("userName") || "Member";
+        const applicationId = `APP-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+        
+        // Get location from personal form
+        let state = "Tamil Nadu";
+        let district = "Tiruvannamalai";
+        let block = "Thandrampet";
+        
+        try {
+          const personalFormRes = await fetch("http://localhost:4000/api/personal-form", {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          if (personalFormRes.ok) {
+            const personalData = await personalFormRes.json();
+            if (personalData.data) {
+              state = personalData.data.state || state;
+              district = personalData.data.district || district;
+              block = personalData.data.block || block;
+            }
+          }
+        } catch (error) {
+          console.log("Using default location");
+        }
+        
+        // Determine member type from business form
+        let memberType = "business";
+        try {
+          const businessFormRes = await fetch("http://localhost:4000/api/business-form", {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          if (businessFormRes.ok) {
+            const businessData = await businessFormRes.json();
+            if (businessData.data?.doingBusiness === "no") {
+              memberType = "aspirant";
+            }
+          }
+        } catch (error) {
+          console.log("Could not determine member type");
+        }
+        
+        const submissionData = {
+          applicationId,
+          userName,
+          submittedAt: new Date().toISOString(),
+          status: "under_review",
+          memberType,
+          state,
+          district,
+          block
+        };
+        
+        // Create application record in backend database
+        try {
+          const applicationResponse = await fetch("http://localhost:4000/api/applications/submit", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              applicationId,
+              userName,
+              memberType,
+              state,
+              district,
+              block,
+              status: "pending_block_approval"
+            }),
+          });
+          
+          if (applicationResponse.ok) {
+            console.log("✅ Application created in database");
+          } else {
+            console.error("⚠️ Failed to create application in database");
+          }
+        } catch (appError) {
+          console.error("❌ Error creating application:", appError);
+        }
+        
+        localStorage.setItem("applicationSubmission", JSON.stringify(submissionData));
+        localStorage.setItem("applicationId", applicationId);
+        
         // Navigate to application submitted page
         setTimeout(() => {
           navigate("/member/application-submitted");

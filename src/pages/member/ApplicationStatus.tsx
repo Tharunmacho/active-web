@@ -2,10 +2,40 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+<<<<<<< Updated upstream
 import { Info, CheckCircle, Clock, FileText, ArrowLeft, User, Mail, Phone, MapPin, Briefcase, Calendar } from 'lucide-react';
+=======
+import { Info, CheckCircle, Clock, FileText, Menu, Loader2 } from 'lucide-react';
+import MemberSidebar from './MemberSidebar';
+import { getUserApplication } from '@/services/applicationApi';
+>>>>>>> Stashed changes
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
+}
+
+interface ApprovalStatus {
+  adminId?: string;
+  adminName?: string;
+  status: string;
+  remarks?: string;
+  actionDate?: string;
+}
+
+interface Application {
+  _id: string;
+  applicationId: string;
+  memberName: string;
+  state: string;
+  district: string;
+  block: string;
+  status: string;
+  approvals: {
+    block: ApprovalStatus;
+    district: ApprovalStatus;
+    state: ApprovalStatus;
+  };
+  submittedAt: string;
 }
 
 export default function ApplicationStatus() {
@@ -13,15 +43,14 @@ export default function ApplicationStatus() {
   const id = q.get('id');
   const navigate = useNavigate();
   const [submissionData, setSubmissionData] = useState<any>(null);
+  const [application, setApplication] = useState<Application | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load submission data from localStorage
-    const data = localStorage.getItem("applicationSubmission");
-    if (data) {
-      setSubmissionData(JSON.parse(data));
-    }
+    loadApplicationData();
   }, []);
 
+<<<<<<< Updated upstream
   // Show admin approval stages screen
   const stages = [
     { id: 1, name: 'Block Level', admin: 'Block Admin Review', status: 'in-progress', icon: CheckCircle, color: 'blue' },
@@ -30,10 +59,113 @@ export default function ApplicationStatus() {
     { id: 4, name: 'Payment', admin: 'Ready for Payment', status: 'pending', icon: FileText, color: 'cyan' }
   ];
 
+=======
+  const loadApplicationData = async () => {
+    setLoading(true);
+    try {
+      // Try to get application from backend
+      const app = await getUserApplication();
+      if (app) {
+        setApplication(app);
+      } else {
+        // Fallback to localStorage
+        const data = localStorage.getItem("applicationSubmission");
+        if (data) {
+          setSubmissionData(JSON.parse(data));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading application:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-blue-600" />
+          <p className="text-gray-700">Loading application status...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Build stages from real application data
+  const getStagesFromApplication = () => {
+    if (!application) {
+      // Fallback to default pending stages
+      return [
+        { id: 1, name: 'Block Admin', admin: 'Pending Assignment', status: 'pending', remarks: '' },
+        { id: 2, name: 'District Admin', admin: 'Pending Assignment', status: 'pending', remarks: '' },
+        { id: 3, name: 'State Admin', admin: 'Pending Assignment', status: 'pending', remarks: '' },
+        { id: 4, name: 'Ready for Payment', admin: 'ACTIV Super Admin', status: 'pending', remarks: '' }
+      ];
+    }
+
+    const stages = [];
+
+    // Block Admin Stage
+    const blockAdmin = application.approvals.block;
+    stages.push({
+      id: 1,
+      name: 'Block Admin',
+      admin: blockAdmin.adminName || `${application.block} Block Admin`,
+      status: blockAdmin.status === 'approved' ? 'completed' : 
+              blockAdmin.status === 'rejected' ? 'rejected' :
+              application.status === 'pending_block_approval' ? 'in-progress' : 'pending',
+      remarks: blockAdmin.remarks || '',
+      actionDate: blockAdmin.actionDate
+    });
+
+    // District Admin Stage
+    const districtAdmin = application.approvals.district;
+    stages.push({
+      id: 2,
+      name: 'District Admin',
+      admin: districtAdmin.adminName || `${application.district} District Admin`,
+      status: districtAdmin.status === 'approved' ? 'completed' :
+              districtAdmin.status === 'rejected' ? 'rejected' :
+              application.status === 'pending_district_approval' ? 'in-progress' : 'pending',
+      remarks: districtAdmin.remarks || '',
+      actionDate: districtAdmin.actionDate
+    });
+
+    // State Admin Stage
+    const stateAdmin = application.approvals.state;
+    stages.push({
+      id: 3,
+      name: 'State Admin',
+      admin: stateAdmin.adminName || `${application.state} State Admin`,
+      status: stateAdmin.status === 'approved' ? 'completed' :
+              stateAdmin.status === 'rejected' ? 'rejected' :
+              application.status === 'pending_state_approval' ? 'in-progress' : 'pending',
+      remarks: stateAdmin.remarks || '',
+      actionDate: stateAdmin.actionDate
+    });
+
+    // Payment Stage
+    stages.push({
+      id: 4,
+      name: 'Ready for Payment',
+      admin: 'ACTIV Super Admin',
+      status: application.status === 'approved' ? 'completed' : 'pending',
+      remarks: '',
+      actionDate: undefined
+    });
+
+    return stages;
+  };
+
+  const stages = getStagesFromApplication();
+>>>>>>> Stashed changes
   const completedStages = stages.filter(s => s.status === 'completed').length;
   const totalStages = stages.length;
   const progressPercentage = (completedStages / totalStages) * 100;
 
+<<<<<<< Updated upstream
   // Application data
   const applicationData = {
     applicationId: 'ACTV2024001',
@@ -261,6 +393,183 @@ export default function ApplicationStatus() {
             </div>
           </CardContent>
         </Card>
+=======
+  // Check if application was rejected
+  const isRejected = stages.some(s => s.status === 'rejected');
+
+  // If coming from query parameter (old flow), show approval stages
+  if (id || application) {
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-100 to-blue-200 p-4 md:p-6">
+        <div className="max-w-2xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-6">
+            <h1 className="text-3xl font-bold mb-2">Application Status</h1>
+            <p className="text-gray-700">Track your membership approval progress</p>
+          </div>
+
+          {/* Stage cards - existing code continues */}
+          <Card className="rounded-2xl shadow-lg mb-6 bg-white">
+            <CardContent className="p-6">
+              <h2 className="text-xl font-bold text-center mb-4">Overall Progress</h2>
+              <p className="text-center text-gray-600 mb-4">{completedStages} of {totalStages} stages completed</p>
+              
+              {/* Progress Bar */}
+              <div className="w-full bg-gray-200 rounded-full h-3 mb-6">
+                <div 
+                  className="bg-blue-600 h-3 rounded-full transition-all duration-300" 
+                  style={{ width: `${progressPercentage}%` }}
+                />
+              </div>
+
+              {/* Stage Indicators */}
+              <div className="grid grid-cols-4 gap-4">
+                {stages.map((stage, index) => {
+                  const isCompleted = stage.status === 'completed';
+                  const isInProgress = stage.status === 'in-progress';
+                  
+                  return (
+                    <div key={stage.id} className="flex flex-col items-center">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 font-bold text-sm ${
+                        isCompleted 
+                          ? 'bg-green-600 text-white' 
+                          : isInProgress 
+                          ? 'bg-blue-600 text-white' 
+                          : 'bg-gray-300 text-gray-600'
+                      }`}>
+                        {isCompleted ? '✓' : index + 1}
+                      </div>
+                      <p className="text-xs text-center text-gray-700 font-medium leading-tight">
+                        {stage.name}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Review Stage Cards */}
+          <div className="space-y-4 mb-6">
+            {stages.map((stage) => {
+              const isCompleted = stage.status === 'completed';
+              const isInProgress = stage.status === 'in-progress';
+
+              return (
+                <Card key={stage.id} className="rounded-2xl shadow-lg bg-white">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold mb-1">{stage.name} Review</h3>
+                        <p className="text-sm text-gray-600">{stage.admin}</p>
+                      </div>
+                      <span className={`px-4 py-1.5 rounded-full text-sm font-semibold ${
+                        isCompleted 
+                          ? 'bg-green-100 text-green-700' 
+                          : isInProgress 
+                          ? 'bg-blue-100 text-blue-700' 
+                          : 'bg-pink-100 text-pink-700'
+                      }`}>
+                        {isCompleted ? 'Approved' : isInProgress ? 'In Progress' : 'Pending'}
+                      </span>
+                    </div>
+                    
+                    {isCompleted && stage.remarks && (
+                      <div className="mt-4 bg-green-50 border border-green-200 rounded-xl p-4">
+                        <div className="flex gap-3">
+                          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-semibold text-green-800">Approval Remarks:</p>
+                            <p className="text-sm text-green-700 mt-1">{stage.remarks}</p>
+                            {stage.actionDate && (
+                              <p className="text-xs text-green-600 mt-1">
+                                Review Date: {new Date(stage.actionDate).toLocaleDateString()}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {isInProgress && (
+                      <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                        <div className="flex gap-3">
+                          <Info className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                          <p className="text-sm text-yellow-800">
+                            Your application is currently being reviewed. You will be notified once this stage is complete.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {stage.status === 'rejected' && stage.remarks && (
+                      <div className="mt-4 bg-red-50 border border-red-200 rounded-xl p-4">
+                        <div className="flex gap-3">
+                          <Info className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-semibold text-red-800">Rejection Reason:</p>
+                            <p className="text-sm text-red-700 mt-1">{stage.remarks}</p>
+                            {stage.actionDate && (
+                              <p className="text-xs text-red-600 mt-1">
+                                Date: {new Date(stage.actionDate).toLocaleDateString()}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {isRejected && (
+            <div className="mb-6 bg-red-50 border-2 border-red-200 rounded-2xl p-6">
+              <h3 className="text-lg font-bold text-red-800 mb-2">Application Rejected</h3>
+              <p className="text-sm text-red-700">
+                Your application has been rejected. Please review the remarks above and contact support if you have questions.
+              </p>
+            </div>
+          )}
+
+          <Button 
+            variant="outline"
+            className="w-full bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 py-6 text-lg font-semibold rounded-2xl"
+            onClick={() => navigate('/member/dashboard')}
+          >
+            Back to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // No application found - show default message
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-blue-200 p-4 md:p-6">
+      <div className="max-w-2xl mx-auto">
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold mb-2">Application Status</h1>
+          <p className="text-gray-700">No application found</p>
+        </div>
+
+        <Card className="rounded-2xl shadow-lg mb-6 bg-white">
+          <CardContent className="p-6 text-center">
+            <Info className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+            <p className="text-gray-600 mb-4">
+              You haven't submitted an application yet. Please complete your profile forms to submit an application.
+            </p>
+            <Button
+              onClick={() => navigate('/member/dashboard')}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Go to Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+>>>>>>> Stashed changes
       </div>
     </div>
   );

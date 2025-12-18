@@ -12,6 +12,8 @@ import financialFormRoutes from './routes/financialFormRoutes.js';
 import declarationFormRoutes from './routes/declarationFormRoutes.js';
 import companyRoutes from './routes/companyRoutes.js';
 import productRoutes from './routes/productRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+import applicationRoutes from './routes/applicationRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 // Load env vars
@@ -35,6 +37,8 @@ app.use('/api/financial-form', financialFormRoutes);
 app.use('/api/declaration-form', declarationFormRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/applications', applicationRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

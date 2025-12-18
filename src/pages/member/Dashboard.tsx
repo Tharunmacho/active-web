@@ -154,13 +154,37 @@ const MemberDashboard = () => {
           const userName = localStorage.getItem("userName") || "Member";
           const applicationId = `APP-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
           
+          // Get location from personal form data if available
+          let state = "Tamil Nadu";
+          let district = "Tiruvannamalai";
+          let block = "Thandrampet";
+          
+          try {
+            const personalFormRes = await fetch("http://localhost:4000/api/personal-form", {
+              headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (personalFormRes.ok) {
+              const personalData = await personalFormRes.json();
+              if (personalData.data) {
+                state = personalData.data.state || state;
+                district = personalData.data.district || district;
+                block = personalData.data.block || block;
+              }
+            }
+          } catch (error) {
+            console.log("Could not fetch location from personal form");
+          }
+          
           const submissionData = {
             applicationId,
             userName,
             submittedAt: new Date().toISOString(),
             status: "under_review",
             formsCompleted: completed,
-            memberType: isDoingBusiness ? "business" : "aspirant"
+            memberType: isDoingBusiness ? "business" : "aspirant",
+            state,
+            district,
+            block
           };
           
           localStorage.setItem("applicationSubmission", JSON.stringify(submissionData));
@@ -228,31 +252,59 @@ const MemberDashboard = () => {
               </div>
             </div>
 
-            {/* Complete Your Profile Card - Professional Blue */}
-            <Card className="shadow-lg border-0 w-full mb-6 bg-blue-600 text-white">
-              <CardContent className="p-6 md:p-8">
-                <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                  <div className="flex-1">
-                    <h3 className="text-2xl md:text-3xl font-bold mb-3">Complete Your Profile</h3>
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="text-4xl font-bold">{completionPercentage}%</div>
-                      <span className="text-sm opacity-90">completed</span>
+            {/* Application Status or Profile Completion Card */}
+            {isFullyCompleted ? (
+              <Card className="shadow-lg border-0 w-full mb-6 bg-green-600 text-white">
+                <CardContent className="p-6 md:p-8">
+                  <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                    <div className="flex-1">
+                      <h3 className="text-2xl md:text-3xl font-bold mb-3">Application Submitted</h3>
+                      <p className="text-sm opacity-90 mb-4">
+                        Your membership application is currently under review. Track your approval progress.
+                      </p>
+                      <div className="mt-4">
+                        <Button 
+                          className="bg-white text-green-600 hover:bg-gray-100 font-semibold px-8 py-2" 
+                          onClick={() => navigate('/member/application-status')}
+                        >
+                          View Status
+                        </Button>
+                      </div>
                     </div>
-                    <p className="text-sm opacity-90 mb-4">Unlock all features by completing your profile.</p>
-                    <div className="mt-4">
-                      <Button className="bg-white text-blue-600 hover:bg-gray-100 font-semibold px-8 py-2" onClick={() => navigate('/member/profile')}>
-                        Complete Profile
-                      </Button>
+                    <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-xl flex items-center justify-center shadow-lg">
+                      <svg className="w-12 h-12 md:w-16 md:h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="shadow-lg border-0 w-full mb-6 bg-blue-600 text-white">
+                <CardContent className="p-6 md:p-8">
+                  <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                    <div className="flex-1">
+                      <h3 className="text-2xl md:text-3xl font-bold mb-3">Complete Your Profile</h3>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="text-4xl font-bold">{completionPercentage}%</div>
+                        <span className="text-sm opacity-90">completed</span>
+                      </div>
+                      <p className="text-sm opacity-90 mb-4">Unlock all features by completing your profile.</p>
+                      <div className="mt-4">
+                        <Button className="bg-white text-blue-600 hover:bg-gray-100 font-semibold px-8 py-2" onClick={() => navigate('/member/profile')}>
+                          Complete Profile
+                        </Button>
+                      </div>
+                    </div>
                     <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-xl flex items-center justify-center shadow-lg">
                       <svg className="w-12 h-12 md:w-16 md:h-16 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                     </div>
-                </div>
-              </CardContent>
-            </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Your Business Account Card - Professional Purple */}
             <Card className="shadow-lg border-0 w-full mb-4 md:mb-6 bg-purple-600 text-white">
