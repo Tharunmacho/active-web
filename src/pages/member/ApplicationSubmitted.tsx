@@ -29,7 +29,6 @@ export default function ApplicationSubmitted() {
       </div>
     );
   }
-
   const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
