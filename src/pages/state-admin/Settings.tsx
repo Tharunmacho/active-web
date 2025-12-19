@@ -17,7 +17,7 @@ import {
     MapPin,
     Shield
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
 
@@ -26,10 +26,15 @@ const Settings = () => {
     const [activeStatus, setActiveStatus] = useState(true);
     const navigate = useNavigate();
 
-    // Get user info from localStorage
-    const userName = localStorage.getItem('userName') || 'District Admin';
-    const userEmail = localStorage.getItem('userEmail') || 'admin@example.com';
-    const role = localStorage.getItem('role') || 'district_admin';
+    // State for admin info
+    const [adminInfo, setAdminInfo] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    
+    // Get fallback info from localStorage
+    const userName = adminInfo?.fullName || localStorage.getItem('userName') || 'State Admin';
+    const userEmail = adminInfo?.email || localStorage.getItem('userEmail') || 'admin@example.com';
+    const role = localStorage.getItem('role') || 'state_admin';
+    const adminLocation = adminInfo?.state || 'No area assigned';
 
     const roleLabel = useMemo(() => {
         if (role === 'block_admin') return 'Block Admin';
@@ -40,12 +45,8 @@ const Settings = () => {
     }, [role]);
 
     const avatarInitials = useMemo(() => {
-        if (role === 'block_admin') return 'BA';
-        if (role === 'district_admin') return 'DA';
-        if (role === 'state_admin') return 'SA';
-        if (role === 'super_admin') return 'SU';
-        return userName.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
-    }, [role, userName]);
+        return userName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+    }, [userName]);
 
     const handleLogout = () => {
         // Clear all local storage items related to login
@@ -57,18 +58,83 @@ const Settings = () => {
         localStorage.removeItem('adminId');
         localStorage.removeItem('sessionStart');
         localStorage.removeItem('userEmail');
+        localStorage.removeItem('adminToken');
 
         // Navigate to main login page
         navigate('/login');
     };
 
-    // Admin stats (these would come from API in real app)
-    const stats = {
-        totalMembers: 15,
-        pendingApprovals: 5,
-        approved: 5,
-        rejected: 5
-    };
+    // Fetch admin info
+    useEffect(() => {
+        const fetchAdminData = async () => {
+            try {
+                setLoading(true);
+                const token = localStorage.getItem('adminToken');
+                
+                if (!token) {
+                    setLoading(false);
+                    return;
+                }
+
+                // Fetch admin info
+                const adminResponse = await fetch('http://localhost:4000/api/admin/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+
+                if (adminResponse.ok) {
+                    const adminData = await adminResponse.json();
+                    console.log('👤 Admin info:', adminData);
+                    setAdminInfo(adminData.data);
+                }
+            } catch (error) {
+                console.error('Error fetching admin data:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchAdminData();
+    }, []);
+
+    // Fetch real stats from backend
+    const [stats, setStats] = useState({
+        totalMembers: 0,
+        pendingApprovals: 0,
+        approved: 0,
+        rejected: 0
+    });
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const token = localStorage.getItem('adminToken');
+                if (!token) return;
+
+                const response = await fetch('http://localhost:4000/api/admin/dashboard/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('📊 State Admin Settings stats:', data);
+                    setStats({
+                        totalMembers: data.data.total,
+                        pendingApprovals: data.data.pending,
+                        approved: data.data.approved,
+                        rejected: data.data.rejected
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+            }
+        };
+
+        fetchStats();
+    }, []);
 
     return (
         <div className="min-h-screen flex bg-gradient-to-br from-gray-100 to-gray-50">
@@ -131,7 +197,7 @@ const Settings = () => {
                                             </div>
                                             <div className="flex items-center gap-2 text-gray-600">
                                                 <MapPin className="w-4 h-4" />
-                                                <span className="text-sm">No area assigned</span>
+                                                <span className="text-sm">{adminLocation}</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3 mt-4 justify-center md:justify-start">

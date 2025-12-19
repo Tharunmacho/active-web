@@ -1,25 +1,121 @@
-﻿import { Link } from "react-router-dom";
+﻿import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   FileText, Users, CheckCircle, XCircle,
-  Clock
+  Clock, Loader2, LogOut
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import AdminSidebar from "./AdminSidebar";
+import { getAdminInfo, getDashboardStats, getApplications, getStoredAdminData, adminLogout } from "@/services/adminApi";
+import { toast } from "sonner";
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const recentApplications = [
-    { id: "Actv2024001", name: "John Doe", status: "approved", date: "2024-01-15", image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=96&h=96&fit=crop&crop=face", size: "12 MB" },
-    { id: "Actv2024002", name: "Jane Smith", status: "pending", date: "2024-01-14", image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop&crop=face", size: "8 MB" },
-    { id: "Actv2024003", name: "Robert Brown", status: "approved", date: "2024-01-13", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop&crop=face", size: "15 MB" },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [adminInfo, setAdminInfo] = useState<any>(null);
+  const [stats, setStats] = useState({
+    totalMembers: 0,
+    pending: 0,
+    approved: 0,
+    rejected: 0
+  });
+  const [recentApplications, setRecentApplications] = useState<any[]>([]);
+  const [applications, setApplications] = useState<any[]>([]);
 
-  const role = (typeof window !== 'undefined' ? localStorage.getItem('role') : '') || '';
-  const userName = (typeof window !== 'undefined' ? localStorage.getItem('userName') : '') || 'Admin';
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      // First, try to get stored admin data
+      const storedAdmin = getStoredAdminData();
+      if (storedAdmin) {
+        setAdminInfo(storedAdmin);
+      }
+
+      // Fetch real admin info from backend
+      const adminResponse = await getAdminInfo();
+      if (adminResponse.success) {
+        const admin = adminResponse.data;
+        const enrichedAdmin = {
+          ...admin,
+          state: admin.meta?.state || admin.state,
+          district: admin.meta?.district || admin.district,
+          block: admin.meta?.block || admin.block
+        };
+        setAdminInfo(enrichedAdmin);
+        localStorage.setItem('adminData', JSON.stringify(enrichedAdmin));
+      }
+
+      // Fetch dashboard statistics
+      const statsResponse = await getDashboardStats();
+      if (statsResponse.success) {
+        setStats({
+          totalMembers: statsResponse.data.total || 0,
+          pending: statsResponse.data.pending || 0,
+          approved: statsResponse.data.approved || 0,
+          rejected: statsResponse.data.rejected || 0
+        });
+      }
+
+      // Fetch recent applications (state admin sees only district-approved applications)
+      console.log('🔄 Fetching applications from backend...');
+      const token = localStorage.getItem('adminToken');
+      const applicationsResponse = await fetch('http://localhost:4000/api/applications/all', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }).then(res => res.json());
+      console.log('📦 Full Applications response:', applicationsResponse);
+      console.log('📊 Response details:', {
+        success: applicationsResponse.success,
+        count: applicationsResponse.count,
+        dataLength: applicationsResponse.data?.length,
+        data: applicationsResponse.data,
+        firstApp: applicationsResponse.data?.[0]
+      });
+      if (applicationsResponse.success && applicationsResponse.data) {
+        // Filter to show only applications approved by district (pending_state_approval, approved, or state rejected)
+        const filteredApps = applicationsResponse.data.filter((app: any) => 
+          app.status === 'pending_state_approval' || 
+          app.status === 'approved' ||
+          app.approvals?.state?.status === 'rejected'
+        );
+        console.log(`✅ Setting ${filteredApps.length} district-approved applications to state`);
+        console.log('📋 Applications data:', filteredApps);
+        setRecentApplications(filteredApps.slice(0, 3));
+        
+        // Also set applications for the page
+        setApplications(applicationsResponse.data);
+      } else {
+        console.log('⚠️ No applications found or error');
+        setRecentApplications([]);
+      }
+
+    } catch (error: any) {
+      console.error('Error loading dashboard data:', error);
+      // Don't show error toast for missing token on initial load
+      if (!error.message?.includes('No admin token')) {
+        toast.error(error.message || 'Failed to load dashboard data');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    adminLogout();
+    toast.success('Logged out successfully');
+    navigate('/');
+  };
+
+  const role = adminInfo?.role || '';
+  const userName = adminInfo?.fullName || 'Admin';
 
   const roleLabel = useMemo(() => {
     if (role === 'block_admin') return 'Block Admin';
@@ -38,29 +134,18 @@ const AdminDashboard = () => {
   }, [role]);
 
   const dashboardSubtitle = useMemo(() => {
-    if (role === 'block_admin') return 'Manage Block Level';
-    if (role === 'district_admin') return 'Manage District Level';
-    if (role === 'state_admin') return 'Manage State Level';
-    if (role === 'super_admin') return 'Manage All Levels';
+    // For state admin, show only the state
+    const state = adminInfo?.state || adminInfo?.meta?.state;
+    if (state && state !== 'undefined' && state !== 'null') {
+      return state;
+    }
     return 'Manage your dashboard';
-  }, [role]);
+  }, [adminInfo]);
 
   const avatarInitials = useMemo(() => {
-    if (role === 'block_admin') return 'BA';
-    if (role === 'district_admin') return 'DA';
-    if (role === 'state_admin') return 'SA';
-    if (role === 'super_admin') return 'SU';
     const parts = (userName || 'A').trim().split(/\s+/);
     return parts.map(p => p[0]).join('').slice(0, 2).toUpperCase();
-  }, [role, userName]);
-
-  // Stats data - can be fetched from API
-  const stats = {
-    totalMembers: 0,
-    pending: 0,
-    approved: 0,
-    rejected: 0
-  };
+  }, [userName]);
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-gray-100 to-gray-50">
@@ -98,28 +183,37 @@ const AdminDashboard = () => {
 
         {/* Main scrollable content */}
         <div className="flex-1 flex flex-col overflow-auto">
-          {/* TOP SECTION - White Header with Shadow */}
-          <div className="bg-white p-6 lg:p-10 shadow-lg">
-            <div className="max-w-7xl mx-auto pt-12 lg:pt-0">
-
-              {/* Header Section */}
-              <div className="mb-8">
-                <div className="flex flex-col md:flex-row items-center md:items-start gap-4 text-center md:text-left">
-                  <Avatar className="w-16 h-16 ring-4 ring-blue-100">
-                    <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop&crop=face" className="object-cover" />
-                    <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold text-2xl">
-                      {avatarInitials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{dashboardTitle}</h1>
-                    <p className="text-gray-600 text-base md:text-lg">{dashboardSubtitle}</p>
-                  </div>
-                </div>
+          {loading ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-blue-600" />
+                <p className="text-gray-600">Loading dashboard...</p>
               </div>
+            </div>
+          ) : (
+            <>
+              {/* TOP SECTION - White Header with Shadow */}
+              <div className="bg-white p-6 lg:p-10 shadow-lg">
+                <div className="max-w-7xl mx-auto pt-12 lg:pt-0">
 
-              {/* Statistics Section */}
-              <div>
+                  {/* Header Section */}
+                  <div className="mb-8">
+                    <div className="flex flex-col md:flex-row items-center md:items-start gap-4 text-center md:text-left">
+                      <Avatar className="w-16 h-16 ring-4 ring-blue-100">
+                        <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold text-2xl">
+                          {avatarInitials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{userName}</h1>
+                        <p className="text-gray-600 text-base md:text-lg">{roleLabel}</p>
+                        <p className="text-sm text-gray-500 mt-1">{dashboardSubtitle}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Statistics Section */}
+                  <div>
                 <h2 className="text-xl font-semibold mb-4 text-gray-900">Overview Statistics</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-6 border border-blue-500 shadow-xl hover:shadow-2xl transition-all duration-300">
@@ -152,7 +246,7 @@ const AdminDashboard = () => {
                   <h2 className="text-2xl font-bold text-gray-900">Recent Activity</h2>
                   <p className="text-gray-600 text-sm">Latest application submissions</p>
                 </div>
-                <Link to="/admin/applications">
+                <Link to="/state-admin/approvals">
                   <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg px-6 shadow-lg">
                     View All
                   </Button>
@@ -169,55 +263,69 @@ const AdminDashboard = () => {
                 </div>
 
                 <div className="space-y-3">
-                  {recentApplications.map((app) => (
-                    <div
-                      key={app.id}
-                      className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-all duration-200 shadow-sm border border-blue-100"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Avatar className="w-10 h-10 ring-2 ring-blue-200">
-                          <AvatarImage src={app.image} className="object-cover" />
-                          <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold text-sm">
-                            {app.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
+                  {recentApplications.length > 0 ? (
+                    recentApplications.map((app) => (
+                      <div
+                        key={app._id}
+                        className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-all duration-200 shadow-sm border border-blue-100"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Avatar className="w-10 h-10 ring-2 ring-blue-200">
+                            <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold text-sm">
+                              {app.memberName.split(' ').map((n: string) => n[0]).join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-semibold text-gray-900 text-sm">{app.memberName}</p>
+                            <p className="text-xs text-gray-600">{app.applicationId}</p>
+                          </div>
+                        </div>
                         <div>
-                          <p className="font-semibold text-gray-900 text-sm">{app.name}</p>
-                          <p className="text-xs text-gray-600">{app.id}</p>
+                          <Badge
+                            variant="outline"
+                            className={
+                              app.status === 'approved'
+                                ? "bg-green-500 text-white hover:bg-green-600 border-0 shadow-md"
+                                : app.status === 'rejected'
+                                ? "bg-red-500 text-white hover:bg-red-600 border-0 shadow-md"
+                                : "bg-yellow-500 text-white border-0 shadow-md"
+                            }
+                          >
+                            {app.status === 'approved' ? 'Approved' :
+                             app.status === 'rejected' ? 'Rejected' : 'Pending'}
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-gray-700 font-medium">{app.memberType === 'business' ? 'Business' : 'Aspirant'}</div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-700 font-medium">
+                            {new Date(app.submittedAt).toLocaleDateString()}
+                          </span>
+                          <Link to={`/state-admin/approvals`}>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-blue-600 hover:bg-blue-50 font-medium"
+                            >
+                              View
+                            </Button>
+                          </Link>
                         </div>
                       </div>
-                      <div>
-                        <Badge
-                          variant={app.status === "approved" ? "default" : "outline"}
-                          className={
-                            app.status === "approved"
-                              ? "bg-green-500 text-white hover:bg-green-600 border-0 shadow-md"
-                              : "bg-orange-500 text-white border-0 shadow-md"
-                          }
-                        >
-                          {app.status === "approved" ? "Approved" : "Pending"}
-                        </Badge>
-                      </div>
-                      <div className="text-sm text-gray-700 font-medium">{app.size}</div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-700 font-medium">{app.date}</span>
-                        <Link to={`/admin/application/${app.id}`}>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-blue-600 hover:bg-blue-50 font-medium"
-                          >
-                            View
-                          </Button>
-                        </Link>
-                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <FileText className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                      <p>No applications found</p>
+                      <p className="text-sm">Applications from your jurisdiction will appear here</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
 
             </div>
           </div>
+            </>
+          )}
         </div>
       </div>
     </div>

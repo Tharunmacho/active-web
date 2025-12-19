@@ -90,11 +90,9 @@ const AdminDashboard = () => {
 
     } catch (error: any) {
       console.error('Error loading dashboard data:', error);
-      toast.error(error.message || 'Failed to load dashboard data');
-      
-      // If unauthorized, redirect to login
-      if (error.message?.includes('Session expired') || error.message?.includes('No admin token')) {
-        navigate('/');
+      // Don't show error toast for missing token on initial load
+      if (!error.message?.includes('No admin token')) {
+        toast.error(error.message || 'Failed to load dashboard data');
       }
     } finally {
       setLoading(false);
@@ -200,14 +198,6 @@ const AdminDashboard = () => {
                         <p className="text-gray-600 text-base md:text-lg">{roleLabel}</p>
                         <p className="text-sm text-gray-500 mt-1">{dashboardSubtitle}</p>
                       </div>
-                      <Button
-                        variant="outline"
-                        onClick={handleLogout}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Logout
-                      </Button>
                     </div>
                   </div>
 
@@ -245,7 +235,7 @@ const AdminDashboard = () => {
                   <h2 className="text-2xl font-bold text-gray-900">Recent Activity</h2>
                   <p className="text-gray-600 text-sm">Latest application submissions</p>
                 </div>
-                <Link to="/admin/applications">
+                <Link to="/block-admin/approvals">
                   <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg px-6 shadow-lg">
                     View All
                   </Button>
@@ -283,17 +273,17 @@ const AdminDashboard = () => {
                           <Badge
                             variant="outline"
                             className={
-                              app.status.includes('approved')
+                              (app.approvals?.block?.status === 'approved' || app.status === 'approved')
                                 ? "bg-green-500 text-white hover:bg-green-600 border-0 shadow-md"
-                                : app.status === 'rejected'
+                                : (app.approvals?.block?.status === 'rejected' || app.status === 'rejected')
                                 ? "bg-red-500 text-white hover:bg-red-600 border-0 shadow-md"
-                                : "bg-orange-500 text-white border-0 shadow-md"
+                                : "bg-yellow-500 text-white border-0 shadow-md"
                             }
                           >
-                            {app.status.includes('block') ? 'Pending Review' :
-                             app.status.includes('district') ? 'At District' :
-                             app.status.includes('state') ? 'At State' :
-                             app.status === 'approved' ? 'Approved' : 'Rejected'}
+                            {app.approvals?.block?.status === 'approved' ? 'Approved' :
+                             app.approvals?.block?.status === 'rejected' ? 'Rejected' :
+                             app.status === 'approved' ? 'Approved' :
+                             app.status === 'rejected' ? 'Rejected' : 'Pending'}
                           </Badge>
                         </div>
                         <div className="text-sm text-gray-700 font-medium">{app.memberType === 'business' ? 'Business' : 'Aspirant'}</div>

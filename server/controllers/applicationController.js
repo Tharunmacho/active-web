@@ -38,34 +38,53 @@ const getApplications = async (req, res) => {
     });
 
     // Filter based on admin role and location - show ALL applications from their jurisdiction
+    // Use case-insensitive regex to handle spelling variations
     if (admin.role === 'block_admin') {
       // Block admin sees ALL applications from their block
       query = {
+        state: new RegExp(`^${adminState}$`, 'i'),
+        district: new RegExp(`^${adminDistrict}$`, 'i'),
+        block: new RegExp(`^${adminBlock}$`, 'i')
+      };
+      console.log('🔍 Block Admin Query (case-insensitive):', {
         state: adminState,
         district: adminDistrict,
         block: adminBlock
-      };
-      console.log('🔍 Block Admin Query:', JSON.stringify(query, null, 2));
+      });
     } else if (admin.role === 'district_admin') {
-      // District admin sees ALL applications from their district
+      // District admin sees ONLY applications pending district approval (approved by block admin)
       query = {
-        state: adminState,
-        district: adminDistrict
+        state: new RegExp(`^${adminState}$`, 'i'),
+        district: new RegExp(`^${adminDistrict}$`, 'i'),
+        status: 'pending_district_approval'
       };
+      console.log('🔍 District Admin Query (WITH STATUS FILTER):', {
+        state: adminState,
+        district: adminDistrict,
+        status: 'pending_district_approval'
+      });
+      console.log('🔍 District Admin Query (with status filter):', {
+        state: adminState,
+        district: adminDistrict,
+        status: 'pending_district_approval'
+      });
     } else if (admin.role === 'state_admin') {
-      // State admin sees ALL applications from their state
+      // State admin sees ONLY applications pending state approval (approved by district admin)
       query = {
-        state: adminState
+        state: new RegExp(`^${adminState}$`, 'i'),
+        status: 'pending_state_approval'
       };
     } else if (admin.role === 'super_admin') {
       // Super admin can see all
       query = {};
     }
 
-    console.log('🔍 Query for applications:', query);
+    console.log('🔍 Query for applications (regex):', query);
 
     const applications = await Application.find(query)
-      .populate('userId', 'email')
+      .populate('userId', 'email phone')
+      .populate('personalFormId')
+      .populate('businessFormId')
       .sort({ submittedAt: -1 });
 
     console.log(`✅ Found ${applications.length} applications matching query`);
@@ -88,6 +107,70 @@ const getApplications = async (req, res) => {
 
   } catch (error) {
     console.error('Get applications error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get ALL applications for admin's jurisdiction (no status filter)
+// @route   GET /api/applications/all
+// @access  Private (Admin only)
+const getAllApplications = async (req, res) => {
+  try {
+    const admin = req.user;
+    let query = {};
+
+    console.log('📋 Getting ALL applications for admin:', {
+      email: admin.email,
+      role: admin.role
+    });
+
+    // Extract location from admin.meta
+    const adminState = admin.meta?.state;
+    const adminDistrict = admin.meta?.district;
+    const adminBlock = admin.meta?.block;
+
+    // Filter based on admin role and location - NO STATUS FILTER
+    if (admin.role === 'block_admin') {
+      query = {
+        state: new RegExp(`^${adminState}$`, 'i'),
+        district: new RegExp(`^${adminDistrict}$`, 'i'),
+        block: new RegExp(`^${adminBlock}$`, 'i')
+      };
+    } else if (admin.role === 'district_admin') {
+      query = {
+        state: new RegExp(`^${adminState}$`, 'i'),
+        district: new RegExp(`^${adminDistrict}$`, 'i')
+      };
+    } else if (admin.role === 'state_admin') {
+      query = {
+        state: new RegExp(`^${adminState}$`, 'i')
+      };
+    } else if (admin.role === 'super_admin') {
+      query = {};
+    }
+
+    console.log('🔍 Query for ALL applications:', query);
+
+    const applications = await Application.find(query)
+      .populate('userId', 'email phone')
+      .populate('personalFormId')
+      .populate('businessFormId')
+      .sort({ submittedAt: -1 });
+
+    console.log(`✅ Found ${applications.length} total applications`);
+
+    res.status(200).json({
+      success: true,
+      count: applications.length,
+      data: applications
+    });
+
+  } catch (error) {
+    console.error('Get all applications error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
@@ -294,18 +377,21 @@ function checkAdminAuthority(admin, application) {
   const adminDistrict = admin.meta?.district;
   const adminBlock = admin.meta?.block;
   
+  // Use case-insensitive comparison for location matching
+  const stateMatch = adminState?.toLowerCase() === application.state?.toLowerCase();
+  const districtMatch = adminDistrict?.toLowerCase() === application.district?.toLowerCase();
+  const blockMatch = adminBlock?.toLowerCase() === application.block?.toLowerCase();
+  
   if (admin.role === 'state_admin') {
-    return adminState === application.state;
+    return stateMatch;
   }
   
   if (admin.role === 'district_admin') {
-    return adminState === application.state && adminDistrict === application.district;
+    return stateMatch && districtMatch;
   }
   
   if (admin.role === 'block_admin') {
-    return adminState === application.state && 
-           adminDistrict === application.district && 
-           adminBlock === application.block;
+    return stateMatch && districtMatch && blockMatch;
   }
   
   return false;
@@ -324,23 +410,109 @@ const getApplicationStats = async (req, res) => {
     const adminDistrict = admin.meta?.district;
     const adminBlock = admin.meta?.block;
 
-    // Filter by admin location
+    // Filter by admin location using case-insensitive regex
+    // District and State admins should only see stats for their approval level
     if (admin.role === 'block_admin') {
-      baseQuery = { state: adminState, district: adminDistrict, block: adminBlock };
+      baseQuery = { 
+        state: new RegExp(`^${adminState}$`, 'i'),
+        district: new RegExp(`^${adminDistrict}$`, 'i'),
+        block: new RegExp(`^${adminBlock}$`, 'i')
+      };
     } else if (admin.role === 'district_admin') {
-      baseQuery = { state: adminState, district: adminDistrict };
+      // District admin stats: only applications at district level
+      baseQuery = { 
+        state: new RegExp(`^${adminState}$`, 'i'),
+        district: new RegExp(`^${adminDistrict}$`, 'i'),
+        status: 'pending_district_approval'
+      };
     } else if (admin.role === 'state_admin') {
-      baseQuery = { state: adminState };
+      // State admin stats: only applications at state level
+      baseQuery = { 
+        state: new RegExp(`^${adminState}$`, 'i'),
+        status: 'pending_state_approval'
+      };
     }
 
-    const stats = {
-      total: await Application.countDocuments(baseQuery),
-      pending: await Application.countDocuments({ ...baseQuery, status: { $regex: /^pending/ } }),
-      approved: await Application.countDocuments({ ...baseQuery, status: 'approved' }),
-      rejected: await Application.countDocuments({ ...baseQuery, status: 'rejected' }),
-      aspirants: await Application.countDocuments({ ...baseQuery, memberType: 'aspirant' }),
-      business: await Application.countDocuments({ ...baseQuery, memberType: 'business' })
-    };
+    // For district/state admins, calculate stats based on their approval status
+    let stats;
+    if (admin.role === 'district_admin') {
+      // District admin stats: ALL applications approved by block
+      const allDistrictApps = await Application.find({
+        state: new RegExp(`^${adminState}$`, 'i'),
+        district: new RegExp(`^${adminDistrict}$`, 'i'),
+        $or: [
+          { status: 'pending_district_approval' },
+          { status: 'pending_state_approval' },
+          { status: 'approved' },
+          { 'approvals.district.status': 'rejected' }
+        ]
+      });
+      
+      console.log('📊 District Admin Stats Query:', {
+        state: adminState,
+        district: adminDistrict,
+        foundApps: allDistrictApps.length,
+        appIds: allDistrictApps.map(app => app.applicationId)
+      });
+      
+      stats = {
+        total: allDistrictApps.length,
+        pending: allDistrictApps.filter(app => app.approvals?.district?.status !== 'approved' && app.approvals?.district?.status !== 'rejected').length,
+        approved: allDistrictApps.filter(app => app.approvals?.district?.status === 'approved').length,
+        rejected: allDistrictApps.filter(app => app.approvals?.district?.status === 'rejected').length,
+        aspirants: allDistrictApps.filter(app => app.memberType === 'aspirant').length,
+        business: allDistrictApps.filter(app => app.memberType === 'business').length
+      };
+      
+      console.log('📊 District Admin Stats Result:', stats);
+    } else if (admin.role === 'state_admin') {
+      // State admin stats: ALL applications approved by district (pending_state_approval, approved, or state rejected)
+      const query = {
+        state: new RegExp(`^${adminState}$`, 'i'),
+        $or: [
+          { status: 'pending_state_approval' },
+          { status: 'approved' },
+          { 'approvals.state.status': 'rejected' }
+        ]
+      };
+      
+      console.log('📊 State Admin Stats Query:', JSON.stringify(query, null, 2));
+      const allStateApps = await Application.find(query);
+      console.log('📊 State Admin Found Apps:', allStateApps.length);
+      console.log('📊 State Admin App Details:', allStateApps.map(app => ({
+        id: app.applicationId,
+        status: app.status,
+        stateApprovalStatus: app.approvals?.state?.status,
+        districtApprovalStatus: app.approvals?.district?.status
+      })));
+      
+      console.log('📊 State Admin Stats Query:', {
+        state: adminState,
+        foundApps: allStateApps.length,
+        statuses: allStateApps.map(app => ({ id: app.applicationId, status: app.status, stateApproval: app.approvals?.state?.status }))
+      });
+      
+      stats = {
+        total: allStateApps.length,
+        pending: allStateApps.filter(app => app.approvals?.state?.status !== 'approved' && app.approvals?.state?.status !== 'rejected').length,
+        approved: allStateApps.filter(app => app.approvals?.state?.status === 'approved').length,
+        rejected: allStateApps.filter(app => app.approvals?.state?.status === 'rejected').length,
+        aspirants: allStateApps.filter(app => app.memberType === 'aspirant').length,
+        business: allStateApps.filter(app => app.memberType === 'business').length
+      };
+      
+      console.log('📊 State Admin Stats Result:', stats);
+    } else {
+      // Block admin and super admin: count all applications
+      stats = {
+        total: await Application.countDocuments(baseQuery),
+        pending: await Application.countDocuments({ ...baseQuery, status: { $regex: /^pending/ } }),
+        approved: await Application.countDocuments({ ...baseQuery, status: 'approved' }),
+        rejected: await Application.countDocuments({ ...baseQuery, status: 'rejected' }),
+        aspirants: await Application.countDocuments({ ...baseQuery, memberType: 'aspirant' }),
+        business: await Application.countDocuments({ ...baseQuery, memberType: 'business' })
+      };
+    }
 
     res.status(200).json({
       success: true,
@@ -444,6 +616,7 @@ const submitApplication = async (req, res) => {
 
 export {
   getApplications,
+  getAllApplications,
   getApplicationById,
   approveApplication,
   rejectApplication,

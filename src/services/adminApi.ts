@@ -305,6 +305,27 @@ export const getApplicationStats = async (): Promise<any> => {
   return response.json();
 };
 
+// Get members (filtered by admin role and location)
+export const getMembers = async (): Promise<any> => {
+  const token = localStorage.getItem('adminToken');
+  
+  if (!token) {
+    throw new Error('No admin token found');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/admin/members`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to get members');
+  }
+
+  return response.json();
+};
+
 // Logout admin
 export const adminLogout = () => {
   localStorage.removeItem('adminToken');

@@ -126,32 +126,73 @@ const Approvals = () => {
 
   useEffect(() => { load(); }, []);
 
-  const patch = async (id: string, body: any) => {
-    const res = await fetch(`http://localhost:4000/api/applications/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) throw new Error('Request failed');
-    const json = await res.json();
-    setApplications(prev => prev.map(a => (a.id === id ? json.application : a)));
-  };
-
   const handleApprove = async (id: string) => {
     try {
-      await patch(id, { action: 'approve', reviewerRole: role });
-      toast.success('Approved');
-    } catch {
-      toast.error('Approval failed');
+      console.log('🔄 Approving application:', id);
+      const token = localStorage.getItem('adminToken');
+      
+      if (!token) {
+        toast.error('Please login again');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:4000/api/applications/${id}/approve`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ remarks: '' }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to approve application');
+      }
+
+      const data = await response.json();
+      console.log('✅ Application approved:', data);
+      
+      toast.success('Application approved successfully');
+      await load(); // Reload applications
+      
+    } catch (error) {
+      console.error('❌ Error approving application:', error);
+      toast.error('Failed to approve application');
     }
   };
 
   const handleReject = async (id: string) => {
     try {
-      await patch(id, { action: 'reject', reviewerRole: role });
-      toast.success('Rejected');
-    } catch {
-      toast.error('Rejection failed');
+      console.log('🔄 Rejecting application:', id);
+      const token = localStorage.getItem('adminToken');
+      
+      if (!token) {
+        toast.error('Please login again');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:4000/api/applications/${id}/reject`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ remarks: 'Rejected by super admin' }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to reject application');
+      }
+
+      const data = await response.json();
+      console.log('✅ Application rejected:', data);
+      
+      toast.success('Application rejected successfully');
+      await load(); // Reload applications
+      
+    } catch (error) {
+      console.error('❌ Error rejecting application:', error);
+      toast.error('Failed to reject application');
     }
   };
 
@@ -257,6 +298,7 @@ const Approvals = () => {
                           role: role,
                           gender: '', sector: '', phone: ''
                         }}
+                        status="pending"
                         onApprove={handleApprove}
                         onReject={handleReject}
                       />

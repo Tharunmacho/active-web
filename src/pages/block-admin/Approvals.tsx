@@ -13,6 +13,17 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 // Backend application types
 type StageKey = 'block' | 'district' | 'state' | 'payment';
 interface Stage { id: number; key: StageKey; title: string; reviewer: string; status: string; reviewDate: string | null; notes: string; }
+interface MemberData {
+  name: string;
+  email: string;
+  phone: string;
+  gender?: string;
+  block?: string;
+  district?: string;
+  state?: string;
+  memberType?: string;
+  registrationDate?: string;
+}
 interface ApplicationRec {
   id: string;
   userId: string;
@@ -20,12 +31,13 @@ interface ApplicationRec {
   status: string; // 'Under Review' | 'Rejected' | 'Ready for Payment'
   stage: number; // 1-based index
   stages: Stage[];
+  memberData?: MemberData;
   profile?: any;
 }
 
 const Approvals = () => {
   const [applications, setApplications] = useState<ApplicationRec[]>([]);
-  const [tab, setTab] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending');
+  const [tab, setTab] = useState<'pending' | 'approved' | 'rejected' | 'all'>('all');
   const role = (localStorage.getItem('role') || 'block_admin') as string;
 
   const stageByRole: Record<string, StageKey> = {
@@ -48,23 +60,27 @@ const Approvals = () => {
     const approved: ApplicationRec[] = [];
     const rejected: ApplicationRec[] = [];
     const all: ApplicationRec[] = [...applications];
+    
     for (const a of applications) {
-      const st = getCurrentStage(a);
-      if (a.status === 'Rejected') {
-        rejected.push(a);
-        continue;
+      // Find THIS admin's stage (block)
+      const myStage = a.stages.find(s => s.key === desiredStage);
+      
+      if (!myStage) continue;
+      
+      // Pending: Currently at this admin's stage waiting for review
+      if (myStage.status === 'Under Review' || myStage.status === 'Pending') {
+        pending.push(a);
       }
-      if (a.status === 'Ready for Payment') {
-        // treat as approved for listing purposes
+      // Approved: THIS admin has approved it
+      else if (myStage.status === 'Approved') {
         approved.push(a);
-        continue;
       }
-      if (st?.key === desiredStage) {
-        if (st.status === 'Under Review') pending.push(a);
-        else if (st.status === 'Approved') approved.push(a);
-        else if (st.status === 'Rejected') rejected.push(a);
+      // Rejected: THIS admin rejected it
+      else if (myStage.status === 'Rejected') {
+        rejected.push(a);
       }
     }
+    
     return { pending, approved, rejected, all };
   }, [applications, desiredStage]);
 
@@ -117,6 +133,13 @@ const Approvals = () => {
         } else if (app.status === 'pending_block_approval') {
           currentStage = 1;
         }
+
+        // Extract member info from personalFormId or direct fields
+        const personalForm = app.personalFormId;
+        const memberName = app.memberName || personalForm?.name || 'Unknown';
+        const memberEmail = app.memberEmail || personalForm?.email || app.userId?.email || '';
+        const memberPhone = app.memberPhone || personalForm?.phoneNumber || app.userId?.phone || '';
+        // Gender field removed as per requirements
 
         // Build stages array with approval data
         const stages: Stage[] = [
@@ -172,11 +195,22 @@ const Approvals = () => {
           status: displayStatus,
           stage: currentStage,
           stages: stages,
+          // Store complete member data for ApprovalCard
+          memberData: {
+            name: memberName,
+            email: memberEmail,
+            phone: memberPhone,
+            block: app.block,
+            district: app.district,
+            state: app.state,
+            memberType: app.memberType,
+            registrationDate: app.submittedAt || app.createdAt
+          },
           profile: {
             profile: {
               profile: {
-                firstName: app.memberName || 'Unknown',
-                email: app.memberEmail || app.userId?.email || 'N/A'
+                firstName: memberName,
+                email: memberEmail
               }
             }
           }
@@ -335,11 +369,71 @@ const Approvals = () => {
 
             {/* Tabs */}
             <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="w-full">
-              <TabsList className="grid w-full grid-cols-3 max-w-md bg-white border-2 border-gray-200 p-1 rounded-lg">
-                <TabsTrigger value="pending" className="rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">Pending</TabsTrigger>
-                <TabsTrigger value="approved" className="rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">Approved</TabsTrigger>
-                <TabsTrigger value="rejected" className="rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">Rejected</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-4 max-w-2xl bg-white border-2 border-gray-200 p-1 rounded-lg">
+                <TabsTrigger value="all" className="rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">All ({stats.total})</TabsTrigger>
+                <TabsTrigger value="pending" className="rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">Pending ({stats.pending})</TabsTrigger>
+                <TabsTrigger value="approved" className="rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">Approved ({stats.approved})</TabsTrigger>
+                <TabsTrigger value="rejected" className="rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">Rejected ({stats.rejected})</TabsTrigger>
               </TabsList>
+
+              <TabsContent value="all" className="mt-6">
+                {buckets.all.length === 0 ? (
+                  <Card className="shadow-lg border-0">
+                    <CardContent className="pt-12 pb-12">
+                      <div className="flex flex-col items-center justify-center text-center">
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center mb-4">
+                          <FileText className="w-8 h-8 text-blue-600" />
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-800 mb-2">No applications</h3>
+                        <p className="text-sm text-gray-600">
+                          There are no applications to display.
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {buckets.all.map(app => {
+                      const st = getCurrentStage(app);
+                      // Check if this admin's stage is approved
+                      const myStage = app.stages?.find(s => s.key === desiredStage);
+                      const isMyStageApproved = myStage?.status === 'Approved';
+                      const isMyStageRejected = myStage?.status === 'Rejected';
+                      const isPending = !isMyStageApproved && !isMyStageRejected && (st?.key === desiredStage);
+                      const isApproved = isMyStageApproved;
+                      const isRejected = isMyStageRejected || app.status === 'Rejected';
+                      
+                      const borderColor = isRejected ? 'border-l-red-500' : 
+                                         isApproved ? 'border-l-green-500' : 
+                                         'border-l-yellow-500';
+                      
+                      return (
+                        <div key={app.id} className={`border-l-4 ${borderColor} rounded-lg`}>
+                          <ApprovalCard
+                            member={{
+                              id: app.id,
+                              name: app.memberData?.name || app.profile?.profile?.profile?.firstName || app.userId,
+                              email: app.memberData?.email || app.profile?.profile?.profile?.email || '',
+                              phone: app.memberData?.phone || '',
+                              gender: '',
+                              role: role,
+                              sector: '',
+                              block: app.memberData?.block || '',
+                              district: app.memberData?.district || '',
+                              state: app.memberData?.state || '',
+                              memberType: app.memberData?.memberType || '',
+                              registrationDate: app.memberData?.registrationDate || app.submittedAt
+                            }}
+                            status={isRejected ? 'rejected' : isApproved ? 'approved' : 'pending'}
+                            onApprove={handleApprove}
+                            onReject={handleReject}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </TabsContent>
 
               <TabsContent value="pending" className="mt-6">
                 {buckets.pending.length === 0 ? (
@@ -363,11 +457,19 @@ const Approvals = () => {
                         key={app.id}
                         member={{
                           id: app.id,
-                          name: app.profile?.profile?.profile?.firstName || app.userId,
-                          email: app.profile?.profile?.profile?.email || '',
+                          name: app.memberData?.name || app.profile?.profile?.profile?.firstName || app.userId,
+                          email: app.memberData?.email || app.profile?.profile?.profile?.email || '',
+                          phone: app.memberData?.phone || '',
+                          gender: '',
                           role: role,
-                          gender: '', sector: '', phone: ''
+                          sector: '',
+                          block: app.memberData?.block || '',
+                          district: app.memberData?.district || '',
+                          state: app.memberData?.state || '',
+                          memberType: app.memberData?.memberType || '',
+                          registrationDate: app.memberData?.registrationDate || app.submittedAt
                         }}
+                        status="pending"
                         onApprove={handleApprove}
                         onReject={handleReject}
                       />
@@ -394,23 +496,27 @@ const Approvals = () => {
                 ) : (
                   <div className="space-y-4">
                     {buckets.approved.map(app => (
-                      <Card key={app.id} className="shadow-lg border-0 border-l-4 border-l-green-500">
-                        <CardHeader className="p-5 md:p-6">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="w-10 h-10 ring-2 ring-green-100">
-                              <AvatarFallback className="bg-gradient-to-r from-green-600 to-green-700 text-white font-bold">
-                                {(app.profile?.profile?.profile?.firstName || app.userId).substring(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <CardTitle className="text-base md:text-lg">{app.profile?.profile?.profile?.firstName || app.userId}</CardTitle>
-                              <CardDescription className="text-sm">
-                                <Badge className="bg-green-500 hover:bg-green-600 text-white">Approved</Badge>
-                              </CardDescription>
-                            </div>
-                          </div>
-                        </CardHeader>
-                      </Card>
+                      <div key={app.id} className="border-l-4 border-l-green-500 rounded-lg">
+                        <ApprovalCard
+                          member={{
+                            id: app.id,
+                            name: app.memberData?.name || app.profile?.profile?.profile?.firstName || app.userId,
+                            email: app.memberData?.email || app.profile?.profile?.profile?.email || '',
+                            phone: app.memberData?.phone || '',
+                            gender: '',
+                            role: role,
+                            sector: '',
+                            block: app.memberData?.block || '',
+                            district: app.memberData?.district || '',
+                            state: app.memberData?.state || '',
+                            memberType: app.memberData?.memberType || '',
+                            registrationDate: app.memberData?.registrationDate || app.submittedAt
+                          }}
+                          status="approved"
+                          onApprove={handleApprove}
+                          onReject={handleReject}
+                        />
+                      </div>
                     ))}
                   </div>
                 )}
@@ -434,23 +540,27 @@ const Approvals = () => {
                 ) : (
                   <div className="space-y-4">
                     {buckets.rejected.map(app => (
-                      <Card key={app.id} className="shadow-lg border-0 border-l-4 border-l-red-500">
-                        <CardHeader className="p-5 md:p-6">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="w-10 h-10 ring-2 ring-red-100">
-                              <AvatarFallback className="bg-gradient-to-r from-red-600 to-red-700 text-white font-bold">
-                                {(app.profile?.profile?.profile?.firstName || app.userId).substring(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <CardTitle className="text-base md:text-lg">{app.profile?.profile?.profile?.firstName || app.userId}</CardTitle>
-                              <CardDescription className="text-sm">
-                                <Badge className="bg-red-500 hover:bg-red-600 text-white">Rejected</Badge>
-                              </CardDescription>
-                            </div>
-                          </div>
-                        </CardHeader>
-                      </Card>
+                      <div key={app.id} className="border-l-4 border-l-red-500 rounded-lg">
+                        <ApprovalCard
+                          member={{
+                            id: app.id,
+                            name: app.memberData?.name || app.profile?.profile?.profile?.firstName || app.userId,
+                            email: app.memberData?.email || app.profile?.profile?.profile?.email || '',
+                            phone: app.memberData?.phone || '',
+                            gender: '',
+                            role: role,
+                            sector: '',
+                            block: app.memberData?.block || '',
+                            district: app.memberData?.district || '',
+                            state: app.memberData?.state || '',
+                            memberType: app.memberData?.memberType || '',
+                            registrationDate: app.memberData?.registrationDate || app.submittedAt
+                          }}
+                          status="rejected"
+                          onApprove={handleApprove}
+                          onReject={handleReject}
+                        />
+                      </div>
                     ))}
                   </div>
                 )}

@@ -1,20 +1,26 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Filter, Users, Mail, Phone, MapPin } from "lucide-react";
+import { Search, Filter, Users, Mail, Phone, MapPin, CheckCircle, XCircle, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useState, useEffect } from "react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useState, useEffect, useMemo } from "react";
 import AdminSidebar from "./AdminSidebar";
 import { toast } from "sonner";
+import ProfileViewModal from "@/components/ui/profile-view-modal";
 
 const Members = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [selectedProfile, setSelectedProfile] = useState<any>(null);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
 
-  // Fetch real member data from applications
+  // Fetch applications data to show all requests (pending, approved, rejected)
   useEffect(() => {
     const fetchMembers = async () => {
       try {
@@ -33,24 +39,62 @@ const Members = () => {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch members');
+          throw new Error('Failed to fetch applications');
         }
 
         const data = await response.json();
+        console.log('📦 Applications data received:', data);
         
-        // Map applications to member format
-        const mappedMembers = (data.data || []).map((app: any) => ({
-          id: app._id || app.applicationId,
-          name: app.memberName || 'Unknown',
-          email: app.memberEmail || 'N/A',
-          phone: app.memberPhone || 'N/A',
-          location: `${app.block}, ${app.district}, ${app.state}`,
-          status: app.status === 'approved' ? 'Active' : 
-                 app.status === 'rejected' ? 'Inactive' : 'Pending',
-          role: 'Member',
-          joinDate: new Date(app.submittedAt).toLocaleDateString('en-IN'),
-          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(app.memberName || 'U')}&background=3b82f6&color=fff`
-        }));
+        // Map applications to member format with status
+        const mappedMembers = (data.data || []).map((app: any) => {
+          console.log('🔍 App data:', {
+            _id: app._id,
+            applicationId: app.applicationId,
+            memberName: app.memberName,
+            blockApprovalStatus: app.approvals?.block?.status
+          });
+          let statusLabel = 'Pending';
+          let statusColor = 'bg-yellow-500';
+          
+          // Check block admin approval status first
+          if (app.approvals?.block?.status === 'approved' || app.status === 'approved') {
+            statusLabel = 'Approved';
+            statusColor = 'bg-green-500';
+          } else if (app.approvals?.block?.status === 'rejected' || app.status === 'rejected') {
+            statusLabel = 'Rejected';
+            statusColor = 'bg-red-500';
+          } else if (app.status === 'pending_block_approval') {
+            statusLabel = 'Pending';
+            statusColor = 'bg-yellow-500';
+          } else if (app.status === 'pending_district_approval' || app.status === 'pending_state_approval') {
+            // If moved past block but block approved, show as approved
+            statusLabel = 'Approved';
+            statusColor = 'bg-green-500';
+          }
+          
+          // Extract userId properly
+          let userIdValue = app.userId;
+          if (typeof app.userId === 'object' && app.userId !== null) {
+            userIdValue = app.userId._id || app.userId.id;
+          }
+          
+          return {
+            id: app._id || app.applicationId,
+            applicationId: app.applicationId || app._id,
+            name: app.memberName || 'Unknown',
+            email: app.memberEmail || app.userId?.email || 'N/A',
+            phone: app.memberPhone || app.userId?.phone || 'N/A',
+            location: `${app.block || 'N/A'}, ${app.district || 'N/A'}, ${app.state || 'N/A'}`,
+            status: statusLabel,
+            statusColor: statusColor,
+            rawStatus: app.status,
+            memberType: app.memberType || 'aspirant',
+            role: app.memberType === 'business' ? 'Business' : 'Aspirant',
+            joinDate: app.submittedAt ? new Date(app.submittedAt).toLocaleDateString('en-IN') : 'N/A',
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(app.memberName || 'U')}&background=3b82f6&color=fff`,
+            userId: userIdValue
+          };
+        });
 
         setMembers(mappedMembers);
       } catch (error) {
@@ -64,7 +108,110 @@ const Members = () => {
     fetchMembers();
   }, []);
 
-  const filteredMembers = members.filter(member =>
+  // Function to fetch and view profile
+  const handleViewProfile = async (applicationId: string) => {
+    try {
+      setProfileLoading(true);
+      setProfileModalOpen(true);
+      
+      console.log('🔍 Fetching application data for:', applicationId);
+      
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        toast.error('Please login again');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:4000/api/profile/application/${applicationId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.log('⚠️ Application not found');
+          setSelectedProfile(null);
+          toast.error('Application not found');
+          setProfileModalOpen(false);
+          return;
+        }
+        throw new Error('Failed to fetch application');
+      }
+
+      const data = await response.json();
+      console.log('👤 Application data:', data);
+      
+      // Transform application data to profile format
+      const appData = data.data;
+      const profileData = {
+        // Basic info from application
+        name: appData.application?.memberName,
+        email: appData.application?.memberEmail,
+        phone: appData.application?.memberPhone,
+        state: appData.application?.state,
+        district: appData.application?.district,
+        block: appData.application?.block,
+        city: appData.application?.city,
+        
+        // Personal form data
+        ...appData.personalForm,
+        
+        // Business form data
+        ...appData.businessForm,
+        
+        // Financial form data
+        ...appData.financialForm,
+        
+        // Declaration form data
+        ...appData.declarationForm
+      };
+      
+      setSelectedProfile(profileData);
+    } catch (error) {
+      console.error('❌ Error fetching application:', error);
+      toast.error('Failed to load application data');
+      setProfileModalOpen(false);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const handleCloseProfile = () => {
+    setProfileModalOpen(false);
+    setSelectedProfile(null);
+  };
+
+  // Filter members by status tabs
+  const buckets = useMemo(() => {
+    const pending: any[] = [];
+    const approved: any[] = [];
+    const rejected: any[] = [];
+    const all: any[] = [...members];
+
+    members.forEach(member => {
+      if (member.rawStatus === 'rejected') {
+        rejected.push(member);
+      } else if (member.rawStatus === 'approved') {
+        approved.push(member);
+      } else {
+        pending.push(member);
+      }
+    });
+
+    return { all, pending, approved, rejected };
+  }, [members]);
+
+  const counts = useMemo(() => ({
+    total: members.length,
+    pending: buckets.pending.length,
+    approved: buckets.approved.length,
+    rejected: buckets.rejected.length,
+  }), [members.length, buckets.pending.length, buckets.approved.length, buckets.rejected.length]);
+
+  const currentMembers = buckets[tab];
+  
+  const filteredMembers = currentMembers.filter(member =>
     member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     member.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -130,6 +277,28 @@ const Members = () => {
               </CardContent>
             </Card>
 
+            {/* Tabs for filtering */}
+            <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="w-full">
+              <TabsList className="grid w-full grid-cols-4 h-auto p-1">
+                <TabsTrigger value="all" className="flex items-center gap-2 py-3">
+                  <Users className="w-4 h-4" />
+                  All ({counts.total})
+                </TabsTrigger>
+                <TabsTrigger value="pending" className="flex items-center gap-2 py-3">
+                  <Clock className="w-4 h-4" />
+                  Pending ({counts.pending})
+                </TabsTrigger>
+                <TabsTrigger value="approved" className="flex items-center gap-2 py-3">
+                  <CheckCircle className="w-4 h-4" />
+                  Approved ({counts.approved})
+                </TabsTrigger>
+                <TabsTrigger value="rejected" className="flex items-center gap-2 py-3">
+                  <XCircle className="w-4 h-4" />
+                  Rejected ({counts.rejected})
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value={tab} className="mt-6">
             {/* Members Grid */}
             {loading ? (
               <Card className="shadow-lg border-0">
@@ -173,8 +342,8 @@ const Members = () => {
                       </Avatar>
                       <div className="flex-1">
                         <h3 className="text-lg font-bold text-white">{member.name}</h3>
-                        <p className="text-blue-100 text-sm">{member.id}</p>
-                        <Badge className={member.status === 'Active' ? 'bg-green-500 hover:bg-green-600 mt-2' : 'bg-gray-500 hover:bg-gray-600 mt-2'}>
+                        <p className="text-blue-100 text-sm capitalize">{member.memberType}</p>
+                        <Badge className={`${member.statusColor} hover:opacity-90 mt-2`}>
                           {member.status}
                         </Badge>
                       </div>
@@ -198,7 +367,12 @@ const Members = () => {
                     <div className="mt-4 pt-4 border-t border-white/20">
                       <div className="flex justify-between items-center">
                         <span className="text-blue-100 text-xs">Joined: {member.joinDate}</span>
-                        <Button size="sm" variant="secondary" className="bg-white text-blue-600 hover:bg-blue-50">
+                        <Button 
+                          size="sm" 
+                          variant="secondary" 
+                          className="bg-white text-blue-600 hover:bg-blue-50"
+                          onClick={() => handleViewProfile(member.applicationId)}
+                        >
                           View Profile
                         </Button>
                       </div>
@@ -207,9 +381,17 @@ const Members = () => {
                 ))}
               </div>
             )}
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>
+      <ProfileViewModal 
+        open={profileModalOpen}
+        onClose={handleCloseProfile}
+        profile={selectedProfile}
+        loading={profileLoading}
+      />
     </div>
   );
 };

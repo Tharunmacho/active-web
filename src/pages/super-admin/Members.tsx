@@ -6,10 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import AdminSidebar from "./AdminSidebar";
+import { toast } from "sonner";
+import ProfileViewModal from "@/components/ui/profile-view-modal";
 
 const Members = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState<any>(null);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   // Dummy member data
   const members = [
@@ -22,7 +27,8 @@ const Members = () => {
       status: "Active",
       role: "Member",
       joinDate: "2024-01-15",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=96&h=96&fit=crop&crop=face"
+      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=96&h=96&fit=crop&crop=face",
+      userId: "user001"
     },
     {
       id: "M002",
@@ -33,7 +39,8 @@ const Members = () => {
       status: "Active",
       role: "Member",
       joinDate: "2024-01-14",
-      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop&crop=face"
+      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop&crop=face",
+      userId: "user002"
     },
     {
       id: "M003",
@@ -44,7 +51,8 @@ const Members = () => {
       status: "Active",
       role: "Member",
       joinDate: "2024-01-13",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop&crop=face"
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop&crop=face",
+      userId: "user003"
     },
     {
       id: "M004",
@@ -55,7 +63,8 @@ const Members = () => {
       status: "Inactive",
       role: "Member",
       joinDate: "2024-01-12",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=96&h=96&fit=crop&crop=face"
+      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=96&h=96&fit=crop&crop=face",
+      userId: "user004"
     },
     {
       id: "M005",
@@ -66,7 +75,8 @@ const Members = () => {
       status: "Active",
       role: "Member",
       joinDate: "2024-01-11",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=96&h=96&fit=crop&crop=face"
+      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=96&h=96&fit=crop&crop=face",
+      userId: "user005"
     },
   ];
 
@@ -192,7 +202,12 @@ const Members = () => {
                     <div className="mt-4 pt-4 border-t border-white/20">
                       <div className="flex justify-between items-center">
                         <span className="text-blue-100 text-xs">Joined: {member.joinDate}</span>
-                        <Button size="sm" variant="secondary" className="bg-white text-blue-600 hover:bg-blue-50">
+                        <Button 
+                          size="sm" 
+                          variant="secondary" 
+                          className="bg-white text-blue-600 hover:bg-blue-50"
+                          onClick={() => handleViewProfile(member.userId)}
+                        >
                           View Profile
                         </Button>
                       </div>
@@ -204,6 +219,12 @@ const Members = () => {
           </div>
         </div>
       </div>
+      <ProfileViewModal 
+        open={profileModalOpen}
+        onClose={handleCloseProfile}
+        profile={selectedProfile}
+        loading={profileLoading}
+      />
     </div>
   );
 };

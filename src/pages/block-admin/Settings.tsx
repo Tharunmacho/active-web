@@ -27,10 +27,15 @@ const Settings = () => {
     const [activeStatus, setActiveStatus] = useState(true);
     const navigate = useNavigate();
 
-    // Get user info from localStorage
-    const userName = localStorage.getItem('userName') || 'District Admin';
-    const userEmail = localStorage.getItem('userEmail') || 'admin@example.com';
-    const role = localStorage.getItem('role') || 'district_admin';
+    // State for admin info
+    const [adminInfo, setAdminInfo] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    
+    // Get fallback info from localStorage
+    const userName = adminInfo?.fullName || localStorage.getItem('userName') || 'Admin';
+    const userEmail = adminInfo?.email || localStorage.getItem('userEmail') || 'admin@example.com';
+    const role = localStorage.getItem('role') || 'block_admin';
+    const adminLocation = adminInfo?.block || 'No area assigned';
 
     const roleLabel = useMemo(() => {
         if (role === 'block_admin') return 'Block Admin';
@@ -41,12 +46,8 @@ const Settings = () => {
     }, [role]);
 
     const avatarInitials = useMemo(() => {
-        if (role === 'block_admin') return 'BA';
-        if (role === 'district_admin') return 'DA';
-        if (role === 'state_admin') return 'SA';
-        if (role === 'super_admin') return 'SU';
-        return userName.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
-    }, [role, userName]);
+        return userName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+    }, [userName]);
 
     const handleLogout = () => {
         // Clear all local storage items related to login
@@ -72,41 +73,57 @@ const Settings = () => {
         rejected: 0
     });
 
+    // Fetch admin info and stats
     useEffect(() => {
-        const fetchStats = async () => {
+        const fetchAdminData = async () => {
             try {
+                setLoading(true);
                 const token = localStorage.getItem('adminToken');
                 
                 if (!token) {
+                    setLoading(false);
                     return;
                 }
 
-                const response = await fetch('http://localhost:4000/api/admin/dashboard/stats', {
+                // Fetch admin info
+                const adminResponse = await fetch('http://localhost:4000/api/admin/me', {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                     },
                 });
 
-                if (!response.ok) {
-                    throw new Error('Failed to fetch stats');
+                if (adminResponse.ok) {
+                    const adminData = await adminResponse.json();
+                    console.log('👤 Admin info:', adminData);
+                    setAdminInfo(adminData.data);
                 }
 
-                const data = await response.json();
-                
-                if (data.success) {
-                    setStats({
-                        totalMembers: data.data.totalApplications || 0,
-                        pendingApprovals: data.data.pendingApplications || 0,
-                        approved: data.data.approvedApplications || 0,
-                        rejected: data.data.rejectedApplications || 0
-                    });
+                // Fetch stats
+                const statsResponse = await fetch('http://localhost:4000/api/admin/dashboard/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+
+                if (statsResponse.ok) {
+                    const statsData = await statsResponse.json();
+                    if (statsData.success) {
+                        setStats({
+                            totalMembers: statsData.data.totalApplications || 0,
+                            pendingApprovals: statsData.data.pendingApplications || 0,
+                            approved: statsData.data.approvedApplications || 0,
+                            rejected: statsData.data.rejectedApplications || 0
+                        });
+                    }
                 }
             } catch (error) {
-                console.error('❌ Error fetching stats:', error);
+                console.error('❌ Error fetching admin data:', error);
+            } finally {
+                setLoading(false);
             }
         };
 
-        fetchStats();
+        fetchAdminData();
     }, []);
 
     return (
@@ -170,7 +187,7 @@ const Settings = () => {
                                             </div>
                                             <div className="flex items-center gap-2 text-gray-600">
                                                 <MapPin className="w-4 h-4" />
-                                                <span className="text-sm">No area assigned</span>
+                                                <span className="text-sm">{adminLocation}</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3 mt-4 justify-center md:justify-start">

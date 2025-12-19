@@ -19,11 +19,16 @@ export default function AdminSidebar({ className = '', onClose, isOpen = false }
   const roleLabel = role === 'block_admin' ? 'Block Admin' : role === 'district_admin' ? 'District Admin' : role === 'state_admin' ? 'State Admin' : role === 'super_admin' ? 'Super Admin' : 'Admin';
   const initials = role === 'block_admin' ? 'BA' : role === 'district_admin' ? 'DA' : role === 'state_admin' ? 'SA' : role === 'super_admin' ? 'SU' : (userName || 'A').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
 
+  // Dynamic routes based on admin role
+  const baseRoute = role === 'district_admin' ? '/district-admin' : 
+                    role === 'state_admin' ? '/state-admin' : 
+                    role === 'super_admin' ? '/super-admin' : '/block-admin';
+  
   const nav = [
-    { to: '/block-admin/dashboard', label: 'Dashboard', icon: <FaHome /> },
-    { to: '/block-admin/approvals', label: 'Approvals', icon: <FaCheckCircle /> },
-    { to: '/block-admin/members', label: 'Members', icon: <FaUsers /> },
-    { to: '/block-admin/settings', label: 'Settings', icon: <FaCog /> },
+    { to: `${baseRoute}/dashboard`, label: 'Dashboard', icon: <FaHome /> },
+    { to: `${baseRoute}/approvals`, label: 'Approvals', icon: <FaCheckCircle /> },
+    { to: `${baseRoute}/members`, label: 'Members', icon: <FaUsers /> },
+    { to: `${baseRoute}/settings`, label: 'Settings', icon: <FaCog /> },
   ];
 
   const handleLogout = () => {

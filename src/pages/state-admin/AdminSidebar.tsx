@@ -20,10 +20,10 @@ export default function AdminSidebar({ className = '', onClose, isOpen = false }
   const initials = role === 'block_admin' ? 'BA' : role === 'district_admin' ? 'DA' : role === 'state_admin' ? 'SA' : role === 'super_admin' ? 'SU' : (userName || 'A').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
 
   const nav = [
-    { to: '/block-admin/dashboard', label: 'Dashboard', icon: <FaHome /> },
-    { to: '/block-admin/approvals', label: 'Approvals', icon: <FaCheckCircle /> },
-    { to: '/block-admin/members', label: 'Members', icon: <FaUsers /> },
-    { to: '/block-admin/settings', label: 'Settings', icon: <FaCog /> },
+    { to: '/state-admin/dashboard', label: 'Dashboard', icon: <FaHome /> },
+    { to: '/state-admin/approvals', label: 'Approvals', icon: <FaCheckCircle /> },
+    { to: '/state-admin/members', label: 'Members', icon: <FaUsers /> },
+    { to: '/state-admin/settings', label: 'Settings', icon: <FaCog /> },
   ];
 
   const handleLogout = () => {
@@ -87,7 +87,7 @@ export default function AdminSidebar({ className = '', onClose, isOpen = false }
         <div className="space-y-2">
           {nav.map((item) => {
             const active = location.pathname === item.to ||
-              (item.to !== '/block-admin/dashboard' && location.pathname.startsWith(item.to));
+              (item.to !== '/state-admin/dashboard' && location.pathname.startsWith(item.to));
             return (
               <Link
                 key={item.to}

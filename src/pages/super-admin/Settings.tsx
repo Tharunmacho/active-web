@@ -17,7 +17,7 @@ import {
     MapPin,
     Shield
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
 
@@ -26,10 +26,15 @@ const Settings = () => {
     const [activeStatus, setActiveStatus] = useState(true);
     const navigate = useNavigate();
 
-    // Get user info from localStorage
-    const userName = localStorage.getItem('userName') || 'District Admin';
-    const userEmail = localStorage.getItem('userEmail') || 'admin@example.com';
-    const role = localStorage.getItem('role') || 'district_admin';
+    // State for admin info
+    const [adminInfo, setAdminInfo] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    
+    // Get fallback info from localStorage
+    const userName = adminInfo?.fullName || localStorage.getItem('userName') || 'Super Admin';
+    const userEmail = adminInfo?.email || localStorage.getItem('userEmail') || 'admin@example.com';
+    const role = localStorage.getItem('role') || 'super_admin';
+    const adminLocation = 'All India';
 
     const roleLabel = useMemo(() => {
         if (role === 'block_admin') return 'Block Admin';
@@ -57,10 +62,45 @@ const Settings = () => {
         localStorage.removeItem('adminId');
         localStorage.removeItem('sessionStart');
         localStorage.removeItem('userEmail');
+        localStorage.removeItem('adminToken');
 
         // Navigate to main login page
         navigate('/login');
     };
+
+    // Fetch admin info
+    useEffect(() => {
+        const fetchAdminData = async () => {
+            try {
+                setLoading(true);
+                const token = localStorage.getItem('adminToken');
+                
+                if (!token) {
+                    setLoading(false);
+                    return;
+                }
+
+                // Fetch admin info
+                const adminResponse = await fetch('http://localhost:4000/api/admin/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+
+                if (adminResponse.ok) {
+                    const adminData = await adminResponse.json();
+                    console.log('👤 Admin info:', adminData);
+                    setAdminInfo(adminData.data);
+                }
+            } catch (error) {
+                console.error('Error fetching admin data:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchAdminData();
+    }, []);
 
     // Admin stats (these would come from API in real app)
     const stats = {
@@ -131,7 +171,7 @@ const Settings = () => {
                                             </div>
                                             <div className="flex items-center gap-2 text-gray-600">
                                                 <MapPin className="w-4 h-4" />
-                                                <span className="text-sm">No area assigned</span>
+                                                <span className="text-sm">{adminLocation}</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3 mt-4 justify-center md:justify-start">

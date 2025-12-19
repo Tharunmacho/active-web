@@ -1,6 +1,7 @@
 import express from 'express';
 import {
   getApplications,
+  getAllApplications,
   getApplicationById,
   approveApplication,
   rejectApplication,
@@ -18,7 +19,10 @@ router.post('/submit', memberProtect, submitApplication);
 // All other routes are protected (admin only)
 router.use(protect);
 
-// Get all applications for admin
+// Get all applications for admin (no status filter) - must come before /:id
+router.get('/all', getAllApplications);
+
+// Get all applications for admin (filtered by status)
 router.get('/', getApplications);
 
 // Get application statistics

@@ -4,71 +4,165 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, Filter, Users, Mail, Phone, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AdminSidebar from "./AdminSidebar";
+import { toast } from "sonner";
+import ProfileViewModal from "@/components/ui/profile-view-modal";
+import { getApplications } from "@/services/adminApi";
 
 const Members = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState<any>(null);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [applications, setApplications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Dummy member data
-  const members = [
-    {
-      id: "M001",
-      name: "John Doe",
-      email: "john.doe@example.com",
-      phone: "+91 98765 43210",
-      location: "Mumbai, Maharashtra",
-      status: "Active",
-      role: "Member",
-      joinDate: "2024-01-15",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=96&h=96&fit=crop&crop=face"
-    },
-    {
-      id: "M002",
-      name: "Jane Smith",
-      email: "jane.smith@example.com",
-      phone: "+91 98765 43211",
-      location: "Delhi, NCR",
-      status: "Active",
-      role: "Member",
-      joinDate: "2024-01-14",
-      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop&crop=face"
-    },
-    {
-      id: "M003",
-      name: "Robert Brown",
-      email: "robert.brown@example.com",
-      phone: "+91 98765 43212",
-      location: "Bangalore, Karnataka",
-      status: "Active",
-      role: "Member",
-      joinDate: "2024-01-13",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop&crop=face"
-    },
-    {
-      id: "M004",
-      name: "Sarah Johnson",
-      email: "sarah.johnson@example.com",
-      phone: "+91 98765 43213",
-      location: "Pune, Maharashtra",
-      status: "Inactive",
-      role: "Member",
-      joinDate: "2024-01-12",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=96&h=96&fit=crop&crop=face"
-    },
-    {
-      id: "M005",
-      name: "Michael Lee",
-      email: "michael.lee@example.com",
-      phone: "+91 98765 43214",
-      location: "Chennai, Tamil Nadu",
-      status: "Active",
-      role: "Member",
-      joinDate: "2024-01-11",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=96&h=96&fit=crop&crop=face"
-    },
-  ];
+  const handleCloseProfile = () => {
+    setProfileModalOpen(false);
+    setSelectedProfile(null);
+  };
+
+  const handleViewProfile = async (applicationId: string) => {
+    try {
+      setProfileLoading(true);
+      setProfileModalOpen(true);
+      
+      console.log('🔍 Fetching application data for:', applicationId);
+      
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        toast.error('Please login again');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:4000/api/profile/application/${applicationId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.log('⚠️ Application not found');
+          setSelectedProfile(null);
+          toast.error('Application not found');
+          setProfileModalOpen(false);
+          return;
+        }
+        throw new Error('Failed to fetch application');
+      }
+
+      const data = await response.json();
+      console.log('👤 Application data:', data);
+      
+      // Transform application data to profile format
+      const appData = data.data;
+      const profileData = {
+        // Basic info from application
+        name: appData.application?.memberName,
+        email: appData.application?.memberEmail,
+        phone: appData.application?.memberPhone,
+        state: appData.application?.state,
+        district: appData.application?.district,
+        block: appData.application?.block,
+        city: appData.application?.city,
+        
+        // Personal form data
+        ...appData.personalForm,
+        
+        // Business form data
+        ...appData.businessForm,
+        
+        // Financial form data
+        ...appData.financialForm,
+        
+        // Declaration form data
+        ...appData.declarationForm,
+        
+        // Application info
+        applicationId: appData.application?.applicationId,
+        memberType: appData.application?.memberType,
+        status: appData.application?.status,
+        submittedAt: appData.application?.submittedAt
+      };
+      
+      setSelectedProfile(profileData);
+    } catch (error) {
+      console.error('❌ Error fetching profile:', error);
+      toast.error('Failed to load profile');
+      setProfileModalOpen(false);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  // Fetch real member data from applications
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        setLoading(true);
+        
+        const token = localStorage.getItem('adminToken');
+        if (!token) {
+          toast.error('Please login again');
+          return;
+        }
+
+        // Fetch ALL applications in district (not just pending_district_approval)
+        const response = await fetch('http://localhost:4000/api/applications/all', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch applications');
+        }
+
+        const data = await response.json();
+        if (data.success) {
+          // Filter to show only block-approved applications (pending_district_approval, approved, or district rejected)
+          const blockApprovedApps = data.data.filter((app: any) => 
+            app.status === 'pending_district_approval' ||
+            app.status === 'pending_state_approval' ||
+            app.status === 'approved' ||
+            app.approvals?.district?.status === 'rejected'
+          );
+          setApplications(blockApprovedApps);
+        }
+      } catch (error) {
+        console.error('Error fetching members:', error);
+        toast.error('Failed to load members');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMembers();
+  }, []);
+
+  // Transform applications to member format
+  const members = applications.map(app => {
+    console.log('App data:', {
+      applicationId: app.applicationId,
+      personalFormId: app.personalFormId,
+      userId: app.userId
+    });
+    return {
+      id: app.applicationId,
+      applicationId: app.applicationId,
+      name: app.personalFormId?.name || 'Unknown',
+      email: app.userId?.email || app.personalFormId?.email || 'N/A',
+      phone: app.personalFormId?.phoneNumber || 'N/A',
+      location: app.district || 'N/A',
+      status: app.status === 'approved' ? 'Active' : app.status === 'rejected' ? 'Rejected' : 'Pending',
+      role: app.memberType || 'Member',
+      joinDate: new Date(app.submittedAt).toISOString().split('T')[0],
+      userId: app.userId?._id
+    };
+  });
 
   const filteredMembers = members.filter(member =>
     member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -137,7 +231,18 @@ const Members = () => {
             </Card>
 
             {/* Members Grid */}
-            {filteredMembers.length === 0 ? (
+            {loading ? (
+              <Card className="shadow-lg border-0">
+                <CardContent className="pt-12 pb-12">
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-4 animate-pulse">
+                      <Users className="w-8 h-8 text-blue-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">Loading members...</h3>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : filteredMembers.length === 0 ? (
               <Card className="shadow-lg border-0">
                 <CardContent className="pt-12 pb-12">
                   <div className="flex flex-col items-center justify-center text-center">
@@ -160,7 +265,6 @@ const Members = () => {
                   >
                     <div className="flex items-start gap-4 mb-4">
                       <Avatar className="w-16 h-16 ring-4 ring-white/30">
-                        <AvatarImage src={member.avatar} className="object-cover" />
                         <AvatarFallback className="bg-white/20 text-white font-bold text-lg">
                           {member.name.split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
@@ -168,7 +272,7 @@ const Members = () => {
                       <div className="flex-1">
                         <h3 className="text-lg font-bold text-white">{member.name}</h3>
                         <p className="text-blue-100 text-sm">{member.id}</p>
-                        <Badge className={member.status === 'Active' ? 'bg-green-500 hover:bg-green-600 mt-2' : 'bg-gray-500 hover:bg-gray-600 mt-2'}>
+                        <Badge className={member.status === 'Active' ? 'bg-green-500 hover:bg-green-600 mt-2' : member.status === 'Rejected' ? 'bg-red-500 hover:bg-red-600 mt-2' : 'bg-yellow-500 hover:bg-yellow-600 mt-2'}>
                           {member.status}
                         </Badge>
                       </div>
@@ -192,7 +296,12 @@ const Members = () => {
                     <div className="mt-4 pt-4 border-t border-white/20">
                       <div className="flex justify-between items-center">
                         <span className="text-blue-100 text-xs">Joined: {member.joinDate}</span>
-                        <Button size="sm" variant="secondary" className="bg-white text-blue-600 hover:bg-blue-50">
+                        <Button 
+                          size="sm" 
+                          variant="secondary" 
+                          className="bg-white text-blue-600 hover:bg-blue-50"
+                          onClick={() => handleViewProfile(member.applicationId)}
+                        >
                           View Profile
                         </Button>
                       </div>
@@ -204,6 +313,12 @@ const Members = () => {
           </div>
         </div>
       </div>
+      <ProfileViewModal 
+        open={profileModalOpen}
+        onClose={handleCloseProfile}
+        profile={selectedProfile}
+        loading={profileLoading}
+      />
     </div>
   );
 };

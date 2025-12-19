@@ -43,18 +43,34 @@ export default function EnhancedLoginPage() {
           
           if (response.success && response.data?.admin) {
             const admin = response.data.admin;
+            const token = response.data.token;
             
-            // Store admin data
+            // Store admin data and token
             localStorage.setItem('role', admin.role);
             localStorage.setItem('userName', admin.fullName);
             localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('adminToken', token); // CRITICAL: Store the admin token
+            localStorage.setItem('adminData', JSON.stringify(admin));
+            
+            console.log('💾 Stored admin token:', token ? 'YES' : 'NO');
 
-            // Navigate to appropriate dashboard
+            // Navigate to appropriate dashboard based on role
             const role = admin.role;
             let adminPath = '/block-admin/dashboard';
-            if (role === 'district_admin') adminPath = '/district-admin/dashboard';
-            else if (role === 'state_admin') adminPath = '/state-admin/dashboard';
-            else if (role === 'super_admin') adminPath = '/super-admin/dashboard';
+            
+            console.log('🔍 Determining route for role:', role);
+            
+            if (role === 'district_admin') {
+              adminPath = '/district-admin/dashboard';
+            } else if (role === 'state_admin') {
+              adminPath = '/state-admin/dashboard';
+            } else if (role === 'super_admin') {
+              adminPath = '/super-admin/dashboard';
+            } else if (role === 'block_admin') {
+              adminPath = '/block-admin/dashboard';
+            }
+            
+            console.log('📍 Navigating to:', adminPath);
 
             toast.success(`Welcome ${admin.fullName}!`);
             setIsLoading(false);
@@ -144,10 +160,17 @@ export default function EnhancedLoginPage() {
     const logged = localStorage.getItem('isLoggedIn');
     if (logged === 'true') {
       const role = localStorage.getItem('role') || '';
-      let adminPath = '/block-admin/dashboard';
-      if (role === 'district_admin') adminPath = '/district-admin/dashboard';
-      else if (role === 'state_admin') adminPath = '/state-admin/dashboard';
-      else if (role === 'super_admin') adminPath = '/super-admin/dashboard';
+      let adminPath = '/member/dashboard';
+      
+      if (role === 'district_admin') {
+        adminPath = '/district-admin/dashboard';
+      } else if (role === 'state_admin') {
+        adminPath = '/state-admin/dashboard';
+      } else if (role === 'super_admin') {
+        adminPath = '/super-admin/dashboard';
+      } else if (role === 'block_admin') {
+        adminPath = '/block-admin/dashboard';
+      }
 
       navigate(role.endsWith('_admin') ? adminPath : '/member/dashboard');
     }
