@@ -84,6 +84,9 @@ export const register = async (req, res, next) => {
       isLocked: false
     });
 
+    // Get user profile details from "web users" collection
+    const userProfile = await WebUserProfile.findOne({ userId: user._id });
+
     // Generate token
     const token = generateToken(user._id);
 
@@ -93,7 +96,10 @@ export const register = async (req, res, next) => {
       data: {
         user: {
           id: user._id,
-          email: user.email
+          fullName: userProfile.fullName,
+          email: userProfile.email,
+          phoneNumber: userProfile.phoneNumber,
+          role: userProfile.role
         },
         token
       }

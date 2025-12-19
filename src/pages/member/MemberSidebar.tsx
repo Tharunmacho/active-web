@@ -16,11 +16,51 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Get user name from localStorage
-        const storedUserName = localStorage.getItem("userName");
-        if (storedUserName) {
-            setUserName(storedUserName);
-        }
+        // Fetch user data from backend
+        const fetchUserData = async () => {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                // Fallback to localStorage if no token
+                const storedUserName = localStorage.getItem("userName");
+                if (storedUserName) {
+                    setUserName(storedUserName);
+                }
+                return;
+            }
+
+            try {
+                const response = await fetch("http://localhost:4000/api/auth/me", {
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success && result.data) {
+                        setUserName(result.data.fullName || "");
+                        // Update localStorage
+                        localStorage.setItem("userName", result.data.fullName || "");
+                    }
+                } else {
+                    // Fallback to localStorage
+                    const storedUserName = localStorage.getItem("userName");
+                    if (storedUserName) {
+                        setUserName(storedUserName);
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching user data:", error);
+                // Fallback to localStorage
+                const storedUserName = localStorage.getItem("userName");
+                if (storedUserName) {
+                    setUserName(storedUserName);
+                }
+            }
+        };
+
+        fetchUserData();
     }, []);
 
     const nav = [

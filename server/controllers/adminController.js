@@ -53,7 +53,15 @@ const adminLogin = async (req, res) => {
       });
     }
 
-    console.log('✅ Admin found:', { email: admin.email, role: adminRole, hasPasswordHash: !!admin.passwordHash });
+    console.log('✅ Admin found:', { 
+      email: admin.email, 
+      role: adminRole, 
+      hasPasswordHash: !!admin.passwordHash,
+      meta: admin.meta,
+      'meta.state': admin.meta?.state,
+      'meta.district': admin.meta?.district,
+      'meta.block': admin.meta?.block
+    });
 
     // Verify password
     const isPasswordValid = await admin.comparePassword(password);
@@ -71,36 +79,44 @@ const adminLogin = async (req, res) => {
     await admin.save();
 
     // Generate JWT token
+    const tokenPayload = {
+      adminId: admin._id.toString(),
+      email: admin.email,
+      role: adminRole,
+      state: admin.meta?.state,
+      district: admin.meta?.district,
+      block: admin.meta?.block
+    };
+    
+    console.log('🎫 Creating JWT token with payload:', tokenPayload);
+    
     const token = jwt.sign(
-      {
-        adminId: admin._id.toString(),
+      tokenPayload,
+      process.env.JWT_SECRET || 'your-secret-key-here-change-in-production',
+      { expiresIn: '24h' }
+    );
+
+    // Return admin data (without password)
+    const responseData = {
+      admin: {
+        id: admin._id.toString(),
+        adminId: admin.adminId,
+        fullName: admin.fullName,
         email: admin.email,
         role: adminRole,
         state: admin.meta?.state,
         district: admin.meta?.district,
         block: admin.meta?.block
       },
-      process.env.JWT_SECRET || 'your-secret-key-here-change-in-production',
-      { expiresIn: '24h' }
-    );
-
-    // Return admin data (without password)
+      token
+    };
+    
+    console.log('📤 Sending login response:', responseData);
+    
     res.status(200).json({
       success: true,
       message: 'Login successful',
-      data: {
-        admin: {
-          id: admin._id.toString(),
-          adminId: admin.adminId,
-          fullName: admin.fullName,
-          email: admin.email,
-          role: adminRole,
-          state: admin.meta?.state,
-          district: admin.meta?.district,
-          block: admin.meta?.block
-        },
-        token
-      }
+      data: responseData
     });
 
   } catch (error) {
@@ -168,35 +184,37 @@ const getDashboardStats = async (req, res) => {
     const adminDistrict = admin.meta?.district;
     const adminBlock = admin.meta?.block;
 
-    // Filter applications based on admin role and location
+    // Build base query for admin's jurisdiction
+    const baseQuery = {};
     if (admin.role === 'block_admin') {
-      query = {
-        state: adminState,
-        district: adminDistrict,
-        block: adminBlock,
-        status: 'pending_block_approval'
-      };
+      baseQuery.state = adminState;
+      baseQuery.district = adminDistrict;
+      baseQuery.block = adminBlock;
     } else if (admin.role === 'district_admin') {
-      query = {
-        state: adminState,
-        district: adminDistrict,
-        status: 'pending_district_approval'
-      };
+      baseQuery.state = adminState;
+      baseQuery.district = adminDistrict;
     } else if (admin.role === 'state_admin') {
-      query = {
-        state: adminState,
-        status: 'pending_state_approval'
-      };
+      baseQuery.state = adminState;
     }
 
-    console.log('🔍 Dashboard stats query:', query);
+    console.log('🔍 Dashboard stats base query:', baseQuery);
 
-    const pendingCount = await Application.countDocuments(query);
+    // Total applications in this admin's jurisdiction
+    const totalCount = await Application.countDocuments(baseQuery);
     
-    console.log(`✅ Found ${pendingCount} pending applications`);
-
-    // Approved count (at this admin level)
-    let approvedQuery = { ...query };
+    // Pending applications (at current admin's level)
+    const pendingQuery = { ...baseQuery };
+    if (admin.role === 'block_admin') {
+      pendingQuery.status = 'pending_block_approval';
+    } else if (admin.role === 'district_admin') {
+      pendingQuery.status = 'pending_district_approval';
+    } else if (admin.role === 'state_admin') {
+      pendingQuery.status = 'pending_state_approval';
+    }
+    const pendingCount = await Application.countDocuments(pendingQuery);
+    
+    // Approved applications (by this admin level)
+    const approvedQuery = { ...baseQuery };
     if (admin.role === 'block_admin') {
       approvedQuery['approvals.block.status'] = 'approved';
     } else if (admin.role === 'district_admin') {
@@ -204,23 +222,32 @@ const getDashboardStats = async (req, res) => {
     } else if (admin.role === 'state_admin') {
       approvedQuery['approvals.state.status'] = 'approved';
     }
-
     const approvedCount = await Application.countDocuments(approvedQuery);
 
-    // Total applications in this admin's jurisdiction
-    const totalQuery = {
-      state: adminState,
-      ...(adminDistrict && { district: adminDistrict }),
-      ...(adminBlock && { block: adminBlock })
-    };
-    const totalCount = await Application.countDocuments(totalQuery);
+    // Rejected applications (by this admin level)
+    const rejectedQuery = { ...baseQuery };
+    if (admin.role === 'block_admin') {
+      rejectedQuery['approvals.block.status'] = 'rejected';
+    } else if (admin.role === 'district_admin') {
+      rejectedQuery['approvals.district.status'] = 'rejected';
+    } else if (admin.role === 'state_admin') {
+      rejectedQuery['approvals.state.status'] = 'rejected';
+    }
+    const rejectedCount = await Application.countDocuments(rejectedQuery);
+    
+    console.log(`✅ Stats - Total: ${totalCount}, Pending: ${pendingCount}, Approved: ${approvedCount}, Rejected: ${rejectedCount}`);
 
     res.status(200).json({
       success: true,
       data: {
+        total: totalCount,
         pending: pendingCount,
         approved: approvedCount,
-        total: totalCount,
+        rejected: rejectedCount,
+        totalApplications: totalCount, // Alias for compatibility
+        pendingApplications: pendingCount,
+        approvedApplications: approvedCount,
+        rejectedApplications: rejectedCount,
         role: admin.role,
         location: {
           state: adminState,

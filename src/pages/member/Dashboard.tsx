@@ -15,14 +15,56 @@ const MemberDashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Get user name from localStorage (set during login/registration)
-    const storedUserName = localStorage.getItem("userName");
+    // Fetch user data from backend
+    const fetchUserData = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        // Fallback to localStorage if no token
+        const storedUserName = localStorage.getItem("userName");
+        if (storedUserName) {
+          setUserName(storedUserName);
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch("http://localhost:4000/api/auth/me", {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            // Update localStorage with fresh data
+            localStorage.setItem("userName", result.data.fullName || "");
+            localStorage.setItem("userEmail", result.data.email || "");
+            localStorage.setItem("userId", result.data.userId || "");
+            
+            setUserName(result.data.fullName || "");
+          }
+        } else {
+          // Fallback to localStorage if API fails
+          const storedUserName = localStorage.getItem("userName");
+          if (storedUserName) {
+            setUserName(storedUserName);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        // Fallback to localStorage
+        const storedUserName = localStorage.getItem("userName");
+        if (storedUserName) {
+          setUserName(storedUserName);
+        }
+      }
+    };
+
+    fetchUserData();
+
     const hasVisitedBefore = localStorage.getItem("hasVisitedDashboard");
-
-    if (storedUserName) {
-      setUserName(storedUserName);
-    }
-
     if (hasVisitedBefore) {
       setIsFirstVisit(false);
     } else {
@@ -75,9 +117,18 @@ const MemberDashboard = () => {
         });
         if (personalRes.ok) {
           const data = await personalRes.json();
+          console.log("📋 Personal Form Data:", data.data);
+          console.log("🔒 isLocked:", data.data?.isLocked);
           if (data.data && data.data.isLocked) {
             completed.push("Personal Details");
+            console.log("✅ Personal Details marked as complete");
+          } else if (data.data) {
+            console.log("⚠️ Personal form exists but not locked");
+          } else {
+            console.log("❌ No personal form data found");
           }
+        } else {
+          console.log("⚠️ Personal form API error:", personalRes.status);
         }
 
         // Check Business Form
@@ -195,6 +246,20 @@ const MemberDashboard = () => {
     };
 
     loadProfileCompletion();
+
+    // Listen for form submissions to update percentage dynamically
+    const handleFormUpdate = () => {
+      console.log("🔄 Form updated, reloading profile completion...");
+      loadProfileCompletion();
+    };
+
+    window.addEventListener('formSubmitted', handleFormUpdate);
+    window.addEventListener('profileUpdated', handleFormUpdate);
+
+    return () => {
+      window.removeEventListener('formSubmitted', handleFormUpdate);
+      window.removeEventListener('profileUpdated', handleFormUpdate);
+    };
   }, []);
 
   let business: any = {};

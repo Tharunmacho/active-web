@@ -24,6 +24,7 @@ const AdminDashboard = () => {
     rejected: 0
   });
   const [recentApplications, setRecentApplications] = useState<any[]>([]);
+  const [applications, setApplications] = useState<any[]>([]);
 
   useEffect(() => {
     loadDashboardData();
@@ -65,9 +66,26 @@ const AdminDashboard = () => {
       }
 
       // Fetch recent applications
+      console.log('🔄 Fetching applications from backend...');
       const applicationsResponse = await getApplications();
-      if (applicationsResponse.success) {
+      console.log('📦 Full Applications response:', applicationsResponse);
+      console.log('📊 Response details:', {
+        success: applicationsResponse.success,
+        count: applicationsResponse.count,
+        dataLength: applicationsResponse.data?.length,
+        data: applicationsResponse.data,
+        firstApp: applicationsResponse.data?.[0]
+      });
+      if (applicationsResponse.success && applicationsResponse.data) {
+        console.log(`✅ Setting ${applicationsResponse.data.length} applications to state`);
+        console.log('📋 Applications data:', applicationsResponse.data);
         setRecentApplications(applicationsResponse.data.slice(0, 3));
+        
+        // Also set applications for the page
+        setApplications(applicationsResponse.data);
+      } else {
+        console.log('⚠️ No applications found or error');
+        setRecentApplications([]);
       }
 
     } catch (error: any) {

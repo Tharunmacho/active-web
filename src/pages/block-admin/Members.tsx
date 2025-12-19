@@ -4,71 +4,65 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, Filter, Users, Mail, Phone, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AdminSidebar from "./AdminSidebar";
+import { toast } from "sonner";
 
 const Members = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [members, setMembers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Dummy member data
-  const members = [
-    {
-      id: "M001",
-      name: "John Doe",
-      email: "john.doe@example.com",
-      phone: "+91 98765 43210",
-      location: "Mumbai, Maharashtra",
-      status: "Active",
-      role: "Member",
-      joinDate: "2024-01-15",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=96&h=96&fit=crop&crop=face"
-    },
-    {
-      id: "M002",
-      name: "Jane Smith",
-      email: "jane.smith@example.com",
-      phone: "+91 98765 43211",
-      location: "Delhi, NCR",
-      status: "Active",
-      role: "Member",
-      joinDate: "2024-01-14",
-      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop&crop=face"
-    },
-    {
-      id: "M003",
-      name: "Robert Brown",
-      email: "robert.brown@example.com",
-      phone: "+91 98765 43212",
-      location: "Bangalore, Karnataka",
-      status: "Active",
-      role: "Member",
-      joinDate: "2024-01-13",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop&crop=face"
-    },
-    {
-      id: "M004",
-      name: "Sarah Johnson",
-      email: "sarah.johnson@example.com",
-      phone: "+91 98765 43213",
-      location: "Pune, Maharashtra",
-      status: "Inactive",
-      role: "Member",
-      joinDate: "2024-01-12",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=96&h=96&fit=crop&crop=face"
-    },
-    {
-      id: "M005",
-      name: "Michael Lee",
-      email: "michael.lee@example.com",
-      phone: "+91 98765 43214",
-      location: "Chennai, Tamil Nadu",
-      status: "Active",
-      role: "Member",
-      joinDate: "2024-01-11",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=96&h=96&fit=crop&crop=face"
-    },
-  ];
+  // Fetch real member data from applications
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('adminToken');
+        
+        if (!token) {
+          toast.error('Please login again');
+          return;
+        }
+
+        const response = await fetch('http://localhost:4000/api/applications', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch members');
+        }
+
+        const data = await response.json();
+        
+        // Map applications to member format
+        const mappedMembers = (data.data || []).map((app: any) => ({
+          id: app._id || app.applicationId,
+          name: app.memberName || 'Unknown',
+          email: app.memberEmail || 'N/A',
+          phone: app.memberPhone || 'N/A',
+          location: `${app.block}, ${app.district}, ${app.state}`,
+          status: app.status === 'approved' ? 'Active' : 
+                 app.status === 'rejected' ? 'Inactive' : 'Pending',
+          role: 'Member',
+          joinDate: new Date(app.submittedAt).toLocaleDateString('en-IN'),
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(app.memberName || 'U')}&background=3b82f6&color=fff`
+        }));
+
+        setMembers(mappedMembers);
+      } catch (error) {
+        console.error('❌ Error fetching members:', error);
+        toast.error('Failed to load members');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMembers();
+  }, []);
 
   const filteredMembers = members.filter(member =>
     member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -137,7 +131,19 @@ const Members = () => {
             </Card>
 
             {/* Members Grid */}
-            {filteredMembers.length === 0 ? (
+            {loading ? (
+              <Card className="shadow-lg border-0">
+                <CardContent className="pt-12 pb-12">
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-4 animate-pulse">
+                      <Users className="w-8 h-8 text-blue-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">Loading members...</h3>
+                    <p className="text-sm text-gray-600">Please wait</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : filteredMembers.length === 0 ? (
               <Card className="shadow-lg border-0">
                 <CardContent className="pt-12 pb-12">
                   <div className="flex flex-col items-center justify-center text-center">

@@ -83,6 +83,25 @@ const PersonalInformationForm = () => {
         return;
       }
 
+      // First, try to get user profile data for pre-population
+      let userProfileData = null;
+      try {
+        const userResponse = await fetch("http://localhost:4000/api/auth/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (userResponse.ok) {
+          const userResult = await userResponse.json();
+          if (userResult.success && userResult.data) {
+            userProfileData = userResult.data;
+          }
+        }
+      } catch (error) {
+        console.log("Could not fetch user profile for pre-population");
+      }
+
       const response = await fetch("http://localhost:4000/api/personal-form", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -96,7 +115,33 @@ const PersonalInformationForm = () => {
           setFormData(result.data);
           setIsLocked(result.data.isLocked || false);
           setStatus(result.data.isLocked ? "submitted" : "pending");
+        } else if (userProfileData) {
+          // Pre-populate with user registration data if form is empty
+          setFormData({
+            name: userProfileData.fullName || "",
+            phoneNumber: userProfileData.phoneNumber || "",
+            email: userProfileData.email || "",
+            state: userProfileData.state || "",
+            district: userProfileData.district || "",
+            block: userProfileData.block || "",
+            city: userProfileData.city || "",
+            religion: "",
+            socialCategory: "",
+          });
         }
+      } else if (userProfileData) {
+        // If form doesn't exist yet, pre-populate with user registration data
+        setFormData({
+          name: userProfileData.fullName || "",
+          phoneNumber: userProfileData.phoneNumber || "",
+          email: userProfileData.email || "",
+          state: userProfileData.state || "",
+          district: userProfileData.district || "",
+          block: userProfileData.block || "",
+          city: userProfileData.city || "",
+          religion: "",
+          socialCategory: "",
+        });
       }
     } catch (error) {
       console.error("Error loading form:", error);
@@ -134,6 +179,15 @@ const PersonalInformationForm = () => {
       if (response.ok) {
         toast.success("Personal information saved successfully!");
         setStatus("submitted");
+        setIsLocked(true);
+        
+        // Dispatch event to update dashboard percentage
+        window.dispatchEvent(new Event('formSubmitted'));
+        
+        // Redirect to dashboard after 1.5 seconds
+        setTimeout(() => {
+          navigate("/member/dashboard");
+        }, 1500);
       } else {
         toast.error(result.message || "Failed to save form");
       }

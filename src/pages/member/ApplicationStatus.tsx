@@ -2,13 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-<<<<<<< Updated upstream
-import { Info, CheckCircle, Clock, FileText, ArrowLeft, User, Mail, Phone, MapPin, Briefcase, Calendar } from 'lucide-react';
-=======
 import { Info, CheckCircle, Clock, FileText, Menu, Loader2 } from 'lucide-react';
 import MemberSidebar from './MemberSidebar';
 import { getUserApplication } from '@/services/applicationApi';
->>>>>>> Stashed changes
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -50,16 +46,6 @@ export default function ApplicationStatus() {
     loadApplicationData();
   }, []);
 
-<<<<<<< Updated upstream
-  // Show admin approval stages screen
-  const stages = [
-    { id: 1, name: 'Block Level', admin: 'Block Admin Review', status: 'in-progress', icon: CheckCircle, color: 'blue' },
-    { id: 2, name: 'District Level', admin: 'District Admin Review', status: 'pending', icon: Clock, color: 'purple' },
-    { id: 3, name: 'State Level', admin: 'State Admin Review', status: 'pending', icon: Clock, color: 'indigo' },
-    { id: 4, name: 'Payment', admin: 'Ready for Payment', status: 'pending', icon: FileText, color: 'cyan' }
-  ];
-
-=======
   const loadApplicationData = async () => {
     setLoading(true);
     try {
@@ -98,10 +84,10 @@ export default function ApplicationStatus() {
     if (!application) {
       // Fallback to default pending stages
       return [
-        { id: 1, name: 'Block Admin', admin: 'Pending Assignment', status: 'pending', remarks: '' },
-        { id: 2, name: 'District Admin', admin: 'Pending Assignment', status: 'pending', remarks: '' },
-        { id: 3, name: 'State Admin', admin: 'Pending Assignment', status: 'pending', remarks: '' },
-        { id: 4, name: 'Ready for Payment', admin: 'ACTIV Super Admin', status: 'pending', remarks: '' }
+        { id: 1, name: 'Block Admin', admin: 'Pending Assignment', status: 'pending', remarks: '', icon: FileText },
+        { id: 2, name: 'District Admin', admin: 'Pending Assignment', status: 'pending', remarks: '', icon: FileText },
+        { id: 3, name: 'State Admin', admin: 'Pending Assignment', status: 'pending', remarks: '', icon: FileText },
+        { id: 4, name: 'Ready for Payment', admin: 'ACTIV Super Admin', status: 'pending', remarks: '', icon: CheckCircle }
       ];
     }
 
@@ -117,7 +103,8 @@ export default function ApplicationStatus() {
               blockAdmin.status === 'rejected' ? 'rejected' :
               application.status === 'pending_block_approval' ? 'in-progress' : 'pending',
       remarks: blockAdmin.remarks || '',
-      actionDate: blockAdmin.actionDate
+      actionDate: blockAdmin.actionDate,
+      icon: FileText
     });
 
     // District Admin Stage
@@ -130,7 +117,8 @@ export default function ApplicationStatus() {
               districtAdmin.status === 'rejected' ? 'rejected' :
               application.status === 'pending_district_approval' ? 'in-progress' : 'pending',
       remarks: districtAdmin.remarks || '',
-      actionDate: districtAdmin.actionDate
+      actionDate: districtAdmin.actionDate,
+      icon: FileText
     });
 
     // State Admin Stage
@@ -143,7 +131,8 @@ export default function ApplicationStatus() {
               stateAdmin.status === 'rejected' ? 'rejected' :
               application.status === 'pending_state_approval' ? 'in-progress' : 'pending',
       remarks: stateAdmin.remarks || '',
-      actionDate: stateAdmin.actionDate
+      actionDate: stateAdmin.actionDate,
+      icon: FileText
     });
 
     // Payment Stage
@@ -153,23 +142,137 @@ export default function ApplicationStatus() {
       admin: 'ACTIV Super Admin',
       status: application.status === 'approved' ? 'completed' : 'pending',
       remarks: '',
-      actionDate: undefined
+      actionDate: undefined,
+      icon: CheckCircle
     });
 
     return stages;
   };
 
   const stages = getStagesFromApplication();
->>>>>>> Stashed changes
   const completedStages = stages.filter(s => s.status === 'completed').length;
   const totalStages = stages.length;
   const progressPercentage = (completedStages / totalStages) * 100;
 
-<<<<<<< Updated upstream
-  // Application data
+  // Check if application was rejected
+  const isRejected = stages.some(s => s.status === 'rejected');
+
+  // If coming from query parameter (old flow), show approval stages
+  if (id || application) {
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-100 to-blue-200 p-4 md:p-6">
+        <div className="max-w-2xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-6">
+            <h1 className="text-3xl font-bold mb-2">Application Status</h1>
+            <p className="text-gray-700">Track your membership approval progress</p>
+          </div>
+
+          {/* Stage cards - existing code continues */}
+          <Card className="rounded-2xl shadow-lg mb-6 bg-white">
+            <CardContent className="p-6">
+              <h2 className="text-xl font-bold text-center mb-4">Overall Progress</h2>
+              <p className="text-center text-gray-600 mb-4">{completedStages} of {totalStages} stages completed</p>
+              
+              {/* Progress Bar */}
+              <div className="w-full bg-gray-200 rounded-full h-3 mb-6">
+                <div 
+                  className="bg-blue-600 h-3 rounded-full transition-all duration-300" 
+                  style={{ width: `${progressPercentage}%` }}
+                />
+              </div>
+
+              {/* Stage Indicators */}
+              <div className="grid grid-cols-4 gap-4">
+                {stages.map((stage, index) => {
+                  const isCompleted = stage.status === 'completed';
+                  const isInProgress = stage.status === 'in-progress';
+                  const isRejected = stage.status === 'rejected';
+
+                  return (
+                    <div key={stage.id} className="flex flex-col items-center">
+                      <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-2 ${
+                        isCompleted ? 'bg-green-500' : 
+                        isInProgress ? 'bg-blue-500' :
+                        isRejected ? 'bg-red-500' : 'bg-gray-300'
+                      }`}>
+                        {isCompleted && <CheckCircle className="w-8 h-8 text-white" />}
+                        {isInProgress && <Clock className="w-8 h-8 text-white animate-pulse" />}
+                        {!isCompleted && !isInProgress && <div className="w-3 h-3 bg-white rounded-full" />}
+                      </div>
+                      <p className="text-xs text-center font-medium">{stage.name}</p>
+                      <p className="text-xs text-center text-gray-500">{stage.admin}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Detailed Stage Cards */}
+          <div className="space-y-4">
+            {stages.map((stage, index) => {
+              const isCompleted = stage.status === 'completed';
+              const isInProgress = stage.status === 'in-progress';
+              const isRejected = stage.status === 'rejected';
+
+              return (
+                <Card key={stage.id} className="rounded-2xl shadow-lg">
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        isCompleted ? 'bg-green-500' : 
+                        isInProgress ? 'bg-blue-500' :
+                        isRejected ? 'bg-red-500' : 'bg-gray-300'
+                      }`}>
+                        {isCompleted && <CheckCircle className="w-6 h-6 text-white" />}
+                        {isInProgress && <Clock className="w-6 h-6 text-white" />}
+                        {!isCompleted && !isInProgress && <div className="w-3 h-3 bg-white rounded-full" />}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold mb-1">{stage.name}</h3>
+                        <p className="text-sm text-gray-600 mb-2">{stage.admin}</p>
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                          isCompleted ? 'bg-green-100 text-green-700' :
+                          isInProgress ? 'bg-blue-100 text-blue-700' :
+                          isRejected ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-600'
+                        }`}>
+                          {isCompleted ? 'Approved' : isInProgress ? 'In Review' : isRejected ? 'Rejected' : 'Pending'}
+                        </span>
+                        {stage.remarks && (
+                          <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                            <p className="text-sm text-gray-700">{stage.remarks}</p>
+                          </div>
+                        )}
+                        {stage.actionDate && (
+                          <p className="text-xs text-gray-500 mt-2">
+                            {new Date(stage.actionDate).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          <Button 
+            className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg"
+            onClick={() => navigate('/member/dashboard')}
+          >
+            Back to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // No application found - show the detailed form view with mock data
   const applicationData = {
-    applicationId: 'ACTV2024001',
-    submittedDate: '15 Dec 2024, 10:30 AM',
+    applicationId: application?.applicationId || 'ACTV2024001',
+    submittedDate: application?.submittedAt ? new Date(application.submittedAt).toLocaleDateString() : '15 Dec 2024, 10:30 AM',
     personalInfo: {
       name: localStorage.getItem('userName') || 'John Doe',
       email: 'john.doe@example.com',
@@ -195,7 +298,6 @@ export default function ApplicationStatus() {
                 className="flex items-center gap-2 bg-white/10 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
                 onClick={() => navigate('/member/dashboard')}
               >
-                <ArrowLeft className="w-4 h-4" />
                 <span className="hidden sm:inline">Back</span>
               </Button>
             </div>
@@ -215,7 +317,7 @@ export default function ApplicationStatus() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-purple-600" />
+                  <Clock className="w-6 h-6 text-purple-600" />
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Submitted On</p>
@@ -240,7 +342,7 @@ export default function ApplicationStatus() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-xl border border-blue-100">
                 <div className="w-14 h-14 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                  <User className="w-7 h-7 text-white" />
+                  <Info className="w-7 h-7 text-white" />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm text-gray-600 mb-1">Full Name</p>
@@ -250,7 +352,7 @@ export default function ApplicationStatus() {
 
               <div className="flex items-center gap-4 p-4 bg-purple-50 rounded-xl border border-purple-100">
                 <div className="w-14 h-14 rounded-xl bg-purple-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                  <Mail className="w-7 h-7 text-white" />
+                  <Info className="w-7 h-7 text-white" />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm text-gray-600 mb-1">Email Address</p>
@@ -260,7 +362,7 @@ export default function ApplicationStatus() {
 
               <div className="flex items-center gap-4 p-4 bg-green-50 rounded-xl border border-green-100">
                 <div className="w-14 h-14 rounded-xl bg-green-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                  <Phone className="w-7 h-7 text-white" />
+                  <Info className="w-7 h-7 text-white" />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm text-gray-600 mb-1">Phone Number</p>
@@ -270,7 +372,7 @@ export default function ApplicationStatus() {
 
               <div className="flex items-center gap-4 p-4 bg-orange-50 rounded-xl border border-orange-100">
                 <div className="w-14 h-14 rounded-xl bg-orange-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                  <MapPin className="w-7 h-7 text-white" />
+                  <Info className="w-7 h-7 text-white" />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm text-gray-600 mb-1">Address</p>
@@ -280,7 +382,7 @@ export default function ApplicationStatus() {
 
               <div className="flex items-center gap-4 p-4 bg-indigo-50 rounded-xl border border-indigo-100 md:col-span-2">
                 <div className="w-14 h-14 rounded-xl bg-indigo-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                  <Briefcase className="w-7 h-7 text-white" />
+                  <Info className="w-7 h-7 text-white" />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm text-gray-600 mb-1">Occupation</p>
@@ -393,183 +495,14 @@ export default function ApplicationStatus() {
             </div>
           </CardContent>
         </Card>
-=======
-  // Check if application was rejected
-  const isRejected = stages.some(s => s.status === 'rejected');
 
-  // If coming from query parameter (old flow), show approval stages
-  if (id || application) {
-
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-100 to-blue-200 p-4 md:p-6">
-        <div className="max-w-2xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold mb-2">Application Status</h1>
-            <p className="text-gray-700">Track your membership approval progress</p>
-          </div>
-
-          {/* Stage cards - existing code continues */}
-          <Card className="rounded-2xl shadow-lg mb-6 bg-white">
-            <CardContent className="p-6">
-              <h2 className="text-xl font-bold text-center mb-4">Overall Progress</h2>
-              <p className="text-center text-gray-600 mb-4">{completedStages} of {totalStages} stages completed</p>
-              
-              {/* Progress Bar */}
-              <div className="w-full bg-gray-200 rounded-full h-3 mb-6">
-                <div 
-                  className="bg-blue-600 h-3 rounded-full transition-all duration-300" 
-                  style={{ width: `${progressPercentage}%` }}
-                />
-              </div>
-
-              {/* Stage Indicators */}
-              <div className="grid grid-cols-4 gap-4">
-                {stages.map((stage, index) => {
-                  const isCompleted = stage.status === 'completed';
-                  const isInProgress = stage.status === 'in-progress';
-                  
-                  return (
-                    <div key={stage.id} className="flex flex-col items-center">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 font-bold text-sm ${
-                        isCompleted 
-                          ? 'bg-green-600 text-white' 
-                          : isInProgress 
-                          ? 'bg-blue-600 text-white' 
-                          : 'bg-gray-300 text-gray-600'
-                      }`}>
-                        {isCompleted ? '✓' : index + 1}
-                      </div>
-                      <p className="text-xs text-center text-gray-700 font-medium leading-tight">
-                        {stage.name}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Review Stage Cards */}
-          <div className="space-y-4 mb-6">
-            {stages.map((stage) => {
-              const isCompleted = stage.status === 'completed';
-              const isInProgress = stage.status === 'in-progress';
-
-              return (
-                <Card key={stage.id} className="rounded-2xl shadow-lg bg-white">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold mb-1">{stage.name} Review</h3>
-                        <p className="text-sm text-gray-600">{stage.admin}</p>
-                      </div>
-                      <span className={`px-4 py-1.5 rounded-full text-sm font-semibold ${
-                        isCompleted 
-                          ? 'bg-green-100 text-green-700' 
-                          : isInProgress 
-                          ? 'bg-blue-100 text-blue-700' 
-                          : 'bg-pink-100 text-pink-700'
-                      }`}>
-                        {isCompleted ? 'Approved' : isInProgress ? 'In Progress' : 'Pending'}
-                      </span>
-                    </div>
-                    
-                    {isCompleted && stage.remarks && (
-                      <div className="mt-4 bg-green-50 border border-green-200 rounded-xl p-4">
-                        <div className="flex gap-3">
-                          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                          <div>
-                            <p className="text-sm font-semibold text-green-800">Approval Remarks:</p>
-                            <p className="text-sm text-green-700 mt-1">{stage.remarks}</p>
-                            {stage.actionDate && (
-                              <p className="text-xs text-green-600 mt-1">
-                                Review Date: {new Date(stage.actionDate).toLocaleDateString()}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {isInProgress && (
-                      <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-                        <div className="flex gap-3">
-                          <Info className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                          <p className="text-sm text-yellow-800">
-                            Your application is currently being reviewed. You will be notified once this stage is complete.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {stage.status === 'rejected' && stage.remarks && (
-                      <div className="mt-4 bg-red-50 border border-red-200 rounded-xl p-4">
-                        <div className="flex gap-3">
-                          <Info className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                          <div>
-                            <p className="text-sm font-semibold text-red-800">Rejection Reason:</p>
-                            <p className="text-sm text-red-700 mt-1">{stage.remarks}</p>
-                            {stage.actionDate && (
-                              <p className="text-xs text-red-600 mt-1">
-                                Date: {new Date(stage.actionDate).toLocaleDateString()}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-
-          {isRejected && (
-            <div className="mb-6 bg-red-50 border-2 border-red-200 rounded-2xl p-6">
-              <h3 className="text-lg font-bold text-red-800 mb-2">Application Rejected</h3>
-              <p className="text-sm text-red-700">
-                Your application has been rejected. Please review the remarks above and contact support if you have questions.
-              </p>
-            </div>
-          )}
-
-          <Button 
-            variant="outline"
-            className="w-full bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 py-6 text-lg font-semibold rounded-2xl"
-            onClick={() => navigate('/member/dashboard')}
-          >
-            Back to Dashboard
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // No application found - show default message
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-blue-200 p-4 md:p-6">
-      <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold mb-2">Application Status</h1>
-          <p className="text-gray-700">No application found</p>
-        </div>
-
-        <Card className="rounded-2xl shadow-lg mb-6 bg-white">
-          <CardContent className="p-6 text-center">
-            <Info className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-            <p className="text-gray-600 mb-4">
-              You haven't submitted an application yet. Please complete your profile forms to submit an application.
-            </p>
-            <Button
-              onClick={() => navigate('/member/dashboard')}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              Go to Dashboard
-            </Button>
-          </CardContent>
-        </Card>
->>>>>>> Stashed changes
+        {/* Back Button */}
+        <Button 
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg font-semibold rounded-2xl"
+          onClick={() => navigate('/member/dashboard')}
+        >
+          Back to Dashboard
+        </Button>
       </div>
     </div>
   );

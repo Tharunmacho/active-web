@@ -105,14 +105,17 @@ const DeclarationForm = () => {
         toast.success("Declaration submitted successfully!");
         setStatus("submitted");
         
+        // Dispatch event to update dashboard percentage
+        window.dispatchEvent(new Event('formSubmitted'));
+        
         // Create application submission record
         const userName = localStorage.getItem("userName") || "Member";
         const applicationId = `APP-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
         
         // Get location from personal form
-        let state = "Tamil Nadu";
-        let district = "Tiruvannamalai";
-        let block = "Thandrampet";
+        let state = "";
+        let district = "";
+        let block = "";
         
         try {
           const personalFormRes = await fetch("http://localhost:4000/api/personal-form", {
@@ -121,13 +124,35 @@ const DeclarationForm = () => {
           if (personalFormRes.ok) {
             const personalData = await personalFormRes.json();
             if (personalData.data) {
-              state = personalData.data.state || state;
-              district = personalData.data.district || district;
-              block = personalData.data.block || block;
+              state = personalData.data.state || "";
+              district = personalData.data.district || "";
+              block = personalData.data.block || "";
+              console.log("📍 Application location from personal form:", { state, district, block });
+            }
+          }
+          
+          // Fallback: If personal form doesn't have location, get from user profile
+          if (!state || !district || !block) {
+            const userProfileRes = await fetch("http://localhost:4000/api/auth/me", {
+              headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (userProfileRes.ok) {
+              const userData = await userProfileRes.json();
+              if (userData.success && userData.data) {
+                state = state || userData.data.state || "";
+                district = district || userData.data.district || "";
+                block = block || userData.data.block || "";
+                console.log("📍 Application location from user profile:", { state, district, block });
+              }
             }
           }
         } catch (error) {
-          console.log("Using default location");
+          console.error("Error fetching location:", error);
+        }
+        
+        if (!state || !district || !block) {
+          toast.error("Could not determine your location. Please complete your personal form first.");
+          return;
         }
         
         // Determine member type from business form

@@ -17,9 +17,10 @@ import {
     MapPin,
     Shield
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
+import { toast } from "sonner";
 
 const Settings = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -57,18 +58,56 @@ const Settings = () => {
         localStorage.removeItem('adminId');
         localStorage.removeItem('sessionStart');
         localStorage.removeItem('userEmail');
+        localStorage.removeItem('adminToken');
 
         // Navigate to main login page
         navigate('/login');
     };
 
-    // Admin stats (these would come from API in real app)
-    const stats = {
-        totalMembers: 15,
-        pendingApprovals: 5,
-        approved: 5,
-        rejected: 5
-    };
+    // Fetch real admin stats from backend
+    const [stats, setStats] = useState({
+        totalMembers: 0,
+        pendingApprovals: 0,
+        approved: 0,
+        rejected: 0
+    });
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const token = localStorage.getItem('adminToken');
+                
+                if (!token) {
+                    return;
+                }
+
+                const response = await fetch('http://localhost:4000/api/admin/dashboard/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch stats');
+                }
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    setStats({
+                        totalMembers: data.data.totalApplications || 0,
+                        pendingApprovals: data.data.pendingApplications || 0,
+                        approved: data.data.approvedApplications || 0,
+                        rejected: data.data.rejectedApplications || 0
+                    });
+                }
+            } catch (error) {
+                console.error('❌ Error fetching stats:', error);
+            }
+        };
+
+        fetchStats();
+    }, []);
 
     return (
         <div className="min-h-screen flex bg-gradient-to-br from-gray-100 to-gray-50">

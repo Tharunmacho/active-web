@@ -3,6 +3,7 @@ import PersonalForm from '../models/PersonalForm.js';
 import BusinessForm from '../models/BusinessForm.js';
 import FinancialForm from '../models/FinancialForm.js';
 import DeclarationForm from '../models/DeclarationForm.js';
+import WebUserProfile from '../models/WebUserProfile.js';
 
 // @desc    Get all applications for admin (based on role and location)
 // @route   GET /api/applications
@@ -15,9 +16,9 @@ const getApplications = async (req, res) => {
     console.log('📋 Getting applications for admin:', {
       email: admin.email,
       role: admin.role,
-      state: admin.meta?.state,
-      district: admin.meta?.district,
-      block: admin.meta?.block
+      fullName: admin.fullName,
+      'admin.meta': admin.meta,
+      'admin object keys': Object.keys(admin.toObject ? admin.toObject() : admin)
     });
 
     // Extract location from admin.meta
@@ -25,24 +26,36 @@ const getApplications = async (req, res) => {
     const adminDistrict = admin.meta?.district;
     const adminBlock = admin.meta?.block;
 
-    // Filter based on admin role and location
+    console.log('📍 Extracted admin location:', {
+      adminState,
+      adminDistrict,
+      adminBlock,
+      types: {
+        state: typeof adminState,
+        district: typeof adminDistrict,
+        block: typeof adminBlock
+      }
+    });
+
+    // Filter based on admin role and location - show ALL applications from their jurisdiction
     if (admin.role === 'block_admin') {
+      // Block admin sees ALL applications from their block
       query = {
         state: adminState,
         district: adminDistrict,
-        block: adminBlock,
-        status: 'pending_block_approval'
+        block: adminBlock
       };
+      console.log('🔍 Block Admin Query:', JSON.stringify(query, null, 2));
     } else if (admin.role === 'district_admin') {
+      // District admin sees ALL applications from their district
       query = {
         state: adminState,
-        district: adminDistrict,
-        status: 'pending_district_approval'
+        district: adminDistrict
       };
     } else if (admin.role === 'state_admin') {
+      // State admin sees ALL applications from their state
       query = {
-        state: adminState,
-        status: 'pending_state_approval'
+        state: adminState
       };
     } else if (admin.role === 'super_admin') {
       // Super admin can see all
@@ -55,7 +68,17 @@ const getApplications = async (req, res) => {
       .populate('userId', 'email')
       .sort({ submittedAt: -1 });
 
-    console.log(`✅ Found ${applications.length} applications`);
+    console.log(`✅ Found ${applications.length} applications matching query`);
+    
+    // Debug: Show all applications in the database for comparison
+    const allApps = await Application.find({}).limit(10);
+    console.log(`📊 Total applications in database: ${allApps.length}`);
+    if (allApps.length > 0) {
+      console.log('📋 Sample application locations:');
+      allApps.slice(0, 3).forEach(app => {
+        console.log(`  - ${app.applicationId}: state="${app.state}", district="${app.district}", block="${app.block}", status="${app.status}"`);
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -347,7 +370,8 @@ const submitApplication = async (req, res) => {
       memberType,
       state,
       district,
-      block
+      block,
+      userId: req.user.id
     });
 
     // Check if application already exists
@@ -359,17 +383,29 @@ const submitApplication = async (req, res) => {
       });
     }
 
+    // Get user profile details
+    const userProfile = await WebUserProfile.findOne({ userId: req.user.id });
+    const userEmail = userProfile?.email || req.user.email || '';
+    const userPhone = userProfile?.phoneNumber || '';
+
     // Create new application
     const newApplication = new Application({
       applicationId,
       userId: req.user._id,
-      userName,
+      memberName: userName,
+      memberEmail: userEmail,
+      memberPhone: userPhone,
       memberType: memberType || 'business',
       state,
       district,
       block,
       status: 'pending_block_approval',
       submittedAt: new Date(),
+      approvals: {
+        block: { status: 'pending' },
+        district: { status: 'pending' },
+        state: { status: 'pending' }
+      },
       approvalHistory: [
         {
           level: 'submitted',
@@ -382,7 +418,13 @@ const submitApplication = async (req, res) => {
 
     await newApplication.save();
     
-    console.log('✅ Application created successfully:', applicationId);
+    console.log('✅ Application created successfully:', {
+      applicationId,
+      state,
+      district,
+      block,
+      status: 'pending_block_approval'
+    });
 
     res.status(201).json({
       success: true,

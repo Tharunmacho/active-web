@@ -76,82 +76,193 @@ const Approvals = () => {
   }), [applications.length, buckets.pending.length, buckets.approved.length, buckets.rejected.length]);
 
   const load = async () => {
-    // Dummy data for testing
-    const dummyApplications: ApplicationRec[] = [
-      {
-        id: 'APP001',
-        userId: 'user001',
-        submittedAt: '2024-01-15T10:30:00Z',
-        status: 'Under Review',
-        stage: 1,
-        stages: [
-          { id: 1, key: 'block', title: 'Block Review', reviewer: 'Block Admin', status: 'Under Review', reviewDate: null, notes: '' },
-          { id: 2, key: 'district', title: 'District Review', reviewer: '', status: 'Pending', reviewDate: null, notes: '' },
-          { id: 3, key: 'state', title: 'State Review', reviewer: '', status: 'Pending', reviewDate: null, notes: '' },
-          { id: 4, key: 'payment', title: 'Payment', reviewer: '', status: 'Pending', reviewDate: null, notes: '' },
-        ],
-        profile: { profile: { profile: { firstName: 'John Doe', email: 'john@example.com' } } }
-      },
-      {
-        id: 'APP002',
-        userId: 'user002',
-        submittedAt: '2024-01-14T09:20:00Z',
-        status: 'Under Review',
-        stage: 1,
-        stages: [
-          { id: 1, key: 'block', title: 'Block Review', reviewer: 'Block Admin', status: 'Under Review', reviewDate: null, notes: '' },
-          { id: 2, key: 'district', title: 'District Review', reviewer: '', status: 'Pending', reviewDate: null, notes: '' },
-          { id: 3, key: 'state', title: 'State Review', reviewer: '', status: 'Pending', reviewDate: null, notes: '' },
-          { id: 4, key: 'payment', title: 'Payment', reviewer: '', status: 'Pending', reviewDate: null, notes: '' },
-        ],
-        profile: { profile: { profile: { firstName: 'Jane Smith', email: 'jane@example.com' } } }
-      },
-      {
-        id: 'APP003',
-        userId: 'user003',
-        submittedAt: '2024-01-13T14:45:00Z',
-        status: 'Under Review',
-        stage: 1,
-        stages: [
-          { id: 1, key: 'block', title: 'Block Review', reviewer: 'Block Admin', status: 'Approved', reviewDate: '2024-01-13', notes: '' },
-          { id: 2, key: 'district', title: 'District Review', reviewer: '', status: 'Pending', reviewDate: null, notes: '' },
-          { id: 3, key: 'state', title: 'State Review', reviewer: '', status: 'Pending', reviewDate: null, notes: '' },
-          { id: 4, key: 'payment', title: 'Payment', reviewer: '', status: 'Pending', reviewDate: null, notes: '' },
-        ],
-        profile: { profile: { profile: { firstName: 'Robert Brown', email: 'robert@example.com' } } }
-      },
-    ];
-    setApplications(dummyApplications);
+    try {
+      console.log('🔄 Fetching applications from backend...');
+      const token = localStorage.getItem('adminToken');
+      
+      if (!token) {
+        console.error('❌ No admin token found');
+        toast.error('Please login again');
+        return;
+      }
+
+      const response = await fetch('http://localhost:4000/api/applications', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch applications');
+      }
+
+      const data = await response.json();
+      console.log('📦 Applications received:', data);
+
+      // Map backend data to frontend format
+      const mappedApplications: ApplicationRec[] = (data.data || []).map((app: any) => {
+        // Determine display status and current stage
+        let displayStatus = 'Under Review';
+        let currentStage = 1;
+        
+        if (app.status === 'rejected') {
+          displayStatus = 'Rejected';
+        } else if (app.status === 'approved') {
+          displayStatus = 'Ready for Payment';
+          currentStage = 4;
+        } else if (app.status === 'pending_state_approval') {
+          currentStage = 3;
+        } else if (app.status === 'pending_district_approval') {
+          currentStage = 2;
+        } else if (app.status === 'pending_block_approval') {
+          currentStage = 1;
+        }
+
+        // Build stages array with approval data
+        const stages: Stage[] = [
+          {
+            id: 1,
+            key: 'block',
+            title: 'Block Review',
+            reviewer: app.approvals?.block?.adminName || 'Block Admin',
+            status: app.approvals?.block?.status === 'approved' ? 'Approved' : 
+                   app.approvals?.block?.status === 'rejected' ? 'Rejected' : 
+                   currentStage === 1 ? 'Under Review' : 'Pending',
+            reviewDate: app.approvals?.block?.actionDate || null,
+            notes: app.approvals?.block?.remarks || ''
+          },
+          {
+            id: 2,
+            key: 'district',
+            title: 'District Review',
+            reviewer: app.approvals?.district?.adminName || 'District Admin',
+            status: app.approvals?.district?.status === 'approved' ? 'Approved' : 
+                   app.approvals?.district?.status === 'rejected' ? 'Rejected' : 
+                   currentStage === 2 ? 'Under Review' : 'Pending',
+            reviewDate: app.approvals?.district?.actionDate || null,
+            notes: app.approvals?.district?.remarks || ''
+          },
+          {
+            id: 3,
+            key: 'state',
+            title: 'State Review',
+            reviewer: app.approvals?.state?.adminName || 'State Admin',
+            status: app.approvals?.state?.status === 'approved' ? 'Approved' : 
+                   app.approvals?.state?.status === 'rejected' ? 'Rejected' : 
+                   currentStage === 3 ? 'Under Review' : 'Pending',
+            reviewDate: app.approvals?.state?.actionDate || null,
+            notes: app.approvals?.state?.remarks || ''
+          },
+          {
+            id: 4,
+            key: 'payment',
+            title: 'Payment',
+            reviewer: 'Super Admin',
+            status: app.paymentStatus === 'completed' ? 'Approved' : 
+                   currentStage === 4 ? 'Under Review' : 'Pending',
+            reviewDate: app.paymentDate || null,
+            notes: ''
+          }
+        ];
+
+        return {
+          id: app._id || app.applicationId,
+          userId: app.userId?._id || app.userId,
+          submittedAt: app.submittedAt || app.createdAt,
+          status: displayStatus,
+          stage: currentStage,
+          stages: stages,
+          profile: {
+            profile: {
+              profile: {
+                firstName: app.memberName || 'Unknown',
+                email: app.memberEmail || app.userId?.email || 'N/A'
+              }
+            }
+          }
+        };
+      });
+
+      console.log('✅ Mapped applications:', mappedApplications);
+      setApplications(mappedApplications);
+
+    } catch (error) {
+      console.error('❌ Error loading applications:', error);
+      toast.error('Failed to load applications');
+    }
   };
 
   useEffect(() => { load(); }, []);
 
-  const patch = async (id: string, body: any) => {
-    const res = await fetch(`http://localhost:4000/api/applications/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) throw new Error('Request failed');
-    const json = await res.json();
-    setApplications(prev => prev.map(a => (a.id === id ? json.application : a)));
-  };
-
   const handleApprove = async (id: string) => {
     try {
-      await patch(id, { action: 'approve', reviewerRole: role });
-      toast.success('Approved');
-    } catch {
-      toast.error('Approval failed');
+      console.log('🔄 Approving application:', id);
+      const token = localStorage.getItem('adminToken');
+      
+      if (!token) {
+        toast.error('Please login again');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:4000/api/applications/${id}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ remarks: '' }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Approval failed');
+      }
+
+      const data = await response.json();
+      console.log('✅ Application approved:', data);
+      toast.success('Application approved successfully');
+      
+      // Reload applications to get fresh data
+      await load();
+    } catch (error: any) {
+      console.error('❌ Approval error:', error);
+      toast.error(error.message || 'Approval failed');
     }
   };
 
   const handleReject = async (id: string) => {
     try {
-      await patch(id, { action: 'reject', reviewerRole: role });
-      toast.success('Rejected');
-    } catch {
-      toast.error('Rejection failed');
+      console.log('🔄 Rejecting application:', id);
+      const token = localStorage.getItem('adminToken');
+      
+      if (!token) {
+        toast.error('Please login again');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:4000/api/applications/${id}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ remarks: 'Application rejected' }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Rejection failed');
+      }
+
+      const data = await response.json();
+      console.log('✅ Application rejected:', data);
+      toast.success('Application rejected');
+      
+      // Reload applications to get fresh data
+      await load();
+    } catch (error: any) {
+      console.error('❌ Rejection error:', error);
+      toast.error(error.message || 'Rejection failed');
     }
   };
 

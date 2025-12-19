@@ -121,6 +121,9 @@ const BusinessInformationForm = () => {
       if (response.ok) {
         toast.success("Business information saved successfully!");
         setStatus("submitted");
+        
+        // Dispatch event to update dashboard percentage
+        window.dispatchEvent(new Event('formSubmitted'));
       } else {
         toast.error(result.message || "Failed to save form");
       }

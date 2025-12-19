@@ -99,6 +99,9 @@ const FinancialForm = () => {
       if (response.ok) {
         toast.success("Financial information saved successfully!");
         setStatus("submitted");
+        
+        // Dispatch event to update dashboard percentage
+        window.dispatchEvent(new Event('formSubmitted'));
       } else {
         toast.error(result.message || "Failed to save form");
       }
