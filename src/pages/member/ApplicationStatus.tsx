@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Info, CheckCircle, Clock, FileText, Menu, Loader2 } from 'lucide-react';
+import { Info, CheckCircle, Clock, FileText, Menu, Loader2, RefreshCw } from 'lucide-react';
 import MemberSidebar from './MemberSidebar';
 import { getUserApplication } from '@/services/applicationApi';
 
@@ -49,11 +49,23 @@ export default function ApplicationStatus() {
   const loadApplicationData = async () => {
     setLoading(true);
     try {
+      console.log('📥 Loading application data...');
+      
       // Try to get application from backend
       const app = await getUserApplication();
+      console.log('📦 Received application data:', app);
+      
       if (app) {
+        console.log('✅ Application status:', {
+          applicationId: app.applicationId,
+          status: app.status,
+          blockApproval: app.approvals?.block?.status,
+          districtApproval: app.approvals?.district?.status,
+          stateApproval: app.approvals?.state?.status
+        });
         setApplication(app);
       } else {
+        console.log('⚠️ No application found, checking localStorage');
         // Fallback to localStorage
         const data = localStorage.getItem("applicationSubmission");
         if (data) {
@@ -61,7 +73,7 @@ export default function ApplicationStatus() {
         }
       }
     } catch (error) {
-      console.error('Error loading application:', error);
+      console.error('❌ Error loading application:', error);
     } finally {
       setLoading(false);
     }
@@ -95,13 +107,17 @@ export default function ApplicationStatus() {
 
     // Block Admin Stage
     const blockAdmin = application.approvals.block;
+    const isBlockInProgress = application.status === 'pending_block_approval' && blockAdmin.status === 'pending';
+    const isBlockCompleted = blockAdmin.status === 'approved';
+    const isBlockRejected = blockAdmin.status === 'rejected';
+    
     stages.push({
       id: 1,
       name: 'Block Admin',
       admin: blockAdmin.adminName || `${application.block} Block Admin`,
-      status: blockAdmin.status === 'approved' ? 'completed' : 
-              blockAdmin.status === 'rejected' ? 'rejected' :
-              application.status === 'pending_block_approval' ? 'in-progress' : 'pending',
+      status: isBlockRejected ? 'rejected' : 
+              isBlockCompleted ? 'completed' : 
+              isBlockInProgress ? 'in-progress' : 'pending',
       remarks: blockAdmin.remarks || '',
       actionDate: blockAdmin.actionDate,
       icon: FileText
@@ -109,13 +125,17 @@ export default function ApplicationStatus() {
 
     // District Admin Stage
     const districtAdmin = application.approvals.district;
+    const isDistrictInProgress = application.status === 'pending_district_approval' && districtAdmin.status === 'pending';
+    const isDistrictCompleted = districtAdmin.status === 'approved';
+    const isDistrictRejected = districtAdmin.status === 'rejected';
+    
     stages.push({
       id: 2,
       name: 'District Admin',
       admin: districtAdmin.adminName || `${application.district} District Admin`,
-      status: districtAdmin.status === 'approved' ? 'completed' :
-              districtAdmin.status === 'rejected' ? 'rejected' :
-              application.status === 'pending_district_approval' ? 'in-progress' : 'pending',
+      status: isDistrictRejected ? 'rejected' :
+              isDistrictCompleted ? 'completed' :
+              isDistrictInProgress ? 'in-progress' : 'pending',
       remarks: districtAdmin.remarks || '',
       actionDate: districtAdmin.actionDate,
       icon: FileText
@@ -123,13 +143,17 @@ export default function ApplicationStatus() {
 
     // State Admin Stage
     const stateAdmin = application.approvals.state;
+    const isStateInProgress = application.status === 'pending_state_approval' && stateAdmin.status === 'pending';
+    const isStateCompleted = stateAdmin.status === 'approved';
+    const isStateRejected = stateAdmin.status === 'rejected';
+    
     stages.push({
       id: 3,
       name: 'State Admin',
       admin: stateAdmin.adminName || `${application.state} State Admin`,
-      status: stateAdmin.status === 'approved' ? 'completed' :
-              stateAdmin.status === 'rejected' ? 'rejected' :
-              application.status === 'pending_state_approval' ? 'in-progress' : 'pending',
+      status: isStateRejected ? 'rejected' :
+              isStateCompleted ? 'completed' :
+              isStateInProgress ? 'in-progress' : 'pending',
       remarks: stateAdmin.remarks || '',
       actionDate: stateAdmin.actionDate,
       icon: FileText
@@ -165,8 +189,24 @@ export default function ApplicationStatus() {
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold mb-2">Application Status</h1>
+            <div className="flex items-center justify-center gap-4 mb-2">
+              <h1 className="text-3xl font-bold">Application Status</h1>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={loadApplicationData}
+                className="hover:bg-blue-50"
+                title="Refresh status"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+            </div>
             <p className="text-gray-700">Track your membership approval progress</p>
+            {application && (
+              <p className="text-sm text-gray-600 mt-2">
+                Application ID: <span className="font-semibold">{application.applicationId}</span>
+              </p>
+            )}
           </div>
 
           {/* Stage cards - existing code continues */}

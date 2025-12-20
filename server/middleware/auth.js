@@ -9,30 +9,40 @@ export const protect = async (req, res, next) => {
       // Get token from header
       token = req.headers.authorization.split(' ')[1];
 
-      // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log('🔐 Member auth - verifying token');
 
-      // Get user from token
-      req.user = await WebUser.findById(decoded.id).select('-password');
+      // Verify token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-here-change-in-production');
+
+      console.log('✅ Token decoded:', { 
+        id: decoded.id, 
+        userId: decoded.userId,
+        email: decoded.email 
+      });
+
+      // Get user from token (handle both 'id' and 'userId' fields)
+      const userId = decoded.id || decoded.userId;
+      req.user = await WebUser.findById(userId).select('-password');
 
       if (!req.user) {
+        console.log('❌ User not found for ID:', userId);
         return res.status(401).json({
           success: false,
           message: 'User not found'
         });
       }
 
+      console.log('✅ User authenticated:', req.user.email);
       next();
     } catch (error) {
-      console.error(error);
+      console.error('❌ Auth error:', error.message);
       return res.status(401).json({
         success: false,
         message: 'Not authorized, token failed'
       });
     }
-  }
-
-  if (!token) {
+  } else {
+    console.log('❌ No authorization header found');
     return res.status(401).json({
       success: false,
       message: 'Not authorized, no token'

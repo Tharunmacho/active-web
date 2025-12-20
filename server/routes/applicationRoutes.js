@@ -6,15 +6,17 @@ import {
   approveApplication,
   rejectApplication,
   getApplicationStats,
-  submitApplication
+  submitApplication,
+  getMyApplication
 } from '../controllers/applicationController.js';
 import { protect } from '../middleware/adminAuth.js';
 import { protect as memberProtect } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Member route - submit application (must come before protect middleware)
+// Member routes (must come before admin protect middleware)
 router.post('/submit', memberProtect, submitApplication);
+router.get('/my-application', memberProtect, getMyApplication);
 
 // All other routes are protected (admin only)
 router.use(protect);

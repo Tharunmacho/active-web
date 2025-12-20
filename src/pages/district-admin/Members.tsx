@@ -145,21 +145,53 @@ const Members = () => {
 
   // Transform applications to member format
   const members = applications.map(app => {
-    console.log('App data:', {
+    console.log('🔍 District Admin - App data:', {
       applicationId: app.applicationId,
-      personalFormId: app.personalFormId,
-      userId: app.userId
+      memberName: app.memberName,
+      status: app.status,
+      districtApprovalStatus: app.approvals?.district?.status,
+      blockApprovalStatus: app.approvals?.block?.status
     });
+    
+    // Determine status based on district admin's approval
+    let statusLabel = 'Pending';
+    let statusColor = 'bg-yellow-500';
+    
+    if (app.approvals?.district?.status === 'approved') {
+      // District admin has approved
+      statusLabel = 'Approved';
+      statusColor = 'bg-green-500';
+    } else if (app.approvals?.district?.status === 'rejected') {
+      // District admin has rejected
+      statusLabel = 'Rejected';
+      statusColor = 'bg-red-500';
+    } else if (app.status === 'rejected') {
+      // Rejected at any level
+      statusLabel = 'Rejected';
+      statusColor = 'bg-red-500';
+    } else if (app.status === 'pending_district_approval' || app.approvals?.district?.status === 'pending') {
+      // Waiting for district admin action
+      statusLabel = 'Pending';
+      statusColor = 'bg-yellow-500';
+    } else if (app.status === 'pending_state_approval' || app.status === 'approved') {
+      // Moved beyond district (district already approved)
+      statusLabel = 'Approved';
+      statusColor = 'bg-green-500';
+    }
+    
     return {
-      id: app.applicationId,
+      id: app._id || app.applicationId,
       applicationId: app.applicationId,
-      name: app.personalFormId?.name || 'Unknown',
-      email: app.userId?.email || app.personalFormId?.email || 'N/A',
-      phone: app.personalFormId?.phoneNumber || 'N/A',
-      location: app.district || 'N/A',
-      status: app.status === 'approved' ? 'Active' : app.status === 'rejected' ? 'Rejected' : 'Pending',
-      role: app.memberType || 'Member',
-      joinDate: new Date(app.submittedAt).toISOString().split('T')[0],
+      name: app.memberName || app.personalFormId?.name || 'Unknown',
+      email: app.memberEmail || app.userId?.email || app.personalFormId?.email || 'N/A',
+      phone: app.memberPhone || app.personalFormId?.phoneNumber || 'N/A',
+      location: `${app.block || 'N/A'}, ${app.district || 'N/A'}, ${app.state || 'N/A'}`,
+      status: statusLabel,
+      statusColor: statusColor,
+      rawStatus: app.status,
+      role: app.memberType === 'business' ? 'Business' : 'Aspirant',
+      joinDate: app.submittedAt ? new Date(app.submittedAt).toLocaleDateString('en-IN') : 'N/A',
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(app.memberName || 'U')}&background=3b82f6&color=fff`,
       userId: app.userId?._id
     };
   });
@@ -265,6 +297,7 @@ const Members = () => {
                   >
                     <div className="flex items-start gap-4 mb-4">
                       <Avatar className="w-16 h-16 ring-4 ring-white/30">
+                        <AvatarImage src={member.avatar} className="object-cover" />
                         <AvatarFallback className="bg-white/20 text-white font-bold text-lg">
                           {member.name.split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
@@ -272,7 +305,7 @@ const Members = () => {
                       <div className="flex-1">
                         <h3 className="text-lg font-bold text-white">{member.name}</h3>
                         <p className="text-blue-100 text-sm">{member.id}</p>
-                        <Badge className={member.status === 'Active' ? 'bg-green-500 hover:bg-green-600 mt-2' : member.status === 'Rejected' ? 'bg-red-500 hover:bg-red-600 mt-2' : 'bg-yellow-500 hover:bg-yellow-600 mt-2'}>
+                        <Badge className={`${member.statusColor} text-white hover:opacity-90 mt-2`}>
                           {member.status}
                         </Badge>
                       </div>

@@ -58,23 +58,38 @@ const Members = () => {
         );
         
         const transformedMembers = relevantApps.map((app: any) => {
+          console.log('🔍 State Admin - App data:', {
+            applicationId: app.applicationId,
+            memberName: app.memberName,
+            status: app.status,
+            stateApprovalStatus: app.approvals?.state?.status,
+            districtApprovalStatus: app.approvals?.district?.status
+          });
+          
           // Extract userId properly
           let userIdValue = app.userId;
           if (typeof app.userId === 'object' && app.userId !== null) {
             userIdValue = app.userId._id || app.userId.id;
           }
           
-          // Determine status
+          // Determine status based on state admin's approval
           let statusLabel = 'Pending';
           let statusColor = 'bg-yellow-500';
           
-          if (app.status === 'approved') {
+          if (app.approvals?.state?.status === 'approved' || app.status === 'approved') {
+            // State admin has approved (final approval)
             statusLabel = 'Approved';
             statusColor = 'bg-green-500';
-          } else if (app.status === 'rejected' || app.approvals?.state?.status === 'rejected') {
+          } else if (app.approvals?.state?.status === 'rejected') {
+            // State admin has rejected
             statusLabel = 'Rejected';
             statusColor = 'bg-red-500';
-          } else if (app.status === 'pending_state_approval') {
+          } else if (app.status === 'rejected') {
+            // Rejected at any level
+            statusLabel = 'Rejected';
+            statusColor = 'bg-red-500';
+          } else if (app.status === 'pending_state_approval' || app.approvals?.state?.status === 'pending') {
+            // Waiting for state admin action
             statusLabel = 'Pending';
             statusColor = 'bg-yellow-500';
           }
@@ -82,16 +97,17 @@ const Members = () => {
           return {
             id: app._id || app.applicationId,
             applicationId: app.applicationId || app._id,
-            name: app.personalFormId?.name || app.memberName || app.userId?.email || 'Unknown',
-            email: app.personalFormId?.email || app.memberEmail || app.userId?.email || 'N/A',
-            phone: app.personalFormId?.phoneNumber || app.memberPhone || app.userId?.phone || 'N/A',
-            location: [app.city || app.block, app.district, app.state].filter(Boolean).join(', ') || 'Not specified',
+            name: app.memberName || app.personalFormId?.name || app.userId?.email || 'Unknown',
+            email: app.memberEmail || app.personalFormId?.email || app.userId?.email || 'N/A',
+            phone: app.memberPhone || app.personalFormId?.phoneNumber || app.userId?.phone || 'N/A',
+            location: [app.block, app.district, app.state].filter(Boolean).join(', ') || 'Not specified',
             status: statusLabel,
             statusColor: statusColor,
             rawStatus: app.status,
             memberType: app.memberType || 'aspirant',
             role: app.memberType === 'business' ? 'Business' : 'Aspirant',
             joinDate: app.submittedAt ? new Date(app.submittedAt).toLocaleDateString('en-IN') : 'N/A',
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(app.memberName || 'U')}&background=3b82f6&color=fff`,
             userId: userIdValue,
             rawData: app
           };
