@@ -1,5 +1,5 @@
 import express from 'express';
-import { register, login, getMe, updateProfile, changePassword } from '../controllers/authController.js';
+import { register, login, getMe, updateProfile, changePassword, checkUserExists } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -7,6 +7,7 @@ const router = express.Router();
 // Public routes
 router.post('/register', register);
 router.post('/login', login);
+router.get('/check-user/:email', checkUserExists); // Debug endpoint
 
 // Protected routes
 router.get('/me', protect, getMe);

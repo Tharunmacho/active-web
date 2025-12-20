@@ -51,25 +51,30 @@ const Members = () => {
             _id: app._id,
             applicationId: app.applicationId,
             memberName: app.memberName,
-            blockApprovalStatus: app.approvals?.block?.status
+            blockApprovalStatus: app.approvals?.block?.status,
+            applicationStatus: app.status
           });
           let statusLabel = 'Pending';
           let statusColor = 'bg-yellow-500';
           
-          // Check block admin approval status first
-          if (app.approvals?.block?.status === 'approved' || app.status === 'approved') {
+          // For Block Admin: Check the block approval status specifically
+          // If block admin approved, status will be 'pending_district_approval' or beyond
+          if (app.approvals?.block?.status === 'approved') {
+            // Block admin has approved this application
             statusLabel = 'Approved';
             statusColor = 'bg-green-500';
-          } else if (app.approvals?.block?.status === 'rejected' || app.status === 'rejected') {
+          } else if (app.approvals?.block?.status === 'rejected') {
+            // Block admin has rejected this application
             statusLabel = 'Rejected';
             statusColor = 'bg-red-500';
-          } else if (app.status === 'pending_block_approval') {
+          } else if (app.status === 'rejected') {
+            // Application was rejected at any level
+            statusLabel = 'Rejected';
+            statusColor = 'bg-red-500';
+          } else if (app.status === 'pending_block_approval' || app.approvals?.block?.status === 'pending') {
+            // Still waiting for block admin action
             statusLabel = 'Pending';
             statusColor = 'bg-yellow-500';
-          } else if (app.status === 'pending_district_approval' || app.status === 'pending_state_approval') {
-            // If moved past block but block approved, show as approved
-            statusLabel = 'Approved';
-            statusColor = 'bg-green-500';
           }
           
           // Extract userId properly
@@ -190,9 +195,10 @@ const Members = () => {
     const all: any[] = [...members];
 
     members.forEach(member => {
-      if (member.rawStatus === 'rejected') {
+      // Use the calculated status (not rawStatus) to properly categorize
+      if (member.status === 'Rejected') {
         rejected.push(member);
-      } else if (member.rawStatus === 'approved') {
+      } else if (member.status === 'Approved') {
         approved.push(member);
       } else {
         pending.push(member);

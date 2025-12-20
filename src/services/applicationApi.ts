@@ -44,27 +44,51 @@ interface Application {
 export const getUserApplication = async (): Promise<Application | null> => {
   const token = localStorage.getItem('token');
   
+  console.log('🔐 getUserApplication - Token exists:', !!token);
+  
   if (!token) {
+    console.log('❌ No token found in localStorage');
     return null;
   }
 
   try {
     // Try to fetch from backend first
     try {
+      console.log('📡 Fetching from:', `${API_BASE_URL}/applications/my-application`);
       const response = await fetch(`${API_BASE_URL}/applications/my-application`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
       
+      console.log('📥 Response status:', response.status, response.statusText);
+      
+      if (response.status === 401) {
+        console.log('❌ 401 Unauthorized - Token may be invalid');
+        // Clear invalid token
+        localStorage.removeItem('token');
+        return null;
+      }
+      
+      if (response.status === 404) {
+        console.log('⚠️ 404 - No application found for this user');
+        return null;
+      }
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ Application data received:', data);
         if (data.success && data.data) {
           return data.data;
         }
       }
+      
+      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+      console.log('❌ API Error:', errorData);
+      
     } catch (backendError) {
-      console.log('Backend not available, checking localStorage');
+      console.log('❌ Backend error:', backendError);
     }
 
     // Fallback: Check localStorage for application submission

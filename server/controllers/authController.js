@@ -116,8 +116,11 @@ export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
+    console.log('🔐 Member login attempt:', { email, passwordLength: password?.length });
+
     // Validation
     if (!email || !password) {
+      console.log('❌ Missing credentials');
       return res.status(400).json({
         success: false,
         message: 'Please provide email and password'
@@ -128,14 +131,29 @@ export const login = async (req, res, next) => {
     const user = await WebUser.findOne({ email }).select('+password');
 
     if (!user) {
+      console.log('❌ User not found in database:', email);
+      // Check if user exists with different case
+      const userCaseInsensitive = await WebUser.findOne({ 
+        email: { $regex: new RegExp(`^${email}$`, 'i') } 
+      }).select('+password');
+      
+      if (userCaseInsensitive) {
+        console.log('✅ Found user with different case:', userCaseInsensitive.email);
+        // Continue with this user
+        return handleUserLogin(userCaseInsensitive, password, res);
+      }
+      
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
       });
     }
 
+    console.log('✅ User found:', { id: user._id, email: user.email, isActive: user.isActive });
+
     // Check if user is active
     if (!user.isActive) {
+      console.log('❌ User account is deactivated');
       return res.status(401).json({
         success: false,
         message: 'Account is deactivated. Please contact support.'
@@ -143,13 +161,38 @@ export const login = async (req, res, next) => {
     }
 
     // Check password
+    console.log('🔑 Checking password...');
     const isPasswordMatch = await user.comparePassword(password);
 
     if (!isPasswordMatch) {
+      console.log('❌ Password does not match');
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
       });
+    }
+
+    console.log('✅ Password matched');
+    return handleUserLogin(user, password, res);
+    
+  } catch (error) {
+    console.error('❌ Login error:', error);
+    next(error);
+  }
+};
+
+// Helper function to handle user login
+const handleUserLogin = async (user, password, res) => {
+  try {
+    // Check password if needed
+    if (password) {
+      const isPasswordMatch = await user.comparePassword(password);
+      if (!isPasswordMatch) {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid email or password'
+        });
+      }
     }
 
     // Get user profile details from "web users" collection
@@ -181,6 +224,44 @@ export const login = async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  }
+};
+
+// @desc    Check if user exists (DEBUG - Remove in production)
+// @route   GET /api/auth/check-user/:email
+// @access  Public (for debugging only)
+export const checkUserExists = async (req, res) => {
+  try {
+    const { email } = req.params;
+    console.log('🔍 Checking user:', email);
+    
+    const user = await WebUser.findOne({ 
+      email: { $regex: new RegExp(`^${email}$`, 'i') } 
+    });
+    
+    if (!user) {
+      return res.json({
+        exists: false,
+        message: 'User not found'
+      });
+    }
+    
+    const userProfile = await WebUserProfile.findOne({ userId: user._id });
+    
+    return res.json({
+      exists: true,
+      user: {
+        id: user._id,
+        email: user.email,
+        isActive: user.isActive,
+        hasProfile: !!userProfile,
+        profileEmail: userProfile?.email,
+        profileName: userProfile?.fullName
+      }
+    });
+  } catch (error) {
+    console.error('Check user error:', error);
+    res.status(500).json({ error: error.message });
   }
 };
 

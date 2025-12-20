@@ -98,6 +98,19 @@ const getApplications = async (req, res) => {
         console.log(`  - ${app.applicationId}: state="${app.state}", district="${app.district}", block="${app.block}", status="${app.status}"`);
       });
     }
+    
+    // Debug: Log approval status for block admin
+    if (admin.role === 'block_admin' && applications.length > 0) {
+      console.log('📋 Block Admin - Application Approval Status:');
+      applications.slice(0, 3).forEach(app => {
+        console.log(`  - ${app.applicationId}:`, {
+          status: app.status,
+          blockApprovalStatus: app.approvals?.block?.status,
+          districtApprovalStatus: app.approvals?.district?.status,
+          stateApprovalStatus: app.approvals?.state?.status
+        });
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -133,21 +146,35 @@ const getAllApplications = async (req, res) => {
     const adminDistrict = admin.meta?.district;
     const adminBlock = admin.meta?.block;
 
-    // Filter based on admin role and location - NO STATUS FILTER
+    // Filter based on admin role and location - EXCLUDE REJECTED FROM LOWER LEVELS
     if (admin.role === 'block_admin') {
       query = {
         state: new RegExp(`^${adminState}$`, 'i'),
         district: new RegExp(`^${adminDistrict}$`, 'i'),
         block: new RegExp(`^${adminBlock}$`, 'i')
+        // Block admin sees all applications from their block (including rejected)
       };
     } else if (admin.role === 'district_admin') {
       query = {
         state: new RegExp(`^${adminState}$`, 'i'),
-        district: new RegExp(`^${adminDistrict}$`, 'i')
+        district: new RegExp(`^${adminDistrict}$`, 'i'),
+        // District admin sees only block-approved or district-processed applications
+        $or: [
+          { status: 'pending_district_approval' },
+          { status: 'pending_state_approval' },
+          { status: 'approved' },
+          { 'approvals.district.status': 'rejected' } // Only see if THEY rejected it
+        ]
       };
     } else if (admin.role === 'state_admin') {
       query = {
-        state: new RegExp(`^${adminState}$`, 'i')
+        state: new RegExp(`^${adminState}$`, 'i'),
+        // State admin sees only district-approved or state-processed applications
+        $or: [
+          { status: 'pending_state_approval' },
+          { status: 'approved' },
+          { 'approvals.state.status': 'rejected' } // Only see if THEY rejected it
+        ]
       };
     } else if (admin.role === 'super_admin') {
       query = {};
@@ -614,6 +641,60 @@ const submitApplication = async (req, res) => {
   }
 };
 
+// @desc    Get user's own application
+// @route   GET /api/applications/my-application
+// @access  Private (Member only)
+const getMyApplication = async (req, res) => {
+  try {
+    console.log('📋 Getting application for user:', {
+      userId: req.user._id,
+      userEmail: req.user.email
+    });
+    
+    // Find the application for this user
+    const application = await Application.findOne({ userId: req.user._id })
+      .sort({ submittedAt: -1 }); // Get the most recent application
+
+    if (!application) {
+      console.log('⚠️ No application found for user:', req.user._id);
+      
+      // Also check with any field that might contain userId
+      const allAppsForDebugging = await Application.find({}).limit(5);
+      console.log('📊 Sample applications in DB:', allAppsForDebugging.map(app => ({
+        applicationId: app.applicationId,
+        userId: app.userId,
+        status: app.status
+      })));
+      
+      return res.status(404).json({
+        success: false,
+        message: 'No application found'
+      });
+    }
+
+    console.log('✅ Found application:', {
+      applicationId: application.applicationId,
+      status: application.status,
+      blockApproval: application.approvals?.block?.status,
+      districtApproval: application.approvals?.district?.status,
+      stateApproval: application.approvals?.state?.status
+    });
+
+    res.status(200).json({
+      success: true,
+      data: application
+    });
+
+  } catch (error) {
+    console.error('❌ Get my application error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
 export {
   getApplications,
   getAllApplications,
@@ -621,5 +702,6 @@ export {
   approveApplication,
   rejectApplication,
   getApplicationStats,
-  submitApplication
+  submitApplication,
+  getMyApplication
 };

@@ -34,53 +34,50 @@ export default function EnhancedLoginPage() {
     console.log('🔐 Attempting login with:', identifier);
     
     try {
-      // First try admin authentication if email looks like admin format
-      if (identifier.includes('@activ.com') || identifier.includes('admin')) {
-        console.log('🔍 Detected admin email format, trying admin login...');
-        try {
-          const response = await adminLogin(identifier, password);
-          console.log('✅ Admin login successful:', response);
+      // First try admin authentication for ALL logins
+      console.log('🔍 Trying admin login first...');
+      try {
+        const response = await adminLogin(identifier, password);
+        console.log('✅ Admin login successful:', response);
+        
+        if (response.success && response.data?.admin) {
+          const admin = response.data.admin;
+          const token = response.data.token;
           
-          if (response.success && response.data?.admin) {
-            const admin = response.data.admin;
-            const token = response.data.token;
-            
-            // Store admin data and token
-            localStorage.setItem('role', admin.role);
-            localStorage.setItem('userName', admin.fullName);
-            localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('adminToken', token); // CRITICAL: Store the admin token
-            localStorage.setItem('adminData', JSON.stringify(admin));
-            
-            console.log('💾 Stored admin token:', token ? 'YES' : 'NO');
+          // Store admin data and token
+          localStorage.setItem('role', admin.role);
+          localStorage.setItem('userName', admin.fullName);
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('adminToken', token);
+          localStorage.setItem('adminData', JSON.stringify(admin));
+          
+          console.log('💾 Stored admin token:', token ? 'YES' : 'NO');
 
-            // Navigate to appropriate dashboard based on role
-            const role = admin.role;
-            let adminPath = '/block-admin/dashboard';
-            
-            console.log('🔍 Determining route for role:', role);
-            
-            if (role === 'district_admin') {
-              adminPath = '/district-admin/dashboard';
-            } else if (role === 'state_admin') {
-              adminPath = '/state-admin/dashboard';
-            } else if (role === 'super_admin') {
-              adminPath = '/super-admin/dashboard';
-            } else if (role === 'block_admin') {
-              adminPath = '/block-admin/dashboard';
-            }
-            
-            console.log('📍 Navigating to:', adminPath);
-
-            toast.success(`Welcome ${admin.fullName}!`);
-            setIsLoading(false);
-            navigate(adminPath);
-            return;
+          // Navigate to appropriate dashboard based on role
+          const role = admin.role;
+          let adminPath = '/block-admin/dashboard';
+          
+          console.log('🔍 Determining route for role:', role);
+          
+          if (role === 'district_admin') {
+            adminPath = '/district-admin/dashboard';
+          } else if (role === 'state_admin') {
+            adminPath = '/state-admin/dashboard';
+          } else if (role === 'super_admin') {
+            adminPath = '/super-admin/dashboard';
+          } else if (role === 'block_admin') {
+            adminPath = '/block-admin/dashboard';
           }
-        } catch (adminErr: any) {
-          console.error('❌ Admin login failed:', adminErr);
-          console.log('Trying member authentication...');
+          
+          console.log('📍 Navigating to:', adminPath);
+
+          toast.success(`Welcome ${admin.fullName}!`);
+          setIsLoading(false);
+          navigate(adminPath);
+          return;
         }
+      } catch (adminErr: any) {
+        console.log('⚠️ Admin login failed, trying member authentication...');
       }
 
       // Member/backend authentication
