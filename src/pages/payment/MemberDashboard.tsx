@@ -290,6 +290,77 @@ ACTIV Organization
             </div>
           </div>
 
+          {/* Quick Actions - First after welcome */}
+          <div className="mb-6">
+            <h3 className="font-bold text-gray-900 mb-4">Quick Actions</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                {
+                  icon: User,
+                  label: 'My Profile',
+                  description: 'View & edit your profile',
+                  path: '/member/profile',
+                  gradient: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+                  stats: '85% Complete'
+                },
+                {
+                  icon: Calendar,
+                  label: 'Events',
+                  description: 'Upcoming workshops & meets',
+                  path: '/member/events',
+                  gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                  stats: '3 Upcoming'
+                },
+                {
+                  icon: Headphones,
+                  label: 'Support',
+                  description: 'Get help & FAQs',
+                  path: '/member/help',
+                  gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  stats: '24/7 Available'
+                },
+                {
+                  icon: Settings,
+                  label: 'Settings',
+                  description: 'Account preferences',
+                  path: '/member/help',
+                  gradient: 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
+                  stats: 'Help & Settings'
+                }
+              ].map((action, idx) => {
+                const Icon = action.icon;
+                return (
+                  <Card
+                    key={idx}
+                    className="border-0 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg"
+                    style={{
+                      borderRadius: '16px',
+                      boxShadow: '0 4px 16px -4px rgba(0, 0, 0, 0.08)'
+                    }}
+                    onClick={() => navigate(action.path)}
+                  >
+                    <CardContent className="p-5">
+                      <div
+                        className="w-12 h-12 rounded-xl flex items-center justify-center mb-3"
+                        style={{ background: action.gradient }}
+                      >
+                        <Icon className="w-6 h-6 text-white" />
+                      </div>
+                      <p className="font-semibold text-gray-900 text-sm mb-1">{action.label}</p>
+                      <p className="text-xs text-gray-500 mb-2">{action.description}</p>
+                      <span
+                        className="inline-block px-2 py-1 rounded-full text-xs font-medium"
+                        style={{ background: '#f1f5f9', color: '#475569' }}
+                      >
+                        {action.stats}
+                      </span>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {[
@@ -584,42 +655,6 @@ ACTIV Organization
                 </div>
               </CardContent>
             </Card>
-          </div>
-
-          {/* Quick Actions */}
-          <div>
-            <h3 className="font-bold text-gray-900 mb-4">Quick Actions</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { icon: User, label: 'My Profile', path: '/member/profile', gradient: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)' },
-                { icon: Calendar, label: 'Events', path: '/member/events', gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' },
-                { icon: Headphones, label: 'Support', path: '/member/support', gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' },
-                { icon: Settings, label: 'Settings', path: '/member/settings', gradient: 'linear-gradient(135deg, #64748b 0%, #475569 100%)' }
-              ].map((action, idx) => {
-                const Icon = action.icon;
-                return (
-                  <Card
-                    key={idx}
-                    className="border-0 cursor-pointer transition-all hover:scale-[1.02]"
-                    style={{
-                      borderRadius: '16px',
-                      boxShadow: '0 4px 16px -4px rgba(0, 0, 0, 0.08)'
-                    }}
-                    onClick={() => navigate(action.path)}
-                  >
-                    <CardContent className="p-5 text-center">
-                      <div
-                        className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3"
-                        style={{ background: action.gradient }}
-                      >
-                        <Icon className="w-6 h-6 text-white" />
-                      </div>
-                      <p className="font-semibold text-gray-900 text-sm">{action.label}</p>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
           </div>
 
           {/* Footer Info */}
