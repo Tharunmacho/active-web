@@ -4,13 +4,15 @@ import { useNavigate } from 'react-router-dom';
 import { FaBriefcase, FaBox, FaCompass, FaChartBar, FaCog, FaSignOutAlt, FaTimes } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { toast } from 'sonner';
 
 type Props = {
     isOpen: boolean;
     onClose: () => void;
+    disableNavigation?: boolean;
 };
 
-export default function BusinessSidebar({ isOpen, onClose }: Props) {
+export default function BusinessSidebar({ isOpen, onClose, disableNavigation = false }: Props) {
     const location = useLocation();
     const [userName, setUserName] = useState("");
     const navigate = useNavigate();
@@ -69,17 +71,31 @@ export default function BusinessSidebar({ isOpen, onClose }: Props) {
             <nav className="p-2 overflow-y-auto flex-1">
                 {nav.map((item) => {
                     const active = location.pathname === item.to;
+                    const isDisabled = disableNavigation && item.to !== '/business/create-profile';
+                    
+                    const handleClick = (e: React.MouseEvent) => {
+                        if (isDisabled) {
+                            e.preventDefault();
+                            toast.error("Please complete your business profile first");
+                            return;
+                        }
+                        onClose();
+                    };
+                    
                     return (
                         <Link
                             key={item.to}
                             to={item.to}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-lg mb-1 transition-all ${active
+                            className={`flex items-center gap-3 px-4 py-3 rounded-lg mb-1 transition-all ${
+                                isDisabled 
+                                    ? 'text-gray-400 cursor-not-allowed opacity-50'
+                                    : active
                                     ? 'bg-blue-600 text-white shadow-md'
                                     : 'text-gray-700 hover:bg-gray-100'
-                                }`}
-                            onClick={onClose}
+                            }`}
+                            onClick={handleClick}
                         >
-                            <span className={`w-5 h-5 ${active ? 'text-white' : 'text-gray-500'}`}>
+                            <span className={`w-5 h-5 ${isDisabled ? 'text-gray-400' : active ? 'text-white' : 'text-gray-500'}`}>
                                 {item.icon}
                             </span>
                             <span className="font-medium">{item.label}</span>

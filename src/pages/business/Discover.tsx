@@ -1,24 +1,30 @@
-import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, MapPin, Star, Filter, Building2, Package } from "lucide-react";
+import { Search, Building2, Phone, Briefcase } from "lucide-react";
+import { toast } from "sonner";
 import BusinessSidebar from "./BusinessSidebar";
 
 const Discover = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [companies, setCompanies] = useState<any[]>([]);
+    const [hasSearched, setHasSearched] = useState(false);
 
-    useEffect(() => {
-        loadCompanies();
-    }, []);
+    const handleSearch = async () => {
+        if (!searchQuery || searchQuery.trim() === '') {
+            toast.error("Please enter a product name to search");
+            return;
+        }
 
-    const loadCompanies = async () => {
+        setLoading(true);
+        setHasSearched(true);
+
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:4000/api/companies', {
+            const response = await fetch(`http://localhost:4000/api/products/search?q=${encodeURIComponent(searchQuery)}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -27,47 +33,25 @@ const Discover = () => {
             const result = await response.json();
             if (result.success) {
                 setCompanies(result.data);
+                if (result.data.length === 0) {
+                    toast.info("No companies found with matching products");
+                }
+            } else {
+                toast.error(result.message || "Failed to search products");
             }
         } catch (error) {
-            console.error('Error loading companies:', error);
+            console.error('Error searching products:', error);
+            toast.error("Failed to search products");
         } finally {
             setLoading(false);
         }
     };
 
-    const getCategoryIcon = (category: string) => {
-        return Building2;
+    const handleKeyPress = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleSearch();
+        }
     };
-
-    const getCategoryColor = (index: number) => {
-        const colors = [
-            { text: "text-blue-600", bg: "bg-blue-50" },
-            { text: "text-green-600", bg: "bg-green-50" },
-            { text: "text-purple-600", bg: "bg-purple-50" },
-            { text: "text-orange-600", bg: "bg-orange-50" },
-            { text: "text-pink-600", bg: "bg-pink-50" },
-        ];
-        return colors[index % colors.length];
-    };
-
-    const filteredCompanies = companies.filter(company =>
-        (company.companyName && company.companyName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (company.businessCategory && company.businessCategory.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (company.city && company.city.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-
-    const uniqueCategories = new Set(companies.map(c => c.businessCategory).filter(Boolean));
-
-    if (loading) {
-        return (
-            <div className="min-h-screen flex bg-white items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading businesses...</p>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen flex bg-gradient-to-br from-blue-50 to-purple-50">
@@ -78,7 +62,7 @@ const Discover = () => {
                 <div className="p-5 md:p-6 bg-white border-b border-gray-200">
                     <div>
                         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">Discover</h1>
-                        <p className="text-gray-600 text-sm md:text-base">Find companies and products</p>
+                        <p className="text-gray-600 text-sm md:text-base">Search for products and find companies</p>
                     </div>
                 </div>
 
@@ -87,120 +71,106 @@ const Discover = () => {
                     <div className="max-w-4xl mx-auto">
                         {/* Search Bar */}
                         <div className="mb-8">
-                            <div className="relative">
-                                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                                <Input
-                                    type="text"
-                                    placeholder="Search companies, products..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="pl-12 pr-4 py-6 text-base rounded-xl border-gray-200 bg-white shadow-sm focus:ring-2 focus:ring-blue-500"
-                                />
+                            <div className="flex gap-3">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                    <Input
+                                        type="text"
+                                        placeholder="Search for products (e.g., laptop, shoes, furniture)..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        onKeyPress={handleKeyPress}
+                                        className="pl-12 pr-4 py-6 text-base rounded-xl border-gray-200 bg-white shadow-sm focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+                                <Button
+                                    onClick={handleSearch}
+                                    disabled={loading}
+                                    className="px-8 py-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md"
+                                >
+                                    {loading ? "Searching..." : "Search"}
+                                </Button>
                             </div>
                         </div>
 
-                        {/* Empty State or Results */}
-                        {companies.length === 0 ? (
+                        {/* Results */}
+                        {!hasSearched ? (
                             <div className="flex flex-col items-center justify-center py-20 px-4">
                                 <div className="w-32 h-32 mb-6 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
-                                    <Search className="w-16 h-16 text-gray-400" />
+                                    <Search className="w-16 h-16 text-blue-400" />
                                 </div>
                                 <h3 className="text-xl md:text-2xl font-semibold text-gray-800 mb-2 text-center">
-                                    Search for companies and products
+                                    Search for Products
                                 </h3>
                                 <p className="text-gray-500 text-center max-w-md">
-                                    Start typing to discover businesses
+                                    Enter a product name to discover companies selling similar products
                                 </p>
                             </div>
-                        ) : filteredCompanies.length === 0 ? (
+                        ) : loading ? (
                             <div className="flex flex-col items-center justify-center py-20 px-4">
-                                <div className="w-32 h-32 mb-6 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                                <p className="text-gray-600">Searching for products...</p>
+                            </div>
+                        ) : companies.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-20 px-4">
+                                <div className="w-32 h-32 mb-6 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
                                     <Search className="w-16 h-16 text-gray-400" />
                                 </div>
                                 <h3 className="text-xl md:text-2xl font-semibold text-gray-800 mb-2 text-center">
-                                    No results found
+                                    No Results Found
                                 </h3>
                                 <p className="text-gray-500 text-center max-w-md">
-                                    Try adjusting your search terms
+                                    No companies found with products matching "{searchQuery}". Try different keywords.
                                 </p>
                             </div>
                         ) : (
-                            <div className="space-y-5">
-                                {/* Stats Cards - Only show when searching */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 mb-6">
-                                    <div className="p-5 md:p-6 rounded-xl bg-white border-0 shadow-md hover:shadow-lg transition-shadow">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <span className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">{companies.length}</span>
-                                        </div>
-                                        <p className="text-gray-600 text-sm font-medium">Total Companies</p>
-                                    </div>
-
-                                    <div className="p-5 md:p-6 rounded-xl bg-white border-0 shadow-md hover:shadow-lg transition-shadow">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <span className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent">{uniqueCategories.size}</span>
-                                        </div>
-                                        <p className="text-gray-600 text-sm font-medium">Categories</p>
-                                    </div>
-
-                                    <div className="p-5 md:p-6 rounded-xl bg-white border-0 shadow-md hover:shadow-lg transition-shadow">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <span className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-green-600 to-green-700 bg-clip-text text-transparent">{companies.filter(c => c.isActive).length}</span>
-                                        </div>
-                                        <p className="text-gray-600 text-sm font-medium">Active</p>
-                                    </div>
+                            <div className="space-y-4">
+                                <div className="mb-6">
+                                    <h2 className="text-lg font-semibold text-gray-800 mb-2">
+                                        Found {companies.length} {companies.length === 1 ? 'company' : 'companies'} with matching products
+                                    </h2>
+                                    <p className="text-sm text-gray-600">Search term: "{searchQuery}"</p>
                                 </div>
 
-                                {/* Company Cards Grid */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
-                                    {filteredCompanies.map((company, index) => {
-                                    const Icon = getCategoryIcon(company.businessCategory);
-                                    const colors = getCategoryColor(index);
-                                    return (
-                                        <div key={company._id} className="group">
-                                            <div className="h-full rounded-2xl bg-white border-0 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden">
-                                                {/* Company Icon Header */}
-                                                <div className={`h-36 relative ${colors.bg} flex items-center justify-center`}>
-                                                    <Icon className={`h-16 w-16 ${colors.text}`} strokeWidth={1.5} />
-                                                    {company.isActive && (
-                                                        <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-green-500 shadow-md">
-                                                            <span className="text-xs font-bold text-white">Active</span>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {companies.map((company, index) => (
+                                        <Card key={company.companyId} className="rounded-xl border-0 shadow-md hover:shadow-xl transition-all overflow-hidden">
+                                            <CardContent className="p-6">
+                                                <div className="space-y-4">
+                                                    {/* Company Name */}
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+                                                            <Building2 className="w-6 h-6 text-white" />
                                                         </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Company Info */}
-                                                <div className="p-6">
-                                                    <h3 className="font-bold text-xl text-gray-900 mb-2">{company.companyName}</h3>
-                                                    <p className="text-sm text-gray-600 mb-4 min-h-[40px] line-clamp-2">
-                                                        {company.businessCategory || 'Business'}
-                                                    </p>
-
-                                                    <div className="space-y-3 mb-5">
-                                                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                            <MapPin className="h-4 w-4 text-gray-400" />
-                                                            <span>{company.city || 'Location not set'}, {company.state || ''}</span>
-                                                        </div>
-                                                        <div className="flex items-center justify-between">
-                                                            <span className={`px-3 py-1.5 ${colors.bg} rounded-lg text-xs font-semibold ${colors.text}`}>
-                                                                {company.businessCategory || 'General'}
-                                                            </span>
-                                                            <span className="text-xs text-gray-500">
-                                                                {company.contactEmail ? 'Verified' : 'Unverified'}
-                                                            </span>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h3 className="font-semibold text-lg text-gray-900 truncate">
+                                                                {company.businessName}
+                                                            </h3>
+                                                            <p className="text-sm text-gray-500">
+                                                                {company.productCount} {company.productCount === 1 ? 'product' : 'products'} available
+                                                            </p>
                                                         </div>
                                                     </div>
 
-                                                    <Button 
-                                                        onClick={() => window.location.href = `/business/companies/${company._id}`}
-                                                        className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-md hover:shadow-lg h-11"
-                                                    >
-                                                        View Profile
-                                                    </Button>
+                                                    {/* Business Type */}
+                                                    <div className="flex items-center gap-2 text-gray-700">
+                                                        <Briefcase className="w-4 h-4 text-blue-600" />
+                                                        <span className="text-sm font-medium">
+                                                            {company.businessType || 'Not specified'}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Mobile Number */}
+                                                    <div className="flex items-center gap-2 text-gray-700">
+                                                        <Phone className="w-4 h-4 text-green-600" />
+                                                        <span className="text-sm font-medium">
+                                                            {company.mobileNumber || 'Not available'}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                            </CardContent>
+                                        </Card>
+                                    ))}
                                 </div>
                             </div>
                         )}

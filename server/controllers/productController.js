@@ -1,7 +1,7 @@
 import Product from '../models/Product.js';
 import Company from '../models/Company.js';
 
-// @desc    Get all products for user
+// @desc    Get all products for active company
 // @route   GET /api/products
 // @access  Private
 export const getProducts = async (req, res) => {
@@ -10,11 +10,25 @@ export const getProducts = async (req, res) => {
     
     console.log('🔍 Fetching products for userId:', userId);
     
-    const products = await Product.find({ userId })
+    // Find the active company
+    const activeCompany = await Company.findOne({ userId, isActive: true });
+    
+    if (!activeCompany) {
+      return res.status(404).json({
+        success: false,
+        message: 'No active company found. Please set a company as active.',
+        data: []
+      });
+    }
+    
+    console.log('✅ Active company:', activeCompany.businessName);
+    
+    // Get products only for the active company
+    const products = await Product.find({ userId, companyId: activeCompany._id })
       .populate('companyId', 'businessName logo')
       .sort({ createdAt: -1 });
     
-    console.log(`✅ Found ${products.length} products`);
+    console.log(`✅ Found ${products.length} products for active company`);
     
     res.status(200).json({
       success: true,
@@ -301,6 +315,78 @@ export const getProductsByCompany = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching products',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Search products and get companies with products
+// @route   GET /api/products/search?q=searchTerm
+// @access  Private
+export const searchProductsAndCompanies = async (req, res) => {
+  try {
+    const searchTerm = req.query.q || '';
+    const currentUserId = req.user.id;
+    
+    console.log('🔍 Searching for:', searchTerm);
+    
+    if (!searchTerm || searchTerm.trim() === '') {
+      return res.status(200).json({
+        success: true,
+        data: []
+      });
+    }
+    
+    // Get the active company to exclude it from search results
+    const activeCompany = await Company.findOne({ userId: currentUserId, isActive: true });
+    console.log('🏢 Active company:', activeCompany?.businessName || 'None');
+    
+    // Search for products matching the search term
+    const products = await Product.find({
+      $or: [
+        { productName: { $regex: searchTerm, $options: 'i' } },
+        { category: { $regex: searchTerm, $options: 'i' } },
+        { description: { $regex: searchTerm, $options: 'i' } }
+      ]
+    }).populate('companyId userId');
+    
+    console.log(`✅ Found ${products.length} matching products`);
+    
+    // Get unique companies that have these products (exclude only the active company)
+    const companyIds = [...new Set(products.map(p => p.companyId?._id?.toString()).filter(Boolean))];
+    
+    const companyFilter = {
+      _id: { $in: companyIds }
+    };
+    
+    // Exclude active company if it exists
+    if (activeCompany) {
+      companyFilter._id = { $in: companyIds, $ne: activeCompany._id };
+    }
+    
+    const companies = await Company.find(companyFilter);
+    
+    // Format response with limited company info
+    const results = companies.map(company => ({
+      companyId: company._id,
+      businessName: company.businessName,
+      businessType: company.businessType,
+      mobileNumber: company.mobileNumber,
+      productCount: products.filter(p => p.companyId?._id?.toString() === company._id.toString()).length
+    }));
+    
+    console.log(`✅ Returning ${results.length} companies with products (excluded active company)`);
+    
+    res.status(200).json({
+      success: true,
+      count: results.length,
+      data: results
+    });
+  } catch (error) {
+    console.error('❌ Error searching products:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error searching products',
       error: error.message
     });
   }

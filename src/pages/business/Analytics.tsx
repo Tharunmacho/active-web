@@ -7,7 +7,7 @@ const Analytics = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [products, setProducts] = useState<any[]>([]);
-    const [companies, setCompanies] = useState<any[]>([]);
+    const [activeCompany, setActiveCompany] = useState<any>(null);
 
     useEffect(() => {
         loadData();
@@ -17,23 +17,23 @@ const Analytics = () => {
         try {
             const token = localStorage.getItem('token');
             
-            const [productsRes, companiesRes] = await Promise.all([
+            const [productsRes, activeCompanyRes] = await Promise.all([
                 fetch('http://localhost:4000/api/products', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 }),
-                fetch('http://localhost:4000/api/companies', {
+                fetch('http://localhost:4000/api/companies/active', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
             ]);
 
             const productsData = await productsRes.json();
-            const companiesData = await companiesRes.json();
+            const activeCompanyData = await activeCompanyRes.json();
 
             if (productsData.success) {
                 setProducts(productsData.data);
             }
-            if (companiesData.success) {
-                setCompanies(companiesData.data);
+            if (activeCompanyData.success) {
+                setActiveCompany(activeCompanyData.data);
             }
         } catch (error) {
             console.error('Error loading data:', error);
@@ -93,9 +93,9 @@ const Analytics = () => {
             borderColor: "border-l-blue-500" 
         },
         { 
-            label: "Companies", 
-            value: companies.length.toString(), 
-            change: companies.filter(c => c.isActive).length > 0 ? "Active" : "None", 
+            label: "Active Company", 
+            value: activeCompany ? activeCompany.businessName : "None", 
+            change: activeCompany ? activeCompany.status.charAt(0).toUpperCase() + activeCompany.status.slice(1) : "None", 
             borderColor: "border-l-purple-500" 
         },
         { 

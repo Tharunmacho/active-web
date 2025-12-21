@@ -8,7 +8,7 @@ import BusinessSidebar from "./BusinessSidebar";
 const BusinessDashboard = () => {
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [businesses, setBusinesses] = useState<any[]>([]);
+    const [activeCompany, setActiveCompany] = useState<any>(null);
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -20,19 +20,19 @@ const BusinessDashboard = () => {
         try {
             const token = localStorage.getItem("token");
             
-            // Load companies
-            const companiesResponse = await fetch("http://localhost:4000/api/companies", {
+            // Load active company only
+            const activeCompanyResponse = await fetch("http://localhost:4000/api/companies/active", {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             });
 
-            const companiesResult = await companiesResponse.json();
-            if (companiesResult.success) {
-                setBusinesses(companiesResult.data);
+            const activeCompanyResult = await activeCompanyResponse.json();
+            if (activeCompanyResult.success) {
+                setActiveCompany(activeCompanyResult.data);
             }
 
-            // Load products
+            // Load products (backend now filters by active company automatically)
             const productsResponse = await fetch("http://localhost:4000/api/products", {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -90,15 +90,15 @@ const BusinessDashboard = () => {
                     <div className="max-w-7xl mx-auto space-y-5">
                         {/* Stats Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
-                            {/* Total Companies */}
+                            {/* Active Company */}
                             <Card className="border-0 shadow-lg rounded-xl hover:shadow-xl transition-shadow bg-white border-l-4 border-l-blue-500">
                                 <CardContent className="p-6 md:p-7">
                                     <div className="mb-4">
-                                        <p className="text-sm font-medium text-gray-500 mb-2">Active Companies</p>
-                                        <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">{businesses.length}</div>
+                                        <p className="text-sm font-medium text-gray-500 mb-2">Active Company</p>
+                                        <div className="text-lg md:text-xl font-bold text-gray-800">{activeCompany ? activeCompany.businessName : 'No active company'}</div>
                                     </div>
                                     <div className="pt-4 border-t border-gray-100">
-                                        <p className="text-xs text-gray-500">Currently managed</p>
+                                        <p className="text-xs text-gray-500">{activeCompany ? activeCompany.businessType : 'Set a company as active'}</p>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -142,79 +142,80 @@ const BusinessDashboard = () => {
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                             {/* Left Column - Business Cards */}
                             <div className="lg:col-span-2 space-y-5">
-                                {/* Manage Companies Card */}
+                                {/* Active Company Card */}
                                 <Card className="border-0 shadow-lg rounded-xl bg-gradient-to-br from-white to-gray-50">
                                     <CardContent className="p-5 md:p-6">
                                         <div className="flex items-center justify-between mb-5">
-                                            <h2 className="text-lg md:text-xl font-bold text-blue-600">My Companies</h2>
-                                            <div className="flex items-center gap-2">
-                                                <span className="px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-semibold shadow-md">
-                                                    {businesses.length}
-                                                </span>
-                                                <Button
-                                                    size="sm"
-                                                    className="bg-blue-600 hover:bg-blue-700"
-                                                    onClick={() => navigate("/business/companies")}
-                                                >
-                                                    Manage
-                                                </Button>
-                                            </div>
+                                            <h2 className="text-lg md:text-xl font-bold text-blue-600">Active Company</h2>
+                                            <Button
+                                                size="sm"
+                                                className="bg-blue-600 hover:bg-blue-700"
+                                                onClick={() => navigate("/business/companies")}
+                                            >
+                                                Switch
+                                            </Button>
                                         </div>
 
-                                        {/* Business Cards */}
+                                        {/* Active Company Card */}
                                         <div className="space-y-4">
                                             {loading ? (
                                                 <div className="text-center py-8">
                                                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
                                                 </div>
-                                            ) : businesses.length === 0 ? (
+                                            ) : !activeCompany ? (
                                                 <div className="text-center py-8">
-                                                    <p className="text-gray-500 mb-4">No companies yet</p>
-                                                    <Button onClick={() => navigate("/business/companies/add")}>
-                                                        Add Your First Company
+                                                    <p className="text-gray-500 mb-4">No active company</p>
+                                                    <Button onClick={() => navigate("/business/companies")}>
+                                                        Select Active Company
                                                     </Button>
                                                 </div>
                                             ) : (
-                                                businesses.slice(0, 2).map((business) => (
-                                                    <div key={business._id} className="p-4 md:p-5 rounded-xl bg-white border border-gray-200 hover:shadow-md transition-shadow">
-                                                        <div className="flex items-start gap-4 mb-4">
-                                                            {business.logo && (
-                                                                <img src={business.logo} alt={business.businessName} className="w-12 h-12 rounded-lg object-cover" />
-                                                            )}
-                                                            <div className="flex-1">
-                                                                <h3 className="font-bold text-base md:text-lg text-gray-800 mb-1">{business.businessName}</h3>
-                                                                <p className="text-sm text-gray-600 mb-0.5">{business.businessType}</p>
-                                                                <p className="text-sm text-gray-500">{business.mobileNumber}</p>
+                                                <div className="p-4 md:p-5 rounded-xl bg-white border-2 border-blue-200 shadow-md">
+                                                    <div className="flex items-start gap-4 mb-4">
+                                                        {activeCompany.logo && (
+                                                            <img src={activeCompany.logo} alt={activeCompany.businessName} className="w-12 h-12 rounded-lg object-cover" />
+                                                        )}
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <h3 className="font-bold text-base md:text-lg text-gray-800">{activeCompany.businessName}</h3>
+                                                                <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">
+                                                                    ACTIVE
+                                                                </span>
                                                             </div>
-                                                            <span className={`px-3 py-1.5 text-xs font-bold rounded-full ${
-                                                                business.status === 'approved' ? 'bg-green-100 text-green-700' :
-                                                                business.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                                                                'bg-orange-100 text-orange-700'
-                                                            }`}>
-                                                                {business.status.charAt(0).toUpperCase() + business.status.slice(1)}
-                                                            </span>
+                                                            <p className="text-sm text-gray-600 mb-0.5">{activeCompany.businessType}</p>
+                                                            <p className="text-sm text-gray-500">{activeCompany.mobileNumber}</p>
+                                                            {activeCompany.email && (
+                                                                <p className="text-sm text-gray-500">{activeCompany.email}</p>
+                                                            )}
                                                         </div>
-
-                                                        <div className="flex gap-2">
-                                                            <Button
-                                                                variant="outline"
-                                                                className="flex-1 rounded-lg border-2 border-blue-200 text-blue-600 hover:bg-blue-50 font-medium text-sm"
-                                                                onClick={() => navigate(`/business/companies/${business._id}`)}
-                                                            >
-                                                                <Eye className="h-4 w-4 mr-2" />
-                                                                View
-                                                            </Button>
-                                                            <Button
-                                                                variant="outline"
-                                                                className="flex-1 rounded-lg border-2 border-blue-200 text-blue-600 hover:bg-blue-50 font-medium text-sm"
-                                                                onClick={() => navigate(`/business/companies/edit/${business._id}`)}
-                                                            >
-                                                                <Edit className="h-4 w-4 mr-2" />
-                                                                Edit
-                                                            </Button>
-                                                        </div>
+                                                        <span className={`px-3 py-1.5 text-xs font-bold rounded-full ${
+                                                            activeCompany.status === 'approved' ? 'bg-green-100 text-green-700' :
+                                                            activeCompany.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                            'bg-orange-100 text-orange-700'
+                                                        }`}>
+                                                            {activeCompany.status.charAt(0).toUpperCase() + activeCompany.status.slice(1)}
+                                                        </span>
                                                     </div>
-                                                ))
+
+                                                    <div className="flex gap-2">
+                                                        <Button
+                                                            variant="outline"
+                                                            className="flex-1 rounded-lg border-2 border-blue-200 text-blue-600 hover:bg-blue-50 font-medium text-sm"
+                                                            onClick={() => navigate(`/business/companies/${activeCompany._id}`)}
+                                                        >
+                                                            <Eye className="h-4 w-4 mr-2" />
+                                                            View Details
+                                                        </Button>
+                                                        <Button
+                                                            variant="outline"
+                                                            className="flex-1 rounded-lg border-2 border-blue-200 text-blue-600 hover:bg-blue-50 font-medium text-sm"
+                                                            onClick={() => navigate("/business/settings")}
+                                                        >
+                                                            <Edit className="h-4 w-4 mr-2" />
+                                                            Settings
+                                                        </Button>
+                                                    </div>
+                                                </div>
                                             )}
                                         </div>
                                     </CardContent>

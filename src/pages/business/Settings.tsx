@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { User, Bell, Shield, CreditCard, Globe, LogOut, Save, Lock, Mail, Phone, MapPin, Check } from "lucide-react";
+import { User, Bell, Shield, Globe, LogOut, Save, Lock, Mail, Phone, MapPin, Check } from "lucide-react";
 import BusinessSidebar from "./BusinessSidebar";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -51,11 +51,11 @@ const Settings = () => {
                 const company = companyResult.data;
                 setActiveCompany(company);
                 setFormData({
-                    businessName: company.companyName || "",
-                    email: company.contactEmail || "",
-                    phone: company.contactPhone || "",
-                    location: `${company.city || ""}, ${company.state || ""}`,
-                    description: company.businessCategory || ""
+                    businessName: company.businessName || "",
+                    email: company.email || "",
+                    phone: company.mobileNumber || "",
+                    location: company.location || "",
+                    description: company.businessType || ""
                 });
             }
         } catch (error) {
@@ -74,16 +74,12 @@ const Settings = () => {
         try {
             const token = localStorage.getItem('token');
             
-            // Extract city and state from location
-            const [city, state] = formData.location.split(',').map(s => s.trim());
-            
             const updateData = {
-                companyName: formData.businessName,
-                contactEmail: formData.email,
-                contactPhone: formData.phone,
-                city: city || activeCompany.city,
-                state: state || activeCompany.state,
-                businessCategory: formData.description || activeCompany.businessCategory
+                businessName: formData.businessName,
+                email: formData.email,
+                mobileNumber: formData.phone,
+                location: formData.location,
+                businessType: formData.description
             };
 
             const response = await fetch(`http://localhost:4000/api/companies/${activeCompany._id}`, {
@@ -119,7 +115,6 @@ const Settings = () => {
         { id: "account", label: "Account", icon: User },
         { id: "notifications", label: "Notifications", icon: Bell },
         { id: "security", label: "Security & Privacy", icon: Shield },
-        { id: "billing", label: "Billing", icon: CreditCard },
         { id: "preferences", label: "Preferences", icon: Globe },
     ];
 
@@ -357,30 +352,7 @@ const Settings = () => {
                                     </div>
                                 )}
 
-                                {/* Billing */}
-                                {activeTab === "billing" && (
-                                    <div className="bg-white rounded-xl border-0 shadow-lg p-5 md:p-6">
-                                        <div className="mb-6">
-                                            <h2 className="text-lg md:text-xl font-bold text-blue-600">Billing & Payment</h2>
-                                            <p className="text-sm text-gray-500 mt-1">Manage your subscription and payment methods</p>
-                                        </div>
-
-                                        <div className="p-5 md:p-6 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200">
-                                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                                <div>
-                                                    <p className="text-sm font-semibold text-gray-600">Current Plan</p>
-                                                    <h3 className="text-2xl md:text-3xl font-bold text-gray-800 mt-1">Free Plan</h3>
-                                                    <p className="text-sm text-gray-600 mt-1">All basic features included</p>
-                                                </div>
-                                                <Button className="rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-6 h-11 w-fit">
-                                                    Upgrade Plan
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Preferences */}
+                                {/* Preferences */
                                 {activeTab === "preferences" && (
                                     <div className="bg-white rounded-xl border-0 shadow-lg p-5 md:p-6">
                                         <div className="mb-6">

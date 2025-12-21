@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Menu, Upload, ImagePlus, Building2, MapPin, Phone, FileText, Briefcase } from "lucide-react";
+import { Menu, Upload, ImagePlus, Building2, MapPin, Phone, FileText, Briefcase, Mail } from "lucide-react";
 import { toast } from "sonner";
 import BusinessSidebar from "./BusinessSidebar";
 
@@ -14,8 +14,10 @@ const BusinessProfile = () => {
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const [hasExistingProfile, setHasExistingProfile] = useState(false);
     const [formData, setFormData] = useState({
         businessName: "",
+        email: "",
         description: "",
         businessType: "",
         mobileNumber: "",
@@ -44,22 +46,14 @@ const BusinessProfile = () => {
                     console.log("📥 Active company loaded:", result);
                     
                     if (result.data) {
-                        setFormData({
-                            businessName: result.data.businessName || "",
-                            description: result.data.description || "",
-                            businessType: result.data.businessType || "",
-                            mobileNumber: result.data.mobileNumber || "",
-                            area: result.data.area || "",
-                            location: result.data.location || "",
-                            logo: null
-                        });
-                        
-                        if (result.data.logo) {
-                            setLogoPreview(result.data.logo);
-                        }
+                        // Profile already exists, redirect to dashboard
+                        console.log("✅ Profile exists, redirecting to dashboard");
+                        navigate("/business/dashboard");
+                        return;
                     }
                 } else {
                     console.log("ℹ️ No active company found, creating new one");
+                    setHasExistingProfile(false);
                 }
             } catch (error) {
                 console.error("❌ Error loading active company:", error);
@@ -83,8 +77,15 @@ const BusinessProfile = () => {
 
     const handleSave = async () => {
         // Validate required fields
-        if (!formData.businessName || !formData.businessType || !formData.mobileNumber) {
+        if (!formData.businessName || !formData.businessType || !formData.mobileNumber || !formData.email) {
             toast.error("Please fill in all required fields");
+            return;
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+            toast.error("Please enter a valid email address");
             return;
         }
 
@@ -99,6 +100,7 @@ const BusinessProfile = () => {
             // Prepare data to send
             const companyData = {
                 businessName: formData.businessName,
+                email: formData.email,
                 description: formData.description,
                 businessType: formData.businessType,
                 mobileNumber: formData.mobileNumber,
@@ -141,8 +143,8 @@ const BusinessProfile = () => {
 
     return (
         <div className="min-h-screen flex">
-            {/* Sidebar */}
-            <BusinessSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+            {/* Sidebar - Always visible but navigation disabled until profile created */}
+            <BusinessSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} disableNavigation={!hasExistingProfile} />
 
             {/* Main content */}
             <div className="flex-1 flex flex-col">
@@ -267,6 +269,22 @@ const BusinessProfile = () => {
                                             <div className="text-right text-xs text-gray-500 mt-1">
                                                 {formData.description.length}/500 characters
                                             </div>
+                                        </div>
+
+                                        {/* Email Field */}
+                                        <div>
+                                            <Label htmlFor="email" className="text-sm font-semibold mb-2 flex items-center gap-2 text-gray-700">
+                                                <Mail className="w-4 h-4 text-blue-600" />
+                                                Email Address *
+                                            </Label>
+                                            <Input
+                                                id="email"
+                                                type="email"
+                                                placeholder="business@example.com"
+                                                value={formData.email}
+                                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                                className="border-gray-300 focus:border-blue-500 rounded-xl"
+                                            />
                                         </div>
 
                                         {/* Business Type & Mobile Number - Grid */}

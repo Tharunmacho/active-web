@@ -11,6 +11,11 @@ const companySchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  email: {
+    type: String,
+    trim: true,
+    lowercase: true
+  },
   description: {
     type: String,
     trim: true,
