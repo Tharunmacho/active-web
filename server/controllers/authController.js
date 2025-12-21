@@ -345,6 +345,15 @@ export const changePassword = async (req, res, next) => {
       });
     }
 
+    // Check if new password is same as current password
+    const isSamePassword = await user.comparePassword(newPassword);
+    if (isSamePassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be different from current password'
+      });
+    }
+
     if (newPassword.length < 6) {
       return res.status(400).json({
         success: false,

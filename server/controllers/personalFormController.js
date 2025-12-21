@@ -22,10 +22,11 @@ export const savePersonalForm = async (req, res) => {
     let personalForm = await PersonalForm.findOne({ userId: req.user.id });
     
     if (personalForm) {
-      // Update existing form and lock it
+      // Update existing form - always allow updates
       Object.assign(personalForm, formData);
       personalForm.isLocked = true;
       await personalForm.save();
+      console.log('✅ Personal form updated for user:', req.user.id);
     } else {
       // Create new form and lock it
       personalForm = await PersonalForm.create({
@@ -33,9 +34,9 @@ export const savePersonalForm = async (req, res) => {
         ...formData,
         isLocked: true
       });
+      console.log('✅ Personal form created and locked for user:', req.user.id);
     }
 
-    console.log('✅ Personal form saved and locked for user:', req.user.id);
     res.json({ success: true, data: personalForm });
   } catch (error) {
     console.error('Error saving personal form:', error);

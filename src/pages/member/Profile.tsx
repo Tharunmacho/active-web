@@ -105,8 +105,8 @@ export default function Profile() {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLocked, setIsLocked] = useState(false);
   const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [hasExistingProfile, setHasExistingProfile] = useState(false);
   const [companyNames, setCompanyNames] = useState<string[]>([""]);
   const [showSeparateFields, setShowSeparateFields] = useState(false);
   const navigate = useNavigate();
@@ -150,7 +150,7 @@ export default function Profile() {
             const formData = personalResult.data;
             console.log("Loading personal form from backend:", formData);
             
-            setIsLocked(formData.isLocked || false);
+            setHasExistingProfile(true);
             
             const formValues = {
               name: formData.name || "",
@@ -347,31 +347,27 @@ export default function Profile() {
       return false;
     }
 
-    // Validate password fields if user wants to change password
-    if (data.password && data.password.trim() !== "") {
-      if (data.password.length < 6) {
-        toast.error("New password must be at least 6 characters");
-        return false;
-      }
-
-      if (data.password !== data.confirmPassword) {
-        toast.error("New password and confirm password do not match");
-        return false;
-      }
-    }
-
     try {
       const token = localStorage.getItem("token");
       
-      // Only attempt password change if new password is provided
-      if (data.password && data.password.trim() !== "" && token) {
-        if (!data.currentPassword || data.currentPassword.trim() === "") {
-          toast.error("Please enter your current password to change it");
+      // Check if user wants to change password
+      const wantsToChangePassword = data.password && data.password.trim() !== "";
+      
+      if (wantsToChangePassword && token) {
+        // Validate password fields
+        if (data.password.length < 6) {
+          toast.error("New password must be at least 6 characters");
           return false;
         }
 
         if (data.password !== data.confirmPassword) {
           toast.error("New password and confirm password do not match");
+          return false;
+        }
+
+        // Current password is required when changing password
+        if (!data.currentPassword || data.currentPassword.trim() === "") {
+          toast.error("Please enter your current password to change it");
           return false;
         }
 
@@ -427,11 +423,13 @@ export default function Profile() {
           toast.error("Failed to save profile");
           return false;
         }
+        
+        // Mark that profile now exists
+        setHasExistingProfile(true);
       }
 
       saveCurrentStepData(data);
-      setIsLocked(true);
-      toast.success("Profile saved and locked successfully!");
+      toast.success(hasExistingProfile ? "Profile updated successfully!" : "Profile saved successfully!");
       
       return true;
     } catch (error) {
@@ -731,14 +729,6 @@ export default function Profile() {
               </div>
 
               <CardContent className="p-6">
-                {isLocked && currentStep === 1 && (
-                  <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <p className="text-sm text-yellow-800">
-                      🔒 Profile is locked. Please logout and login with your updated credentials to make changes.
-                    </p>
-                  </div>
-                )}
-                
                 {currentStep === 1 && (
                   <div className="space-y-6">
                     <div>
@@ -751,7 +741,6 @@ export default function Profile() {
                             placeholder="Enter your full name"
                             {...register("name", { required: true })}
                             className="mt-1"
-                            disabled={isLocked}
                           />
                           {errors.name && <p className="text-red-500 text-sm mt-1">Name is required</p>}
                         </div>
@@ -769,8 +758,7 @@ export default function Profile() {
                                   const currentData = watch();
                                   reset({ ...currentData, state: value, district: '', block: '' });
                                 }} 
-                                value={field.value} 
-                                disabled={isLocked}
+                                value={field.value}
                               >
                                 <SelectTrigger className="mt-1">
                                   <SelectValue placeholder="Select state" />
@@ -802,7 +790,7 @@ export default function Profile() {
                                   reset({ ...currentData, district: value, block: '' });
                                 }} 
                                 value={field.value} 
-                                disabled={!selectedState || isLocked}
+                                disabled={!selectedState}
                               >
                                 <SelectTrigger className="mt-1">
                                   <SelectValue placeholder={selectedState ? "Select district" : "Select state first"} />
@@ -827,7 +815,7 @@ export default function Profile() {
                             control={control}
                             rules={{ required: true }}
                             render={({ field }) => (
-                              <Select onValueChange={field.onChange} value={field.value} disabled={!selectedDistrict || isLocked}>
+                              <Select onValueChange={field.onChange} value={field.value} disabled={!selectedDistrict}>
                                 <SelectTrigger className="mt-1">
                                   <SelectValue placeholder={selectedDistrict ? "Select block" : "Select district first"} />
                                 </SelectTrigger>
@@ -855,7 +843,6 @@ export default function Profile() {
                             placeholder="Enter city"
                             {...register("city", { required: true })}
                             className="mt-1"
-                            disabled={isLocked}
                           />
                           {errors.city && <p className="text-red-500 text-sm mt-1">City is required</p>}
                         </div>
@@ -868,7 +855,6 @@ export default function Profile() {
                             placeholder="Enter phone number"
                             {...register("phone", { required: true })}
                             className="mt-1"
-                            disabled={isLocked}
                           />
                           {errors.phone && <p className="text-red-500 text-sm mt-1">Phone number is required</p>}
                         </div>
@@ -881,7 +867,6 @@ export default function Profile() {
                             placeholder="Enter email"
                             {...register("email", { required: true })}
                             className="mt-1"
-                            disabled={isLocked}
                           />
                           {errors.email && <p className="text-red-500 text-sm mt-1">Email is required</p>}
                         </div>
@@ -894,13 +879,11 @@ export default function Profile() {
                               type={showPassword ? "text" : "password"}
                               placeholder="Enter your current login password"
                               {...register("currentPassword")}
-                              disabled={isLocked}
                             />
                             <button
                               type="button"
                               className="absolute right-3 top-1/2 -translate-y-1/2"
                               onClick={() => setShowPassword(!showPassword)}
-                              disabled={isLocked}
                             >
                               {showPassword ? <EyeOff className="h-4 w-4 text-gray-500" /> : <Eye className="h-4 w-4 text-gray-500" />}
                             </button>
@@ -916,13 +899,11 @@ export default function Profile() {
                               type={showPassword ? "text" : "password"}
                               placeholder="Enter new password (optional)"
                               {...register("password")}
-                              disabled={isLocked}
                             />
                             <button
                               type="button"
                               className="absolute right-3 top-1/2 -translate-y-1/2"
                               onClick={() => setShowPassword(!showPassword)}
-                              disabled={isLocked}
                             >
                               {showPassword ? <EyeOff className="h-4 w-4 text-gray-500" /> : <Eye className="h-4 w-4 text-gray-500" />}
                             </button>
@@ -938,13 +919,11 @@ export default function Profile() {
                               type={showConfirmPassword ? "text" : "password"}
                               placeholder="Confirm new password"
                               {...register("confirmPassword")}
-                              disabled={isLocked}
                             />
                             <button
                               type="button"
                               className="absolute right-3 top-1/2 -translate-y-1/2"
                               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                              disabled={isLocked}
                             >
                               {showConfirmPassword ? <EyeOff className="h-4 w-4 text-gray-500" /> : <Eye className="h-4 w-4 text-gray-500" />}
                             </button>
@@ -960,10 +939,9 @@ export default function Profile() {
                           const data = watch();
                           await saveStep1(data);
                         }}
-                        className={`w-full ${isLocked ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-                        disabled={isLocked}
+                        className="w-full bg-blue-600 hover:bg-blue-700"
                       >
-                        {isLocked ? 'Profile Saved ✓' : 'Save Personal Details'}
+                        {hasExistingProfile ? 'Update Personal Details' : 'Save Personal Details'}
                       </Button>
                     </div>
 
