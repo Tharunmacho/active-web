@@ -42,7 +42,7 @@ const BusinessProfile = () => {
                 if (response.ok) {
                     const result = await response.json();
                     console.log("📥 Business profile loaded:", result);
-                    
+
                     if (result.data) {
                         setFormData({
                             businessName: result.data.businessName || "",
@@ -53,7 +53,7 @@ const BusinessProfile = () => {
                             location: result.data.location || "",
                             logo: null
                         });
-                        
+
                         if (result.data.logo) {
                             setLogoPreview(result.data.logo);
                         }

@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Menu, Eye, EyeOff } from "lucide-react";
+import { Menu, Eye, EyeOff, Bell, User, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import MemberSidebar from "./MemberSidebar";
 import { INDIA_DISTRICTS } from "@/data/india-districts";
@@ -25,7 +25,7 @@ type ProfileData = {
   confirmPassword?: string;
   religion?: string;
   socialCategory?: string;
-  
+
   // Step 2: Business Information
   doingBusiness?: string;
   organization?: string;
@@ -36,7 +36,7 @@ type ProfileData = {
   chamber?: string;
   chamberDetails?: string;
   govtOrgs?: string[];
-  
+
   // Step 3: Financial & Compliance
   pan?: string;
   gst?: string;
@@ -51,7 +51,7 @@ type ProfileData = {
   scheme1?: string;
   scheme2?: string;
   scheme3?: string;
-  
+
   // Step 4: Declaration
   sisterConcerns?: string;
   companyNames?: string;
@@ -128,7 +128,7 @@ export default function Profile() {
     const loadUserProfile = async () => {
       try {
         const token = localStorage.getItem("token");
-        
+
         // If authenticated, load from backend
         if (!token) return;
 
@@ -142,18 +142,18 @@ export default function Profile() {
         });
 
         console.log("Personal form response status:", personalFormResponse.status);
-        
+
         if (personalFormResponse.ok) {
           const personalResult = await personalFormResponse.json();
           console.log("Personal form result:", personalResult);
-          
+
           if (personalResult.data) {
             const formData = personalResult.data;
             console.log("Loading personal form from backend:", formData);
-            
+
             setHasExistingProfile(true);
             setIsLocked(formData.isLocked || false);
-            
+
             const formValues = {
               name: formData.name || "",
               phone: formData.phoneNumber || "",
@@ -168,7 +168,7 @@ export default function Profile() {
               confirmPassword: "",
               currentPassword: ""
             };
-            
+
             console.log("Setting form values:", formValues);
             reset(formValues);
 
@@ -176,12 +176,12 @@ export default function Profile() {
             if (formData.state) {
               console.log("Setting districts for state:", formData.state);
               setDistricts(INDIA_DISTRICTS[formData.state] ?? []);
-              
+
               // Load blocks if district exists
               if (formData.district) {
                 const blocksUrl = `http://localhost:4000/api/locations/states/${encodeURIComponent(formData.state)}/districts/${encodeURIComponent(formData.district)}/blocks`;
                 console.log("Fetching blocks from:", blocksUrl);
-                
+
                 fetch(blocksUrl)
                   .then(res => res.ok ? res.json() : { data: [] })
                   .then(result => {
@@ -208,15 +208,15 @@ export default function Profile() {
         });
 
         console.log("Business form response status:", businessFormResponse.status);
-        
+
         if (businessFormResponse.ok) {
           const businessResult = await businessFormResponse.json();
           console.log("Business form result:", businessResult);
-          
+
           if (businessResult.data) {
             const businessData = businessResult.data;
             console.log("Loading business form from backend:", businessData);
-            
+
             reset(prev => ({
               ...prev,
               doingBusiness: businessData.doingBusiness || "",
@@ -258,10 +258,10 @@ export default function Profile() {
           const url = `http://localhost:4000/api/locations/states/${encodeURIComponent(selectedState)}/districts/${encodeURIComponent(selectedDistrict)}/blocks`;
           console.log("🔍 Loading blocks for:", selectedState, selectedDistrict);
           console.log("📡 Blocks API URL:", url);
-          
+
           const response = await fetch(url);
           console.log("📊 Blocks API response status:", response.status);
-          
+
           if (response.ok) {
             const data = await response.json();
             console.log("✅ Blocks API success! Data:", data);
@@ -351,10 +351,10 @@ export default function Profile() {
 
     try {
       const token = localStorage.getItem("token");
-      
+
       // Check if user wants to change password
       const wantsToChangePassword = data.password && data.password.trim() !== "";
-      
+
       if (wantsToChangePassword && token) {
         // Validate password fields
         if (data.password.length < 6) {
@@ -425,7 +425,7 @@ export default function Profile() {
           toast.error("Failed to save profile");
           return false;
         }
-        
+
         // Mark that profile now exists and lock it
         setHasExistingProfile(true);
         setIsLocked(true);
@@ -433,7 +433,7 @@ export default function Profile() {
 
       saveCurrentStepData(data);
       toast.success(hasExistingProfile ? "Profile updated successfully!" : "Profile saved successfully!");
-      
+
       return true;
     } catch (error) {
       console.error("Error saving profile:", error);
@@ -456,17 +456,17 @@ export default function Profile() {
           toast.error("Please accept the declaration to continue");
           return;
         }
-        
+
         // Save business form with "no" status (Aspirant)
         const token = localStorage.getItem("token");
         if (!token) {
           toast.error("Authentication required");
           return;
         }
-        
+
         try {
           console.log("💾 Saving business form for ASPIRANT (doingBusiness: no)");
-          
+
           const businessResponse = await fetch("http://localhost:4000/api/business-form", {
             method: "POST",
             headers: {
@@ -475,22 +475,22 @@ export default function Profile() {
             },
             body: JSON.stringify({ doingBusiness: "no" })
           });
-          
+
           console.log("📡 Business form save response status:", businessResponse.status);
           const businessResult = await businessResponse.json();
           console.log("📥 Business form save result:", businessResult);
-          
+
           if (!businessResponse.ok) {
             console.error("❌ Failed to save business form:", businessResult);
             toast.error("Failed to save business information");
             return;
           }
-          
+
           console.log("✅ Business form saved successfully for aspirant!");
-          
+
           // Also save declaration form for aspirant
           console.log("💾 Saving declaration form for ASPIRANT");
-          
+
           const declarationResponse = await fetch("http://localhost:4000/api/declaration-form", {
             method: "POST",
             headers: {
@@ -502,28 +502,28 @@ export default function Profile() {
               declarationAccepted: true
             })
           });
-          
+
           console.log("📡 Declaration form save response status:", declarationResponse.status);
           const declarationResult = await declarationResponse.json();
           console.log("📥 Declaration form save result:", declarationResult);
-          
+
           if (!declarationResponse.ok) {
             console.error("❌ Failed to save declaration:", declarationResult);
             toast.error("Failed to submit declaration");
             return;
           }
-          
+
           console.log("✅ Declaration saved successfully for aspirant!");
-          
+
         } catch (error) {
           console.error("❌ Error saving forms:", error);
           toast.error("Failed to save information");
           return;
         }
-        
+
         toast.success("Application submitted successfully!");
         saveCurrentStepData(data);
-        
+
         // Generate application ID and redirect to application submitted screen
         const applicationId = `APP-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
         localStorage.setItem('applicationId', applicationId);
@@ -534,7 +534,7 @@ export default function Profile() {
           toast.error("Please fill in all required business information");
           return;
         }
-        
+
         // Save business form to business_profiles collection
         try {
           const token = localStorage.getItem("token");
@@ -551,11 +551,11 @@ export default function Profile() {
               chamberDetails: data.chamberDetails || "",
               govtOrgs: data.govtOrgs || []
             };
-            
+
             console.log("📤 Submitting business form data:", businessData);
-            
+
             console.log("🚀 Sending POST request to /api/business-form");
-            
+
             const response = await fetch("http://localhost:4000/api/business-form", {
               method: "POST",
               headers: {
@@ -564,17 +564,17 @@ export default function Profile() {
               },
               body: JSON.stringify(businessData)
             });
-            
+
             console.log("📡 Response status:", response.status);
             const result = await response.json();
             console.log("📥 Response data:", result);
-            
+
             if (!response.ok) {
               console.error("❌ Failed to save:", result);
               toast.error("Failed to save business information");
               return;
             }
-            
+
             console.log("✅ Business form saved successfully!");
             toast.success("Business information saved!");
           }
@@ -583,7 +583,7 @@ export default function Profile() {
           toast.error("Failed to save business information");
           return;
         }
-        
+
         saveCurrentStepData(data);
         setCurrentStep(3);
       } else {
@@ -609,7 +609,7 @@ export default function Profile() {
             scheme2: data.scheme2 || "",
             scheme3: data.scheme3 || ""
           };
-          
+
           const response = await fetch("http://localhost:4000/api/financial-form", {
             method: "POST",
             headers: {
@@ -618,12 +618,12 @@ export default function Profile() {
             },
             body: JSON.stringify(financialData)
           });
-          
+
           if (!response.ok) {
             toast.error("Failed to save financial information");
             return;
           }
-          
+
           toast.success("Financial information saved!");
         }
       } catch (error) {
@@ -631,7 +631,7 @@ export default function Profile() {
         toast.error("Failed to save financial information");
         return;
       }
-      
+
       saveCurrentStepData(data);
       setCurrentStep(4);
     }
@@ -672,7 +672,7 @@ export default function Profile() {
     }
 
     toast.success("Application submitted successfully!");
-    
+
     // Generate application ID and store it, then redirect to application submitted screen
     const applicationId = `APP-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
     localStorage.setItem('applicationId', applicationId);
@@ -696,42 +696,117 @@ export default function Profile() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div
+      className="min-h-screen flex"
+      style={{
+        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+        fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif"
+      }}
+    >
       <MemberSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="lg:hidden">
-              <Menu className="h-6 w-6" />
-            </button>
-            <h1 className="text-xl font-semibold">My Profile</h1>
-          </div>
-        </header>
 
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-4xl mx-auto">
-            <div className="mb-8">
-              <div className="flex items-center justify-center gap-3 mb-4">
-                {[1, 2, 3, 4].map((s) => (
-                  <div key={s} className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${
-                    s <= currentStep
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 text-gray-400'
-                  }`}>
-                    {s}
+      <div className="flex-1 flex flex-col min-h-screen">
+        {/* Mobile Header */}
+        <div
+          className="md:hidden sticky top-0 z-40 backdrop-blur-md px-4 py-3 flex items-center justify-between"
+          style={{
+            background: 'rgba(255, 255, 255, 0.9)',
+            borderBottom: '1px solid rgba(0, 0, 0, 0.05)'
+          }}
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsSidebarOpen(true)}
+            className="rounded-xl"
+          >
+            <Menu className="w-5 h-5 text-gray-700" />
+          </Button>
+          <h1 className="font-bold text-gray-900">My Profile</h1>
+          <Button variant="ghost" size="icon" className="rounded-xl">
+            <Bell className="w-5 h-5 text-gray-700" />
+          </Button>
+        </div>
+
+        {/* Desktop Header */}
+        <div
+          className="hidden md:block sticky top-0 z-40 backdrop-blur-md px-8 lg:px-12 py-5"
+          style={{
+            background: 'rgba(255, 255, 255, 0.95)',
+            borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.02)'
+          }}
+        >
+          <div className="flex items-center justify-between max-w-6xl mx-auto">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
+              <p className="text-sm text-gray-500 mt-1">Manage your account settings and preferences</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" className="rounded-xl hover:bg-gray-100 transition-colors">
+                <Bell className="w-5 h-5 text-gray-600" />
+              </Button>
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center shadow-md"
+                style={{ background: 'linear-gradient(135deg, #0f766e 0%, #134e4a 100%)' }}
+              >
+                <User className="w-5 h-5 text-white" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <main className="flex-1 p-4 md:p-8 lg:p-12">
+          <div className="max-w-6xl mx-auto">
+            {/* Step Indicators */}
+            <div className="mb-8 md:mb-10">
+              <div className="flex items-center justify-center gap-3 md:gap-6 lg:gap-8 mb-4">
+                {[1, 2, 3, 4].map((s, index) => (
+                  <div key={s} className="flex items-center gap-3 md:gap-6 lg:gap-8">
+                    <div
+                      className="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-2xl flex items-center justify-center font-bold text-base md:text-lg transition-all cursor-pointer hover:scale-105"
+                      style={{
+                        background: s < currentStep
+                          ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                          : s === currentStep
+                            ? 'linear-gradient(135deg, #0f766e 0%, #134e4a 100%)'
+                            : '#e2e8f0',
+                        color: s <= currentStep ? '#ffffff' : '#94a3b8',
+                        boxShadow: s === currentStep ? '0 10px 25px -5px rgba(15, 118, 110, 0.4)' : 'none'
+                      }}
+                    >
+                      {s < currentStep ? <CheckCircle className="w-6 h-6 md:w-7 md:h-7" /> : s}
+                    </div>
+                    {index < 3 && (
+                      <div
+                        className="hidden md:block w-12 lg:w-20 h-1 rounded-full transition-all"
+                        style={{
+                          background: s < currentStep ? '#10b981' : '#e2e8f0'
+                        }}
+                      />
+                    )}
                   </div>
                 ))}
               </div>
-              <p className="text-center text-sm text-gray-600">Step {currentStep} of 4</p>
+              <p className="text-center text-sm md:text-base text-gray-500 font-medium">Step {currentStep} of 4</p>
             </div>
 
-            <Card className="rounded-2xl border-0 shadow-lg">
-              <div className="bg-blue-600 text-white py-4 px-6 rounded-t-2xl">
-                <h2 className="text-xl font-bold">ACTIV</h2>
+            <Card
+              className="border-0 overflow-hidden"
+              style={{
+                borderRadius: '24px',
+                boxShadow: '0 20px 60px -15px rgba(0, 0, 0, 0.12)'
+              }}
+            >
+              <div
+                className="py-6 md:py-8 px-6 md:px-10"
+                style={{ background: 'linear-gradient(135deg, #0f766e 0%, #134e4a 100%)' }}
+              >
+                <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white">ACTIV Membership</h2>
+                <p className="text-teal-200 text-sm md:text-base mt-1">Complete your profile to apply for membership</p>
               </div>
 
-              <CardContent className="p-6">
+              <CardContent className="p-6 md:p-8 lg:p-10">
                 {isLocked && currentStep === 1 && (
                   <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
                     <p className="text-sm text-green-800">
@@ -748,12 +823,12 @@ export default function Profile() {
                     </Button>
                   </div>
                 )}
-                
+
                 {currentStep === 1 && (
-                  <div className="space-y-6">
+                  <div className="space-y-8">
                     <div>
-                      <h3 className="text-lg font-semibold mb-4">Personal details</h3>
-                      <div className="space-y-4">
+                      <h3 className="text-lg md:text-xl font-semibold mb-6 text-gray-800">Personal details</h3>
+                      <div className="space-y-5 md:grid md:grid-cols-2 md:gap-6 md:space-y-0">
                         <div>
                           <Label htmlFor="name">Name *</Label>
                           <Input
@@ -773,12 +848,12 @@ export default function Profile() {
                             control={control}
                             rules={{ required: true }}
                             render={({ field }) => (
-                              <Select 
+                              <Select
                                 onValueChange={(value) => {
                                   field.onChange(value);
                                   const currentData = watch();
                                   reset({ ...currentData, state: value, district: '', block: '' });
-                                }} 
+                                }}
                                 value={field.value}
                                 disabled={isLocked}
                               >
@@ -805,13 +880,13 @@ export default function Profile() {
                             control={control}
                             rules={{ required: true }}
                             render={({ field }) => (
-                              <Select 
+                              <Select
                                 onValueChange={(value) => {
                                   field.onChange(value);
                                   const currentData = watch();
                                   reset({ ...currentData, district: value, block: '' });
-                                }} 
-                                value={field.value} 
+                                }}
+                                value={field.value}
                                 disabled={!selectedState || isLocked}
                               >
                                 <SelectTrigger className="mt-1">
@@ -963,23 +1038,29 @@ export default function Profile() {
                       </div>
                     </div>
 
-                    <div className="border-t pt-6 pb-6">
+                    <div className="border-t pt-6 md:pt-8 pb-6 md:pb-8">
                       <Button
                         type="button"
                         onClick={async () => {
                           const data = watch();
                           await saveStep1(data);
                         }}
-                        className={`w-full ${isLocked ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                        className="w-full py-5 rounded-xl font-semibold text-white"
+                        style={{
+                          background: isLocked
+                            ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                            : 'linear-gradient(135deg, #0f766e 0%, #134e4a 100%)',
+                          boxShadow: isLocked ? 'none' : '0 8px 20px -4px rgba(15, 118, 110, 0.4)'
+                        }}
                         disabled={isLocked}
                       >
                         {isLocked ? 'Profile Saved ✓' : (hasExistingProfile ? 'Update Personal Details' : 'Save Personal Details')}
                       </Button>
                     </div>
 
-                    <div className="border-t pt-6">
-                      <h3 className="text-lg font-semibold mb-4">Demographic details</h3>
-                      <div className="space-y-4">
+                    <div className="border-t pt-6 md:pt-8">
+                      <h3 className="text-lg md:text-xl font-semibold mb-6 text-gray-800">Demographic details</h3>
+                      <div className="space-y-4 md:grid md:grid-cols-2 md:gap-6 md:space-y-0">
                         <div>
                           <Label htmlFor="religion">Religion</Label>
                           <Input
@@ -1013,11 +1094,15 @@ export default function Profile() {
                       </div>
                     </div>
 
-                    <div className="border-t pt-6">
+                    <div className="border-t pt-6 md:pt-8">
                       <Button
                         type="button"
                         onClick={handleNext}
-                        className="w-full bg-blue-600 hover:bg-blue-700"
+                        className="w-full py-5 rounded-xl font-semibold text-white"
+                        style={{
+                          background: 'linear-gradient(135deg, #0f766e 0%, #134e4a 100%)',
+                          boxShadow: '0 8px 20px -4px rgba(15, 118, 110, 0.4)'
+                        }}
                       >
                         Next &gt;
                       </Button>
@@ -1026,9 +1111,9 @@ export default function Profile() {
                 )}
 
                 {currentStep === 2 && (
-                  <div className="space-y-6">
-                    <h3 className="text-lg font-semibold mb-4">Business Information</h3>
-                    
+                  <div className="space-y-8">
+                    <h3 className="text-lg md:text-xl font-semibold mb-6 text-gray-800">Business Information</h3>
+
                     <div>
                       <Label className="text-sm font-medium">Doing Business</Label>
                       <div className="flex gap-6 mt-2">
@@ -1250,220 +1335,230 @@ export default function Profile() {
                       </>
                     )}
 
-                    <div className="border-t pt-6 flex gap-4">
+                    <div className="border-t pt-6 md:pt-8 flex gap-4">
                       <Button
                         type="button"
                         onClick={() => setCurrentStep(1)}
-                        className="flex-1 bg-white border-2 border-purple-600 text-purple-600 hover:bg-purple-50"
+                        className="flex-1 bg-white border-2 border-teal-600 text-teal-600 hover:bg-teal-50 py-5 rounded-xl font-semibold"
                       >
                         Previous
                       </Button>
                       <Button
                         type="button"
                         onClick={handleNext}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700"
+                        className="flex-1 py-5 rounded-xl font-semibold text-white"
+                        style={{
+                          background: 'linear-gradient(135deg, #0f766e 0%, #134e4a 100%)',
+                          boxShadow: '0 8px 20px -4px rgba(15, 118, 110, 0.4)'
+                        }}
                       >
-                        {watch("doingBusiness") === "no" ? "Next →" : "Next →"}
+                        Next →
                       </Button>
                     </div>
                   </div>
                 )}
 
                 {currentStep === 3 && (
-                  <div className="space-y-6">
-                    <h3 className="text-lg font-semibold mb-4">Financial & Compliance Information</h3>
-                    
-                    <div>
-                      <Label htmlFor="pan">PAN Number</Label>
-                      <Input
-                        id="pan"
-                        placeholder="Enter PAN number"
-                        {...register("pan")}
-                        className="mt-1"
-                        maxLength={10}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">Validate PAN Number (10 chars Alphanumeric)</p>
-                    </div>
+                  <div className="space-y-8">
+                    <h3 className="text-lg md:text-xl font-semibold mb-6 text-gray-800">Financial & Compliance Information</h3>
 
-                    <div>
-                      <Label htmlFor="gst">GST Number</Label>
-                      <Input
-                        id="gst"
-                        placeholder="Enter GST number"
-                        {...register("gst")}
-                        className="mt-1"
-                        maxLength={15}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">Validate GSTIN Number (15 chars)</p>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="udyam">Udyam Number</Label>
-                      <Input
-                        id="udyam"
-                        placeholder="Enter Udyam number"
-                        {...register("udyam")}
-                        className="mt-1"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">Optional</p>
-                    </div>
-
-                    <div>
-                      <Label className="text-sm font-medium">Filed Income Tax Returns</Label>
-                      <div className="flex gap-6 mt-2">
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            value="yes"
-                            {...register("filedITR")}
-                          />
-                          <span>Yes</span>
-                        </label>
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            value="no"
-                            {...register("filedITR")}
-                          />
-                          <span>No</span>
-                        </label>
-                      </div>
-                    </div>
-
-                    {watch("filedITR") === "yes" && (
+                    <div className="space-y-5 md:grid md:grid-cols-2 md:gap-6 md:space-y-0">
                       <div>
-                        <Label htmlFor="itrYears">How many continuous years have you filed ITR?</Label>
+                        <Label htmlFor="pan">PAN Number</Label>
                         <Input
-                          id="itrYears"
-                          type="number"
-                          placeholder="Enter number of years"
-                          {...register("itrYears")}
+                          id="pan"
+                          placeholder="Enter PAN number"
+                          {...register("pan")}
+                          className="mt-1"
+                          maxLength={10}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Validate PAN Number (10 chars Alphanumeric)</p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="gst">GST Number</Label>
+                        <Input
+                          id="gst"
+                          placeholder="Enter GST number"
+                          {...register("gst")}
+                          className="mt-1"
+                          maxLength={15}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Validate GSTIN Number (15 chars)</p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="udyam">Udyam Number</Label>
+                        <Input
+                          id="udyam"
+                          placeholder="Enter Udyam number"
+                          {...register("udyam")}
                           className="mt-1"
                         />
+                        <p className="text-xs text-gray-500 mt-1">Optional</p>
                       </div>
-                    )}
 
-                    <div>
-                      <Label htmlFor="turnoverRange">Turnover</Label>
-                      <Controller
-                        name="turnoverRange"
-                        control={control}
-                        render={({ field }) => (
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger className="mt-1">
-                              <SelectValue placeholder="Select turnover range" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="0-1cr">0 - 1 Crore</SelectItem>
-                              <SelectItem value="1-5cr">1 - 5 Crores</SelectItem>
-                              <SelectItem value="5-10cr">5 - 10 Crores</SelectItem>
-                              <SelectItem value="10-25cr">10 - 25 Crores</SelectItem>
-                              <SelectItem value="25-50cr">25 - 50 Crores</SelectItem>
-                              <SelectItem value="50cr+">Above 50 Crores</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-sm font-medium mb-3 block">Turnover for Last 3 Yrs</Label>
-                      
-                      <div className="space-y-4">
-                        <div>
-                          <Input
-                            placeholder="Enter turnover amount"
-                            {...register("turnover1")}
-                            className="mt-1"
-                          />
-                          <p className="text-xs text-gray-500 mt-1">FY 2024-25</p>
-                        </div>
-
-                        <div>
-                          <Input
-                            placeholder="Enter turnover amount"
-                            {...register("turnover2")}
-                            className="mt-1"
-                          />
-                          <p className="text-xs text-gray-500 mt-1">FY 2023-24</p>
-                        </div>
-
-                        <div>
-                          <Input
-                            placeholder="Enter turnover amount"
-                            {...register("turnover3")}
-                            className="mt-1"
-                          />
-                          <p className="text-xs text-gray-500 mt-1">FY 2022-23</p>
+                      <div>
+                        <Label className="text-sm font-medium">Filed Income Tax Returns</Label>
+                        <div className="flex gap-6 mt-2">
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              value="yes"
+                              {...register("filedITR")}
+                            />
+                            <span>Yes</span>
+                          </label>
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              value="no"
+                              {...register("filedITR")}
+                            />
+                            <span>No</span>
+                          </label>
                         </div>
                       </div>
-                    </div>
 
-                    <div>
-                      <Label className="text-sm font-medium">Have you got benefitted through any Govt. Schemes to your Business?</Label>
-                      <div className="flex gap-6 mt-2">
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            value="yes"
-                            {...register("govtSchemes")}
+                      {watch("filedITR") === "yes" && (
+                        <div>
+                          <Label htmlFor="itrYears">How many continuous years have you filed ITR?</Label>
+                          <Input
+                            id="itrYears"
+                            type="number"
+                            placeholder="Enter number of years"
+                            {...register("itrYears")}
+                            className="mt-1"
                           />
-                          <span>Yes</span>
-                        </label>
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            value="no"
-                            {...register("govtSchemes")}
-                          />
-                          <span>No</span>
-                        </label>
-                      </div>
-                    </div>
+                        </div>
+                      )}
 
-                    {watch("govtSchemes") === "yes" && (
-                      <div className="space-y-3">
-                        <Input
-                          placeholder="Scheme 1"
-                          {...register("scheme1")}
-                          className="mt-1"
-                        />
-                        <Input
-                          placeholder="Scheme 2"
-                          {...register("scheme2")}
-                          className="mt-1"
-                        />
-                        <Input
-                          placeholder="Scheme 3"
-                          {...register("scheme3")}
-                          className="mt-1"
+                      <div>
+                        <Label htmlFor="turnoverRange">Turnover</Label>
+                        <Controller
+                          name="turnoverRange"
+                          control={control}
+                          render={({ field }) => (
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <SelectTrigger className="mt-1">
+                                <SelectValue placeholder="Select turnover range" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="0-1cr">0 - 1 Crore</SelectItem>
+                                <SelectItem value="1-5cr">1 - 5 Crores</SelectItem>
+                                <SelectItem value="5-10cr">5 - 10 Crores</SelectItem>
+                                <SelectItem value="10-25cr">10 - 25 Crores</SelectItem>
+                                <SelectItem value="25-50cr">25 - 50 Crores</SelectItem>
+                                <SelectItem value="50cr+">Above 50 Crores</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
                         />
                       </div>
-                    )}
 
-                    <div className="border-t pt-6 flex gap-4">
+                      <div>
+                        <Label className="text-sm font-medium mb-3 block">Turnover for Last 3 Yrs</Label>
+
+                        <div className="space-y-4">
+                          <div>
+                            <Input
+                              placeholder="Enter turnover amount"
+                              {...register("turnover1")}
+                              className="mt-1"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">FY 2024-25</p>
+                          </div>
+
+                          <div>
+                            <Input
+                              placeholder="Enter turnover amount"
+                              {...register("turnover2")}
+                              className="mt-1"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">FY 2023-24</p>
+                          </div>
+
+                          <div>
+                            <Input
+                              placeholder="Enter turnover amount"
+                              {...register("turnover3")}
+                              className="mt-1"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">FY 2022-23</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-sm font-medium">Have you got benefitted through any Govt. Schemes to your Business?</Label>
+                        <div className="flex gap-6 mt-2">
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              value="yes"
+                              {...register("govtSchemes")}
+                            />
+                            <span>Yes</span>
+                          </label>
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              value="no"
+                              {...register("govtSchemes")}
+                            />
+                            <span>No</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      {watch("govtSchemes") === "yes" && (
+                        <div className="space-y-3">
+                          <Input
+                            placeholder="Scheme 1"
+                            {...register("scheme1")}
+                            className="mt-1"
+                          />
+                          <Input
+                            placeholder="Scheme 2"
+                            {...register("scheme2")}
+                            className="mt-1"
+                          />
+                          <Input
+                            placeholder="Scheme 3"
+                            {...register("scheme3")}
+                            className="mt-1"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="border-t pt-6 md:pt-8 flex gap-4">
                       <Button
                         type="button"
                         onClick={() => setCurrentStep(2)}
-                        className="flex-1 bg-white border-2 border-purple-600 text-purple-600 hover:bg-purple-50"
+                        className="flex-1 bg-white border-2 border-teal-600 text-teal-600 hover:bg-teal-50 py-5 rounded-xl font-semibold"
                       >
                         Previous
                       </Button>
                       <Button
                         type="button"
                         onClick={handleNext}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700"
+                        className="flex-1 py-5 rounded-xl font-semibold text-white"
+                        style={{
+                          background: 'linear-gradient(135deg, #0f766e 0%, #134e4a 100%)',
+                          boxShadow: '0 8px 20px -4px rgba(15, 118, 110, 0.4)'
+                        }}
                       >
-                        Next
+                        Next →
                       </Button>
                     </div>
                   </div>
                 )}
 
                 {currentStep === 4 && (
-                  <div className="space-y-6">
-                    <h3 className="text-lg font-semibold mb-4">Declaration</h3>
-                    
+                  <div className="space-y-8">
+                    <h3 className="text-lg md:text-xl font-semibold mb-6 text-gray-800">Declaration</h3>
+
                     <div>
                       <Label htmlFor="sisterConcerns">No. of Sister Concerns</Label>
                       <Input
@@ -1510,7 +1605,7 @@ export default function Profile() {
                           className="mt-1"
                         />
                       )}
-                      
+
                       <Button
                         type="button"
                         onClick={() => setCompanyNames([...companyNames, ""])}
@@ -1532,29 +1627,37 @@ export default function Profile() {
                       </div>
                     </div>
 
-                    <div className="border-t pt-6">
-                      <Label className="text-sm font-semibold mb-3 block">Declaration</Label>
-                      <p className="text-sm text-gray-700 mb-4">
-                        This application is under the Verification and Screening Process. We have every right to ACCEPT or REJECT this application according to our membership policy.
-                      </p>
-                      
-                      <p className="text-sm font-medium text-gray-900">
-                        I confirm the above information is true and correct
-                      </p>
+                    <div className="border-t pt-6 md:pt-8">
+                      <div className="p-5 md:p-6 bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl">
+                        <Label className="text-base md:text-lg font-semibold mb-3 block text-amber-900">Declaration</Label>
+                        <p className="text-sm md:text-base text-amber-800 mb-4">
+                          This application is under the Verification and Screening Process. We have every right to ACCEPT or REJECT this application according to our membership policy.
+                        </p>
+
+                        <p className="text-sm md:text-base font-medium text-amber-900 flex items-center gap-2">
+                          <span className="w-5 h-5 bg-amber-600 text-white rounded-full flex items-center justify-center text-xs">✓</span>
+                          I confirm the above information is true and correct
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="border-t pt-6 flex gap-4">
+                    <div className="border-t pt-6 md:pt-8 flex gap-4">
                       <Button
                         type="button"
                         onClick={() => setCurrentStep(3)}
-                        className="flex-1 bg-white border-2 border-purple-600 text-purple-600 hover:bg-purple-50"
+                        className="flex-1 py-5 rounded-xl font-semibold border-2"
+                        style={{ borderColor: '#0f766e', color: '#0f766e', background: 'transparent' }}
                       >
                         Previous
                       </Button>
                       <Button
                         type="button"
                         onClick={handleFinalSubmit}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700"
+                        className="flex-1 py-5 rounded-xl font-semibold text-white"
+                        style={{
+                          background: 'linear-gradient(135deg, #0f766e 0%, #134e4a 100%)',
+                          boxShadow: '0 8px 20px -4px rgba(15, 118, 110, 0.4)'
+                        }}
                       >
                         Submit Application
                       </Button>

@@ -37,7 +37,7 @@ const Settings = () => {
     const loadUserData = async () => {
         try {
             const token = localStorage.getItem('token');
-            
+
             // Load active company
             const companyRes = await fetch('http://localhost:4000/api/companies/active', {
                 headers: {
@@ -46,7 +46,7 @@ const Settings = () => {
             });
 
             const companyResult = await companyRes.json();
-            
+
             if (companyResult.success && companyResult.data) {
                 const company = companyResult.data;
                 setActiveCompany(company);
@@ -73,7 +73,7 @@ const Settings = () => {
 
         try {
             const token = localStorage.getItem('token');
-            
+
             const updateData = {
                 businessName: formData.businessName,
                 email: formData.email,
@@ -92,7 +92,7 @@ const Settings = () => {
             });
 
             const result = await response.json();
-            
+
             if (result.success) {
                 toast.success("Settings saved successfully!");
                 loadUserData(); // Reload data
@@ -210,7 +210,7 @@ const Settings = () => {
                                                     <Input
                                                         placeholder="Enter business name"
                                                         value={formData.businessName}
-                                                        onChange={(e) => setFormData({...formData, businessName: e.target.value})}
+                                                        onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
                                                         className="h-11 rounded-lg border-2 border-gray-200 focus:border-blue-500"
                                                     />
                                                 </div>
@@ -224,7 +224,7 @@ const Settings = () => {
                                                         type="email"
                                                         placeholder="business@example.com"
                                                         value={formData.email}
-                                                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                                         className="h-11 rounded-lg border-2 border-gray-200 focus:border-blue-500"
                                                     />
                                                 </div>
@@ -238,7 +238,7 @@ const Settings = () => {
                                                         type="tel"
                                                         placeholder="+91 98765 43210"
                                                         value={formData.phone}
-                                                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                                                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                                         className="h-11 rounded-lg border-2 border-gray-200 focus:border-blue-500"
                                                     />
                                                 </div>
@@ -251,7 +251,7 @@ const Settings = () => {
                                                     <Input
                                                         placeholder="City, State"
                                                         value={formData.location}
-                                                        onChange={(e) => setFormData({...formData, location: e.target.value})}
+                                                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                                                         className="h-11 rounded-lg border-2 border-gray-200 focus:border-blue-500"
                                                     />
                                                 </div>
@@ -263,7 +263,7 @@ const Settings = () => {
                                             <Input
                                                 placeholder="e.g., Technology, Retail, Food & Beverage"
                                                 value={formData.description}
-                                                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                                 className="h-11 rounded-lg border-2 border-gray-200 focus:border-blue-500"
                                             />
                                         </div>
@@ -352,7 +352,8 @@ const Settings = () => {
                                     </div>
                                 )}
 
-                                {/* Preferences */
+
+                                {/* Preferences */}
                                 {activeTab === "preferences" && (
                                     <div className="bg-white rounded-xl border-0 shadow-lg p-5 md:p-6">
                                         <div className="mb-6">
@@ -379,6 +380,7 @@ const Settings = () => {
                                         </div>
                                     </div>
                                 )}
+
                             </div>
                         </div>
                     </div>

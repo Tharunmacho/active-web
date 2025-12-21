@@ -1,12 +1,8 @@
 import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, AlertTriangle, Download, Eye, Home, Calendar, FileText, Clock } from 'lucide-react';
-
-function useQuery() {
-  return new URLSearchParams(useLocation().search);
-}
+import { CheckCircle, AlertTriangle, Download, Eye, Home, Calendar, FileText, Clock, ArrowRight, Shield, Bell, Mail } from 'lucide-react';
 
 export default function ApplicationSubmitted() {
   const navigate = useNavigate();
@@ -16,19 +12,45 @@ export default function ApplicationSubmitted() {
 
   if (!id) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
-        <Card className="max-w-lg w-full shadow-2xl">
-          <CardContent className="p-8">
-            <h3 className="text-lg font-semibold">No application specified</h3>
-            <p className="text-sm text-muted-foreground">Please submit your application first.</p>
-            <div className="mt-3">
-              <Button onClick={() => navigate('/member/dashboard')}>Go to Dashboard</Button>
+      <div
+        className="min-h-screen flex items-center justify-center p-6"
+        style={{
+          background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+          fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif"
+        }}
+      >
+        <Card
+          className="max-w-md w-full border-0"
+          style={{
+            borderRadius: '20px',
+            boxShadow: '0 8px 32px -8px rgba(0, 0, 0, 0.12)'
+          }}
+        >
+          <CardContent className="p-8 text-center">
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
+              style={{ background: '#fef3c7' }}
+            >
+              <AlertTriangle className="w-8 h-8 text-amber-500" />
             </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">No Application Found</h3>
+            <p className="text-sm text-gray-500 mb-6">Please submit your application first.</p>
+            <Button
+              className="w-full py-5 rounded-xl font-semibold"
+              style={{
+                background: 'linear-gradient(135deg, #0f766e 0%, #134e4a 100%)',
+                boxShadow: '0 8px 24px -4px rgba(15, 118, 110, 0.4)'
+              }}
+              onClick={() => navigate('/member/dashboard')}
+            >
+              Go to Dashboard
+            </Button>
           </CardContent>
         </Card>
       </div>
     );
   }
+
   const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
@@ -71,179 +93,272 @@ export default function ApplicationSubmitted() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8 px-4">
-      {/* Centered Form Container */}
-      <div className="max-w-4xl mx-auto">
-        {/* Success Header Card */}
-        <Card className="shadow-2xl border-0 mb-6 overflow-hidden">
-          <div className="bg-gradient-to-r from-green-500 via-green-600 to-emerald-600 p-8 md:p-12 text-center">
-            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-white/20 backdrop-blur-sm mb-4 shadow-xl">
-              <CheckCircle className="w-14 h-14 text-white" />
+    <div
+      className="min-h-screen py-8 px-4 md:px-6"
+      style={{
+        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+        fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif"
+      }}
+    >
+      <div className="max-w-5xl mx-auto">
+        {/* Success Header */}
+        <div
+          className="rounded-3xl overflow-hidden mb-6"
+          style={{
+            boxShadow: '0 20px 50px -12px rgba(0, 0, 0, 0.15)'
+          }}
+        >
+          {/* Success Banner */}
+          <div
+            className="p-8 md:p-12 text-center"
+            style={{ background: 'linear-gradient(135deg, #0f766e 0%, #134e4a 100%)' }}
+          >
+            <div
+              className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-5"
+              style={{ background: 'rgba(255, 255, 255, 0.15)' }}
+            >
+              <CheckCircle className="w-10 h-10 text-white" />
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">Application Submitted Successfully!</h1>
-            <p className="text-lg md:text-xl text-green-100 max-w-2xl mx-auto">
+            <h1 className="text-2xl md:text-4xl font-bold text-white mb-3">
+              Application Submitted!
+            </h1>
+            <p className="text-teal-100 text-sm md:text-base max-w-xl mx-auto leading-relaxed">
               Your membership application has been successfully submitted and is now under review.
-              You will receive updates on your application status via email and SMS.
             </p>
           </div>
 
-          {/* Application Summary Bar */}
-          <div className="bg-white border-b border-gray-200 px-6 md:px-8 py-5">
+          {/* Application Summary */}
+          <div className="bg-white p-5 md:p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-blue-600" />
+              <div
+                className="flex items-center gap-3 p-4 rounded-xl"
+                style={{ background: '#f8fafc' }}
+              >
+                <div
+                  className="w-11 h-11 rounded-xl flex items-center justify-center"
+                  style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)' }}
+                >
+                  <FileText className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-600">Application ID</p>
-                  <p className="text-lg font-bold text-blue-600">{id}</p>
+                  <p className="text-xs text-gray-500">Application ID</p>
+                  <p className="font-bold text-gray-900">{id}</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-purple-600" />
+              <div
+                className="flex items-center gap-3 p-4 rounded-xl"
+                style={{ background: '#f8fafc' }}
+              >
+                <div
+                  className="w-11 h-11 rounded-xl flex items-center justify-center"
+                  style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' }}
+                >
+                  <Calendar className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-600">Submitted On</p>
-                  <p className="text-base font-semibold text-gray-900">{today}, {time}</p>
+                  <p className="text-xs text-gray-500">Submitted On</p>
+                  <p className="font-semibold text-gray-900 text-sm">{today}</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-orange-600" />
+              <div
+                className="flex items-center gap-3 p-4 rounded-xl"
+                style={{ background: '#f8fafc' }}
+              >
+                <div
+                  className="w-11 h-11 rounded-xl flex items-center justify-center"
+                  style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}
+                >
+                  <Clock className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-600">Current Status</p>
-                  <span className="inline-flex px-3 py-1 rounded-full text-sm font-bold bg-orange-600 text-white shadow-md">
+                  <p className="text-xs text-gray-500">Current Status</p>
+                  <span
+                    className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold"
+                    style={{ background: '#fef3c7', color: '#b45309' }}
+                  >
                     Under Review
                   </span>
                 </div>
               </div>
             </div>
           </div>
-        </Card>
+        </div>
 
-        {/* Application Progress Card */}
-        <Card className="shadow-2xl border-0 mb-6">
-          <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-200">
-            <CardTitle className="text-2xl text-gray-900">Application Review Process</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 md:p-8">
-            <div className="space-y-6">
-              {steps.map((step, index) => {
-                const isCompleted = step.status === 'completed';
-                const isInProgress = step.status === 'in-progress';
-                const isPending = step.status === 'pending';
-                const Icon = step.icon;
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left - Progress Steps */}
+          <div className="lg:col-span-2">
+            <Card
+              className="border-0"
+              style={{
+                borderRadius: '20px',
+                boxShadow: '0 4px 20px -4px rgba(0, 0, 0, 0.08)'
+              }}
+            >
+              <CardContent className="p-6 md:p-8">
+                <h2 className="text-lg font-bold text-gray-900 mb-6">Review Progress</h2>
 
-                return (
-                  <div key={step.id} className="flex gap-4 md:gap-6">
-                    {/* Step Indicator */}
-                    <div className="flex flex-col items-center">
-                      <div className={`w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center shadow-xl transition-all duration-300 ${isCompleted
-                        ? 'bg-gradient-to-br from-green-500 to-green-700 text-white'
-                        : isInProgress
-                          ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white ring-4 ring-blue-300 animate-pulse'
-                          : 'bg-gradient-to-br from-gray-200 to-gray-400 text-gray-600'
-                        }`}>
-                        <Icon className="w-8 h-8 md:w-10 md:h-10" />
+                <div className="space-y-0">
+                  {steps.map((step, index) => {
+                    const isCompleted = step.status === 'completed';
+                    const isInProgress = step.status === 'in-progress';
+                    const Icon = step.icon;
+
+                    return (
+                      <div key={step.id} className="flex gap-4">
+                        {/* Step Indicator */}
+                        <div className="flex flex-col items-center">
+                          <div
+                            className="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300"
+                            style={{
+                              background: isCompleted
+                                ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                                : isInProgress
+                                  ? 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)'
+                                  : '#e2e8f0',
+                              boxShadow: isCompleted || isInProgress
+                                ? '0 4px 12px -2px rgba(0, 0, 0, 0.15)'
+                                : 'none'
+                            }}
+                          >
+                            <Icon className={`w-5 h-5 ${isCompleted || isInProgress ? 'text-white' : 'text-gray-400'}`} />
+                          </div>
+                          {index < steps.length - 1 && (
+                            <div
+                              className="w-0.5 h-12 my-1 rounded-full"
+                              style={{
+                                background: isCompleted ? '#10b981' : '#e2e8f0'
+                              }}
+                            />
+                          )}
+                        </div>
+
+                        {/* Step Content */}
+                        <div className="flex-1 pb-6">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <h4 className="font-semibold text-gray-900">{step.title}</h4>
+                            <span
+                              className="px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0"
+                              style={{
+                                background: isCompleted ? '#dcfce7' : isInProgress ? '#dbeafe' : '#f1f5f9',
+                                color: isCompleted ? '#166534' : isInProgress ? '#1e40af' : '#64748b'
+                              }}
+                            >
+                              {isCompleted ? 'Done' : isInProgress ? 'In Progress' : 'Pending'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-500">{step.description}</p>
+
+                          {isInProgress && (
+                            <div
+                              className="mt-3 p-3 rounded-xl flex items-center gap-2"
+                              style={{ background: '#eff6ff' }}
+                            >
+                              <Clock className="w-4 h-4 text-blue-500" />
+                              <span className="text-xs text-blue-700">Expected: 2-3 business days</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      {index < steps.length - 1 && (
-                        <div className={`w-1 h-16 mt-2 rounded-full ${isCompleted ? 'bg-green-600' : 'bg-gray-300'
-                          }`} />
-                      )}
-                    </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-                    {/* Step Content */}
-                    <div className="flex-1 pb-4">
-                      <div className="flex items-start justify-between gap-3 mb-2">
-                        <div className="flex-1">
-                          <h4 className="text-lg md:text-xl font-bold text-gray-900 mb-1">{step.title}</h4>
-                          <p className="text-sm md:text-base text-gray-600">{step.description}</p>
-                        </div>
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${isCompleted
-                          ? 'bg-green-100 text-green-700'
-                          : isInProgress
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'bg-gray-200 text-gray-600'
-                          }`}>
-                          {isCompleted ? 'Completed' : isInProgress ? 'In Progress' : 'Pending'}
-                        </span>
-                      </div>
-
-                      {/* Progress Info */}
-                      {isInProgress && (
-                        <div className="mt-3 bg-blue-50 border-l-4 border-blue-600 rounded-r-lg p-4">
-                          <p className="text-sm text-blue-900 font-medium">
-                            ⏱️ Currently being reviewed. Expected completion: 2-3 business days
-                          </p>
-                        </div>
-                      )}
-
-                      {isCompleted && (
-                        <div className="mt-3 bg-green-50 border-l-4 border-green-600 rounded-r-lg p-4">
-                          <p className="text-sm text-green-900 font-medium">
-                            ✅ Completed on {today}
-                          </p>
-                        </div>
-                      )}
-                    </div>
+          {/* Right - Actions & Info */}
+          <div className="lg:col-span-1 space-y-5">
+            {/* Important Notice */}
+            <Card
+              className="border-0 overflow-hidden"
+              style={{
+                borderRadius: '20px',
+                boxShadow: '0 4px 20px -4px rgba(0, 0, 0, 0.08)'
+              }}
+            >
+              <div
+                className="p-5"
+                style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)' }}
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div
+                    className="w-9 h-9 rounded-lg flex items-center justify-center"
+                    style={{ background: '#f59e0b' }}
+                  >
+                    <AlertTriangle className="w-4 h-4 text-white" />
                   </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Important Notice Card */}
-        <Card className="shadow-2xl border-0 mb-6 bg-gradient-to-r from-yellow-50 to-orange-50">
-          <CardContent className="p-6 md:p-8">
-            <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-xl bg-yellow-500 flex items-center justify-center flex-shrink-0 shadow-lg">
-                <AlertTriangle className="w-7 h-7 text-white" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Important Notice</h3>
-                <ul className="space-y-2 text-gray-700">
-                  <li className="flex items-start gap-2">
-                    <span className="text-yellow-600 mt-1">•</span>
-                    <span>Please keep your <strong>Application ID ({id})</strong> safe for future reference</span>
+                  <h3 className="font-bold text-amber-900">Important</h3>
+                </div>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-2 text-xs text-amber-800">
+                    <span className="w-1 h-1 rounded-full bg-amber-600 mt-1.5 flex-shrink-0"></span>
+                    <span>Keep your Application ID <strong>{id}</strong> safe</span>
                   </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-yellow-600 mt-1">•</span>
-                    <span>You will receive email and SMS notifications at each review stage</span>
+                  <li className="flex items-start gap-2 text-xs text-amber-800">
+                    <span className="w-1 h-1 rounded-full bg-amber-600 mt-1.5 flex-shrink-0"></span>
+                    <span>Review takes 5-7 business days</span>
                   </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-yellow-600 mt-1">•</span>
-                    <span>Review process typically takes 5-7 business days to complete</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-yellow-600 mt-1">•</span>
-                    <span>Check your application status anytime using the button below</span>
+                  <li className="flex items-start gap-2 text-xs text-amber-800">
+                    <span className="w-1 h-1 rounded-full bg-amber-600 mt-1.5 flex-shrink-0"></span>
+                    <span>Updates via email & SMS</span>
                   </li>
                 </ul>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </Card>
 
-        {/* Action Buttons Card */}
-        <Card className="shadow-2xl border-0">
-          <CardContent className="p-6 md:p-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Notifications Info */}
+            <Card
+              className="border-0"
+              style={{
+                borderRadius: '20px',
+                boxShadow: '0 4px 20px -4px rgba(0, 0, 0, 0.08)'
+              }}
+            >
+              <CardContent className="p-5">
+                <div className="flex items-center gap-3 mb-4">
+                  <div
+                    className="w-9 h-9 rounded-lg flex items-center justify-center"
+                    style={{ background: '#eff6ff' }}
+                  >
+                    <Bell className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 text-sm">Stay Updated</h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                    <Mail className="w-3.5 h-3.5 text-gray-400" />
+                    <span>Email notifications enabled</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                    <Shield className="w-3.5 h-3.5 text-gray-400" />
+                    <span>SMS alerts active</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Action Buttons */}
+            <div className="space-y-3">
               <Button
-                className="w-full h-14 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold text-base shadow-lg"
+                className="w-full py-5 rounded-xl font-semibold text-sm transition-all duration-200"
+                style={{
+                  background: 'linear-gradient(135deg, #0f766e 0%, #134e4a 100%)',
+                  boxShadow: '0 8px 24px -4px rgba(15, 118, 110, 0.4)'
+                }}
                 onClick={() => navigate(`/member/application-status?id=${id}`)}
               >
-                <Eye className="w-5 h-5 mr-2" />
-                View Status
+                <Eye className="w-4 h-4 mr-2" />
+                View Full Status
+                <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
 
               <Button
                 variant="outline"
-                className="w-full h-14 border-2 border-blue-600 text-blue-600 font-semibold text-base shadow-md"
+                className="w-full py-5 rounded-xl font-semibold text-sm border-2"
+                style={{ borderColor: '#e2e8f0', color: '#475569' }}
                 onClick={() => {
                   const applicationData = {
                     id: id,
@@ -261,21 +376,22 @@ export default function ApplicationSubmitted() {
                   URL.revokeObjectURL(url);
                 }}
               >
-                <Download className="w-5 h-5 mr-2" />
+                <Download className="w-4 h-4 mr-2" />
                 Download Copy
               </Button>
 
               <Button
-                variant="outline"
-                className="w-full h-14 border-2 border-gray-300 font-semibold text-base shadow-md"
+                variant="ghost"
+                className="w-full py-5 rounded-xl font-semibold text-sm"
+                style={{ color: '#64748b' }}
                 onClick={() => navigate('/member/dashboard')}
               >
-                <Home className="w-5 h-5 mr-2" />
-                Dashboard
+                <Home className="w-4 h-4 mr-2" />
+                Back to Dashboard
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

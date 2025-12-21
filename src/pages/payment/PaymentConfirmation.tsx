@@ -21,7 +21,7 @@ export default function PaymentConfirmation() {
     try {
       // Check if we have details from navigation state
       const stateDetails = location.state;
-      
+
       // Or get from URL parameters (from Instamojo redirect)
       const status = searchParams.get('status');
       const paymentId = searchParams.get('payment_id');
@@ -30,11 +30,11 @@ export default function PaymentConfirmation() {
       if (status === 'success' || stateDetails || true) { // Always show for testing
         // Fetch latest application data
         const app = await getUserApplication();
-        
+
         // Determine plan type based on memberType and payment details
         let planType = 'Aspirant Plan';
         let planAmount = 2000;
-        
+
         if (app.paymentDetails?.planType) {
           // Use saved payment details if available
           planType = app.paymentDetails.planType;
@@ -47,7 +47,7 @@ export default function PaymentConfirmation() {
           planType = 'Aspirant Plan';
           planAmount = 2000;
         }
-        
+
         const details = {
           membershipId: `ACTIV-2024-${String(Math.floor(Math.random() * 999999)).padStart(6, '0')}`,
           memberName: app.memberName || 'Member',
@@ -60,9 +60,9 @@ export default function PaymentConfirmation() {
           applicationId: app.applicationId,
           validFor: '1 Year'
         };
-        
+
         setPaymentDetails(details);
-        
+
         // Fire confetti animation
         fireConfetti();
       } else {
@@ -119,7 +119,7 @@ export default function PaymentConfirmation() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-100 via-blue-100 to-purple-100 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-blue-600" />
           <p className="text-gray-700">Loading payment details...</p>
@@ -167,148 +167,157 @@ Thank you for joining ACTIV!
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-blue-50 to-purple-100 p-4 md:p-6">
-      <div className="max-w-2xl mx-auto">
-        {/* Success Animation */}
-        <div className="text-center mb-6">
-          <div className="inline-block relative mb-4">
-            <div className="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center animate-scale-in">
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-300 shadow-md">
+        <div className="max-w-6xl mx-auto px-6 py-5">
+          <h1 className="text-2xl font-bold text-gray-900">Payment Confirmation</h1>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-6 py-12">
+        {/* Success Section */}
+        <div className="text-center mb-12">
+          <div className="inline-block mb-6">
+            <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center shadow-xl mx-auto">
               <CheckCircle className="w-16 h-16 text-white" strokeWidth={3} />
             </div>
           </div>
-          <h1 className="text-4xl font-bold text-blue-700 mb-2">
+          <h1 className="text-5xl font-bold text-gray-900 mb-4">
             Payment Successful!
           </h1>
-          <p className="text-lg text-gray-700">
+          <p className="text-xl text-gray-600">
             Welcome to ACTIV – Your membership is now active
           </p>
         </div>
 
-        {/* Membership Details Card */}
-        <Card className="mb-4 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Membership Details</h2>
-              <span className="px-4 py-1 bg-green-100 text-green-700 rounded-full text-sm font-semibold">
-                Active
-              </span>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">Membership ID</span>
-                <span className="font-semibold text-gray-900">{paymentDetails.membershipId}</span>
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+          {/* Left Column - Membership Details */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Membership Details Card */}
+            <Card className="border-2 border-gray-300 shadow-xl">
+              <div className="bg-gray-100 p-6 border-b-2 border-gray-300 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">Membership Details</h2>
+                <span className="px-4 py-2 bg-green-500 text-white rounded-full text-sm font-bold shadow-md">
+                  ✓ Active
+                </span>
               </div>
+              <CardContent className="p-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-xs text-gray-500 mb-1 font-semibold uppercase tracking-wide">Membership ID</p>
+                    <p className="text-lg font-bold text-gray-900">{paymentDetails.membershipId}</p>
+                  </div>
 
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">Member Name</span>
-                <span className="font-semibold text-gray-900">{paymentDetails.memberName}</span>
+                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-xs text-gray-500 mb-1 font-semibold uppercase tracking-wide">Member Name</p>
+                    <p className="text-lg font-bold text-gray-900">{paymentDetails.memberName}</p>
+                  </div>
+
+                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-xs text-gray-500 mb-1 font-semibold uppercase tracking-wide">Plan</p>
+                    <p className="text-lg font-bold text-gray-900">{paymentDetails.planType}</p>
+                  </div>
+
+                  <div className="p-4 bg-blue-50 rounded-lg border-2 border-blue-300">
+                    <p className="text-xs text-blue-700 mb-1 font-semibold uppercase tracking-wide">Amount Paid</p>
+                    <p className="text-2xl font-bold text-blue-600">₹{paymentDetails.totalAmount}</p>
+                  </div>
+
+                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-xs text-gray-500 mb-1 font-semibold uppercase tracking-wide">Valid For</p>
+                    <p className="text-lg font-bold text-gray-900">{paymentDetails.validFor}</p>
+                  </div>
+
+                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-xs text-gray-500 mb-1 font-semibold uppercase tracking-wide">Payment Reference</p>
+                    <p className="font-mono text-xs text-gray-900 break-all">{paymentDetails.transactionId}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Download Documents Card */}
+            <Card className="border-2 border-gray-300 shadow-xl">
+              <div className="bg-gray-100 p-6 border-b-2 border-gray-300">
+                <h2 className="text-xl font-bold text-gray-900">Download Documents</h2>
               </div>
+              <CardContent className="p-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Button
+                    variant="outline"
+                    className="py-6 h-auto flex-col gap-3 hover:bg-blue-50 hover:border-blue-400 border-2"
+                    onClick={() => navigate('/member/certificate')}
+                  >
+                    <FileText className="w-8 h-8 text-blue-600" />
+                    <span className="font-bold text-sm">Download Certificate</span>
+                  </Button>
 
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">Plan</span>
-                <span className="font-semibold text-gray-900">{paymentDetails.planType}</span>
-              </div>
+                  <Button
+                    variant="outline"
+                    className="py-6 h-auto flex-col gap-3 hover:bg-green-50 hover:border-green-400 border-2"
+                    onClick={handleDownloadReceipt}
+                  >
+                    <Download className="w-8 h-8 text-green-600" />
+                    <span className="font-bold text-sm">Download Receipt</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
 
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">Amount Paid</span>
-                <span className="font-semibold text-blue-600 text-lg">₹{paymentDetails.totalAmount}</span>
-              </div>
-
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">Valid</span>
-                <span className="font-semibold text-gray-900">{paymentDetails.validFor}</span>
-              </div>
-
-              <div className="flex justify-between items-center py-2">
-                <span className="text-gray-600">Payment Reference</span>
-                <span className="font-mono text-xs text-gray-900">{paymentDetails.transactionId}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Download Documents Card */}
-        <Card className="mb-4 shadow-lg">
-          <CardContent className="p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Download Documents</h2>
-            
-            <div className="space-y-3">
-              <Button
-                variant="outline"
-                className="w-full justify-start py-6 text-left hover:bg-gray-50"
-                onClick={() => navigate('/member/certificate')}
-              >
-                <FileText className="w-5 h-5 mr-3" />
-                <span className="font-medium">Download Membership Certificate</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                className="w-full justify-start py-6 text-left hover:bg-gray-50"
-                onClick={handleDownloadReceipt}
-              >
-                <Download className="w-5 h-5 mr-3" />
-                <span className="font-medium">Download Payment Receipt</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Confirmation Info */}
-        <Card className="mb-4 bg-blue-50 border-blue-200">
-          <CardContent className="p-4 flex items-start gap-3">
-            <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-blue-800">
-              Confirmation has been sent to your registered email and WhatsApp number. 
-              Keep these for your records.
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* What's Next Card */}
-        <Card className="mb-4 shadow-lg">
-          <CardContent className="p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">What's Next?</h2>
-            
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <User className="w-5 h-5 text-blue-600" />
+            {/* Confirmation Info */}
+            <Card className="bg-blue-50 border-2 border-blue-300">
+              <CardContent className="p-6 flex items-start gap-4">
+                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Info className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">Access your member dashboard to update profile and browse other members.</p>
+                  <p className="font-bold text-blue-900 mb-1">Confirmation Sent</p>
+                  <p className="text-sm text-blue-800">
+                    Confirmation has been sent to your registered email and WhatsApp number. Keep these for your records.
+                  </p>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
+          </div>
 
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Calendar className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Join area-specific events and networking opportunities.</p>
-                </div>
+          {/* Right Column - What's Next */}
+          <div className="lg:col-span-1">
+            <Card className="border-2 border-gray-300 shadow-xl sticky top-24">
+              <div className="bg-gray-100 p-6 border-b-2 border-gray-300">
+                <h2 className="text-xl font-bold text-gray-900">What's Next?</h2>
               </div>
-
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <CheckCircle className="w-5 h-5 text-blue-600" />
+              <CardContent className="p-8">
+                <div className="space-y-6">
+                  {[
+                    { icon: User, color: 'blue', text: 'Access your member dashboard to update profile and browse other members' },
+                    { icon: Calendar, color: 'purple', text: 'Join area-specific events and networking opportunities' },
+                    { icon: CheckCircle, color: 'green', text: 'Connect with fellow ACTIV members in your region' }
+                  ].map((item, idx) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={idx} className="flex items-start gap-4">
+                        <div className={`w-12 h-12 bg-${item.color}-100 rounded-xl flex items-center justify-center flex-shrink-0`}>
+                          <Icon className={`w-6 h-6 text-${item.color}-600`} />
+                        </div>
+                        <p className="text-sm text-gray-700 leading-relaxed pt-2">{item.text}</p>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div>
-                  <p className="font-medium text-gray-900">Connect with fellow ACTIV members in your region.</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Go to Dashboard Button */}
-        <Button
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg font-semibold shadow-lg"
-          onClick={() => navigate('/payment/member-dashboard')}
-        >
-          Go to Member Dashboard
-        </Button>
+                <Button
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 text-lg font-bold shadow-lg mt-8"
+                  onClick={() => navigate('/payment/member-dashboard')}
+                >
+                  <Home className="w-5 h-5 mr-2" />
+                  Go to Dashboard
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

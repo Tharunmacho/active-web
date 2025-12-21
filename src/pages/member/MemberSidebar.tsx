@@ -64,7 +64,7 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
     }, []);
 
     const nav = [
-        { to: '/member/dashboard', label: 'Home', icon: <FaHome /> },
+        { to: '/payment/member-dashboard', label: 'Dashboard', icon: <FaHome /> },
         { to: '/explore', label: 'Explore', icon: <FaSearch /> },
         { to: '/notifications', label: 'Notifications', icon: <FaBell /> },
         { to: '/member/profile', label: 'My Profile', icon: <FaUser /> },
