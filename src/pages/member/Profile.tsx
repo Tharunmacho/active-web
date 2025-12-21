@@ -105,6 +105,7 @@ export default function Profile() {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
   const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null);
   const [hasExistingProfile, setHasExistingProfile] = useState(false);
   const [companyNames, setCompanyNames] = useState<string[]>([""]);
@@ -151,6 +152,7 @@ export default function Profile() {
             console.log("Loading personal form from backend:", formData);
             
             setHasExistingProfile(true);
+            setIsLocked(formData.isLocked || false);
             
             const formValues = {
               name: formData.name || "",
@@ -424,8 +426,9 @@ export default function Profile() {
           return false;
         }
         
-        // Mark that profile now exists
+        // Mark that profile now exists and lock it
         setHasExistingProfile(true);
+        setIsLocked(true);
       }
 
       saveCurrentStepData(data);
@@ -729,6 +732,23 @@ export default function Profile() {
               </div>
 
               <CardContent className="p-6">
+                {isLocked && currentStep === 1 && (
+                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
+                    <p className="text-sm text-green-800">
+                      ✓ Profile saved successfully
+                    </p>
+                    <Button
+                      type="button"
+                      onClick={() => setIsLocked(false)}
+                      variant="outline"
+                      size="sm"
+                      className="border-green-600 text-green-600 hover:bg-green-50"
+                    >
+                      Edit Profile
+                    </Button>
+                  </div>
+                )}
+                
                 {currentStep === 1 && (
                   <div className="space-y-6">
                     <div>
@@ -741,6 +761,7 @@ export default function Profile() {
                             placeholder="Enter your full name"
                             {...register("name", { required: true })}
                             className="mt-1"
+                            disabled={isLocked}
                           />
                           {errors.name && <p className="text-red-500 text-sm mt-1">Name is required</p>}
                         </div>
@@ -759,6 +780,7 @@ export default function Profile() {
                                   reset({ ...currentData, state: value, district: '', block: '' });
                                 }} 
                                 value={field.value}
+                                disabled={isLocked}
                               >
                                 <SelectTrigger className="mt-1">
                                   <SelectValue placeholder="Select state" />
@@ -790,7 +812,7 @@ export default function Profile() {
                                   reset({ ...currentData, district: value, block: '' });
                                 }} 
                                 value={field.value} 
-                                disabled={!selectedState}
+                                disabled={!selectedState || isLocked}
                               >
                                 <SelectTrigger className="mt-1">
                                   <SelectValue placeholder={selectedState ? "Select district" : "Select state first"} />
@@ -815,7 +837,7 @@ export default function Profile() {
                             control={control}
                             rules={{ required: true }}
                             render={({ field }) => (
-                              <Select onValueChange={field.onChange} value={field.value} disabled={!selectedDistrict}>
+                              <Select onValueChange={field.onChange} value={field.value} disabled={!selectedDistrict || isLocked}>
                                 <SelectTrigger className="mt-1">
                                   <SelectValue placeholder={selectedDistrict ? "Select block" : "Select district first"} />
                                 </SelectTrigger>
@@ -843,6 +865,7 @@ export default function Profile() {
                             placeholder="Enter city"
                             {...register("city", { required: true })}
                             className="mt-1"
+                            disabled={isLocked}
                           />
                           {errors.city && <p className="text-red-500 text-sm mt-1">City is required</p>}
                         </div>
@@ -855,6 +878,7 @@ export default function Profile() {
                             placeholder="Enter phone number"
                             {...register("phone", { required: true })}
                             className="mt-1"
+                            disabled={isLocked}
                           />
                           {errors.phone && <p className="text-red-500 text-sm mt-1">Phone number is required</p>}
                         </div>
@@ -867,6 +891,7 @@ export default function Profile() {
                             placeholder="Enter email"
                             {...register("email", { required: true })}
                             className="mt-1"
+                            disabled={isLocked}
                           />
                           {errors.email && <p className="text-red-500 text-sm mt-1">Email is required</p>}
                         </div>
@@ -879,11 +904,13 @@ export default function Profile() {
                               type={showPassword ? "text" : "password"}
                               placeholder="Enter your current login password"
                               {...register("currentPassword")}
+                              disabled={isLocked}
                             />
                             <button
                               type="button"
                               className="absolute right-3 top-1/2 -translate-y-1/2"
                               onClick={() => setShowPassword(!showPassword)}
+                              disabled={isLocked}
                             >
                               {showPassword ? <EyeOff className="h-4 w-4 text-gray-500" /> : <Eye className="h-4 w-4 text-gray-500" />}
                             </button>
@@ -899,11 +926,13 @@ export default function Profile() {
                               type={showPassword ? "text" : "password"}
                               placeholder="Enter new password (optional)"
                               {...register("password")}
+                              disabled={isLocked}
                             />
                             <button
                               type="button"
                               className="absolute right-3 top-1/2 -translate-y-1/2"
                               onClick={() => setShowPassword(!showPassword)}
+                              disabled={isLocked}
                             >
                               {showPassword ? <EyeOff className="h-4 w-4 text-gray-500" /> : <Eye className="h-4 w-4 text-gray-500" />}
                             </button>
@@ -919,11 +948,13 @@ export default function Profile() {
                               type={showConfirmPassword ? "text" : "password"}
                               placeholder="Confirm new password"
                               {...register("confirmPassword")}
+                              disabled={isLocked}
                             />
                             <button
                               type="button"
                               className="absolute right-3 top-1/2 -translate-y-1/2"
                               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              disabled={isLocked}
                             >
                               {showConfirmPassword ? <EyeOff className="h-4 w-4 text-gray-500" /> : <Eye className="h-4 w-4 text-gray-500" />}
                             </button>
@@ -939,9 +970,10 @@ export default function Profile() {
                           const data = watch();
                           await saveStep1(data);
                         }}
-                        className="w-full bg-blue-600 hover:bg-blue-700"
+                        className={`w-full ${isLocked ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                        disabled={isLocked}
                       >
-                        {hasExistingProfile ? 'Update Personal Details' : 'Save Personal Details'}
+                        {isLocked ? 'Profile Saved ✓' : (hasExistingProfile ? 'Update Personal Details' : 'Save Personal Details')}
                       </Button>
                     </div>
 
