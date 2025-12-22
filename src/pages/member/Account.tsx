@@ -39,7 +39,6 @@ export default function Account() {
               <AvatarFallback>ME</AvatarFallback>
             </Avatar>
             <div className="text-lg font-semibold">{name}</div>
-            <div className="text-sm text-blue-600">TechCorp Solution</div>
           </CardContent>
         </Card>
 

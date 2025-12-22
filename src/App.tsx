@@ -11,7 +11,6 @@ import ForgotPassword from "./pages/member/ForgotPassword";
 
 import MemberRegister from "./pages/member/Register";
 import MemberDashboard from "./pages/member/Dashboard";
-import Explore from "./pages/member/Explore";
 import Notifications from "./pages/member/Notifications";
 import ADFForm from "./pages/member/ADF";
 import MemberCertificate from "./pages/member/Certificate";
@@ -30,8 +29,6 @@ import PaymentConfirmation from "./pages/payment/PaymentConfirmation";
 import MockPayment from "./pages/payment/MockPayment";
 import PaymentMemberDashboard from "./pages/payment/MemberDashboard";
 import MembershipPlans from "./pages/payment/MembershipPlans";
-import MemberHelp from "./pages/member/Help";
-import MemberEvents from "./pages/member/Events";
 import BusinessProfile from "./pages/business/BusinessProfile";
 import BusinessDashboard from "./pages/business/Dashboard";
 import Products from "./pages/business/Products";
@@ -45,6 +42,16 @@ import AddEditCompany from "./pages/business/AddEditCompany";
 import CompanyDetails from "./pages/business/CompanyDetails";
 import Account from "./pages/member/Account";
 import PaymentHistory from "./pages/member/PaymentHistory";
+
+// Feature Pages Imports
+import Catalog from "./pages/member/features/Catalog";
+import Cart from "./pages/member/features/Cart";
+import Inquiry from "./pages/member/features/Inquiry";
+import Showcase from "./pages/member/features/Showcase";
+import SellerDashboard from "./pages/member/features/SellerDashboard";
+import WhatsAppCatalog from "./pages/member/features/WhatsAppCatalog";
+import Inventory from "./pages/member/features/Inventory";
+
 // Block Admin Imports
 import BlockDashboard from "./pages/block-admin/Dashboard";
 import BlockApprovals from "./pages/block-admin/Approvals";
@@ -91,7 +98,6 @@ const App = () => (
 
           {/* Member Routes */}
           <Route path="/member/dashboard" element={<MemberDashboard />} />
-          <Route path="/explore" element={<Explore />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/member/adf" element={<ADFForm />} />
           <Route path="/member/certificate" element={<MemberCertificate />} />
@@ -107,16 +113,22 @@ const App = () => (
           <Route path="/member/application-status" element={<ApplicationStatus />} />
           <Route path="/member/payment" element={<PaymentPage />} />
           <Route path="/member/payment-success" element={<PaymentSuccess />} />
-          
+
+          {/* Feature Pages Routes */}
+          <Route path="/member/catalog" element={<Catalog />} />
+          <Route path="/member/cart" element={<Cart />} />
+          <Route path="/member/inquiry" element={<Inquiry />} />
+          <Route path="/member/showcase" element={<Showcase />} />
+          <Route path="/member/seller-dashboard" element={<SellerDashboard />} />
+          <Route path="/member/whatsapp-catalog" element={<WhatsAppCatalog />} />
+          <Route path="/member/inventory" element={<Inventory />} />
+
           {/* New Payment Routes */}
           <Route path="/payment/membership-plan" element={<PaymentRegistration />} />
           <Route path="/payment/confirmation" element={<PaymentConfirmation />} />
           <Route path="/payment/mock" element={<MockPayment />} />
           <Route path="/payment/member-dashboard" element={<PaymentMemberDashboard />} />
           <Route path="/payment/membership-plans" element={<MembershipPlans />} />
-          
-          <Route path="/member/help" element={<MemberHelp />} />
-          <Route path="/member/events" element={<MemberEvents />} />
 
           {/* Business Routes */}
           <Route path="/business/dashboard" element={<BusinessDashboard />} />
