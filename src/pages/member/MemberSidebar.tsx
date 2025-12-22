@@ -65,12 +65,9 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
 
     const nav = [
         { to: '/payment/member-dashboard', label: 'Dashboard', icon: <FaHome /> },
-        { to: '/explore', label: 'Explore', icon: <FaSearch /> },
         { to: '/notifications', label: 'Notifications', icon: <FaBell /> },
         { to: '/member/profile', label: 'My Profile', icon: <FaUser /> },
-        { to: '/member/certificate', label: 'Certificate', icon: <FaCertificate /> },
-        { to: '/member/help', label: 'Help', icon: <FaQuestionCircle /> },
-        { to: '/member/events', label: 'Upcoming Events', icon: <FaCalendarAlt /> },
+        { to: '/member/help', label: 'Help', icon: <FaQuestionCircle /> }
     ];
 
     const handleLogout = () => {
@@ -102,9 +99,7 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                         </AvatarFallback>
                     </Avatar>
                     <div>
-                        <div className="font-semibold">{userName || "Member"}</div>
-                        <div className="text-sm text-muted-foreground">TechCorp Solution</div>
-                    </div>
+                        <div className="font-semibold">{userName || "Member"}</div>                    </div>
                 </div>
             </div>
 

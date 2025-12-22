@@ -64,7 +64,6 @@ export default function MobileMenu({ isOpen, onClose }: Props) {
           </Avatar>
           <div>
             <div className="font-semibold">{userName || "Member"}</div>
-            <div className="text-sm text-muted-foreground">TechCorp Solution</div>
           </div>
         </div>
       </div>

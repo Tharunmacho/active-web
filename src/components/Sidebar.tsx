@@ -45,7 +45,6 @@ export default function Sidebar({ className = '' }: Props) {
           <img src="/placeholder.svg" alt="avatar" className="w-10 h-10 md:w-12 md:h-12 rounded-full" />
           <div className="hidden lg:block">
             <div className="font-semibold text-sm md:text-base">{userName || "Member"}</div>
-            <div className="text-xs md:text-sm text-muted-foreground">TechCorp Solution</div>
           </div>
         </div>
 
