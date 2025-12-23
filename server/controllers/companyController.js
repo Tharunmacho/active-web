@@ -248,9 +248,10 @@ export const getActiveCompany = async (req, res) => {
     const company = await Company.findOne({ userId, isActive: true });
     
     if (!company) {
-      return res.status(404).json({
-        success: false,
-        message: 'No active company found'
+      return res.status(200).json({
+        success: true,
+        message: 'No active company found',
+        data: null
       });
     }
     

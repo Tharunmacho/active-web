@@ -253,3 +253,31 @@ export const checkProfileCompletion = async (): Promise<{
     };
   }
 };
+
+// Get user's business form data (contains company name)
+export const getBusinessForm = async (): Promise<any | null> => {
+  const token = localStorage.getItem('token');
+  
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/business-form`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      return result.data;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error fetching business form:', error);
+    return null;
+  }
+};

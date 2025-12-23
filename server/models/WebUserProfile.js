@@ -46,6 +46,10 @@ const webUserProfileSchema = new mongoose.Schema({
     enum: ['member', 'block_admin', 'district_admin', 'state_admin', 'super_admin'],
     default: 'member'
   },
+  profilePhoto: {
+    type: String,
+    default: ''
+  },
   isActive: {
     type: Boolean,
     default: true

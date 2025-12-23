@@ -108,6 +108,8 @@ const MyCompanies = () => {
       if (response.ok) {
         toast.success("Company set as active");
         loadCompanies();
+        // Dispatch event to update sidebar
+        window.dispatchEvent(new Event('companyUpdated'));
       } else {
         toast.error("Failed to set company as active");
       }

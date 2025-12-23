@@ -60,3 +60,4 @@ webUserSchema.methods.toJSON = function() {
 const WebUser = mongoose.model('WebUser', webUserSchema);
 
 export default WebUser;
+

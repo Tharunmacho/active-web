@@ -252,6 +252,7 @@ export default function EnhancedLoginPage() {
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 className="w-full h-11 px-4 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                autoComplete="off"
                 required
               />
             </div>
@@ -268,6 +269,7 @@ export default function EnhancedLoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full h-11 px-4 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  autoComplete="off"
                   required
                 />
                 <button

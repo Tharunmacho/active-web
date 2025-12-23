@@ -372,3 +372,80 @@ export const changePassword = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Update user profile photo
+// @route   PUT /api/auth/update-profile-photo
+// @access  Private
+export const updateProfilePhoto = async (req, res, next) => {
+  try {
+    const { profilePhoto } = req.body;
+
+    if (!profilePhoto) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide profile photo'
+      });
+    }
+
+    const userProfile = await WebUserProfile.findOne({ userId: req.user.id });
+
+    if (!userProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'User profile not found'
+      });
+    }
+
+    userProfile.profilePhoto = profilePhoto;
+    await userProfile.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile photo updated successfully',
+      data: userProfile
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update user basic profile
+// @route   PUT /api/auth/update-profile
+// @access  Private
+export const updateUserProfile = async (req, res, next) => {
+  try {
+    const { fullName, email, phone } = req.body;
+
+    const userProfile = await WebUserProfile.findOne({ userId: req.user.id });
+
+    if (!userProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'User profile not found'
+      });
+    }
+
+    if (fullName) userProfile.fullName = fullName;
+    if (email) {
+      userProfile.email = email;
+      // Also update in WebUser
+      const webUser = await WebUser.findById(req.user.id);
+      if (webUser) {
+        webUser.email = email;
+        await webUser.save();
+      }
+    }
+    if (phone) userProfile.phoneNumber = phone;
+
+    await userProfile.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: userProfile
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

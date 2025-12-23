@@ -1,12 +1,47 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Bell, Calendar, FileText, User, Menu } from "lucide-react";
-import { useState } from "react";
+import { Bell, Calendar, FileText, User, Menu, Lock } from "lucide-react";
+import { useState, useEffect } from "react";
 import MemberSidebar from "./MemberSidebar";
+import { useNavigate } from "react-router-dom";
 
 const Notifications = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState("pending");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkPaymentStatus = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const response = await fetch("http://localhost:4000/api/applications/my-application", {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            setPaymentStatus(result.data.paymentStatus || "pending");
+          }
+        } else {
+          const stored = localStorage.getItem("paymentStatus");
+          if (stored) setPaymentStatus(stored);
+        }
+      } catch (error) {
+        console.error("Error checking payment status:", error);
+        const stored = localStorage.getItem("paymentStatus");
+        if (stored) setPaymentStatus(stored);
+      }
+    };
+
+    checkPaymentStatus();
+  }, []);
 
   const notifications = [
     {
@@ -87,6 +122,34 @@ const Notifications = () => {
 
             {/* Notifications List */}
             <div className="space-y-3 md:space-y-4">
+              {/* Payment Locked Features Notification */}
+              {paymentStatus !== 'completed' && (
+                <Card className="rounded-2xl border-0 shadow-lg hover:shadow-2xl transition-shadow duration-300 overflow-hidden bg-gradient-to-br from-amber-50 to-orange-100 border-l-4 border-l-orange-500">
+                  <CardContent className="p-4 md:p-6">
+                    <div className="flex items-start gap-3 md:gap-4">
+                      <div className="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 bg-orange-500 rounded-full flex items-center justify-center shadow-md">
+                        <Lock className="h-5 w-5 md:h-6 md:w-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-2">
+                          <h3 className="font-semibold text-base md:text-lg text-gray-800">More Features Locked</h3>
+                          <span className="text-xs md:text-sm text-orange-600 font-medium">Action Required</span>
+                        </div>
+                        <p className="text-sm md:text-base text-gray-700 mb-3">
+                          Complete your application forms and get admin approval to unlock payment and all membership features!
+                        </p>
+                        <Button 
+                          onClick={() => navigate('/member/dashboard')}
+                          className="bg-orange-500 hover:bg-orange-600 text-white text-sm"
+                        >
+                          Complete Application Forms
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {notifications.map((notification) => (
                 <Card
                   key={notification.id}

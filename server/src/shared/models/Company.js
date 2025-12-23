@@ -57,11 +57,12 @@ const companySchema = new mongoose.Schema({
   collection: 'companies'
 });
 
-// Index for faster queries
-companySchema.index({ userId: 1 });
-companySchema.index({ status: 1 });
-companySchema.index({ isActive: 1 });
+// Compound indexes for faster queries
+companySchema.index({ userId: 1, isActive: 1 }); // Most common query pattern
+companySchema.index({ userId: 1, status: 1 });
+companySchema.index({ businessName: 'text', businessType: 'text' }); // Text search
 
 const Company = mongoose.model('Company', companySchema);
 
 export default Company;
+

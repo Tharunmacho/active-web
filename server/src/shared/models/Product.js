@@ -54,12 +54,14 @@ const productSchema = new mongoose.Schema({
   collection: 'products'
 });
 
-// Indexes for faster queries
-productSchema.index({ userId: 1 });
-productSchema.index({ companyId: 1 });
-productSchema.index({ category: 1 });
-productSchema.index({ status: 1 });
+// Compound indexes for faster queries
+productSchema.index({ userId: 1, companyId: 1 }); // Most common query pattern
+productSchema.index({ userId: 1, status: 1 });
+productSchema.index({ companyId: 1, status: 1 });
+productSchema.index({ category: 1, status: 1 });
+productSchema.index({ productName: 'text', description: 'text', category: 'text' }); // Text search
 
 const Product = mongoose.model('Product', productSchema);
 
 export default Product;
+

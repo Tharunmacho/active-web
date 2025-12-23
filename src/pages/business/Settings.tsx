@@ -15,6 +15,9 @@ const Settings = () => {
     const [loading, setLoading] = useState(true);
     const [userData, setUserData] = useState<any>(null);
     const [activeCompany, setActiveCompany] = useState<any>(null);
+    const [companyLogo, setCompanyLogo] = useState("");
+    const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+    const fileInputRef = useState<HTMLInputElement | null>(null)[1];
     const [formData, setFormData] = useState({
         businessName: "",
         email: "",
@@ -50,6 +53,7 @@ const Settings = () => {
             if (companyResult.success && companyResult.data) {
                 const company = companyResult.data;
                 setActiveCompany(company);
+                setCompanyLogo(company.logo || "");
                 setFormData({
                     businessName: company.businessName || "",
                     email: company.email || "",
@@ -62,6 +66,57 @@ const Settings = () => {
             console.error('Error loading user data:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            toast.error('Please select an image file');
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Image size should be less than 5MB');
+            return;
+        }
+
+        if (!activeCompany) {
+            toast.error("No active company found");
+            return;
+        }
+
+        setIsUploadingLogo(true);
+        try {
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+                const base64String = reader.result as string;
+                
+                const token = localStorage.getItem('token');
+                const response = await fetch(`http://localhost:4000/api/companies/${activeCompany._id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ logo: base64String })
+                });
+
+                if (response.ok) {
+                    setCompanyLogo(base64String);
+                    toast.success('Logo updated successfully!');
+                } else {
+                    toast.error('Failed to update logo');
+                }
+                setIsUploadingLogo(false);
+            };
+            reader.readAsDataURL(file);
+        } catch (error) {
+            console.error('Error uploading logo:', error);
+            toast.error('Error uploading logo');
+            setIsUploadingLogo(false);
         }
     };
 
@@ -95,6 +150,8 @@ const Settings = () => {
 
             if (result.success) {
                 toast.success("Settings saved successfully!");
+                // Dispatch custom event to notify sidebar to refresh
+                window.dispatchEvent(new CustomEvent('companyDataUpdated'));
                 loadUserData(); // Reload data
             } else {
                 toast.error(result.message || "Failed to save settings");
@@ -195,6 +252,51 @@ const Settings = () => {
                                 {/* Account Settings */}
                                 {activeTab === "account" && (
                                     <div className="space-y-5">
+                                        {/* Logo Upload Section */}
+                                        <div className="bg-white rounded-xl border-0 shadow-lg p-5 md:p-6">
+                                            <div className="mb-6">
+                                                <h2 className="text-lg md:text-xl font-bold text-blue-600">Business Logo</h2>
+                                                <p className="text-sm text-gray-500 mt-1">Upload your business logo</p>
+                                            </div>
+                                            
+                                            <div className="flex items-center gap-6">
+                                                <div className="relative">
+                                                    <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-200 bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
+                                                        {companyLogo ? (
+                                                            <img src={companyLogo} alt="Company Logo" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <span>{formData.businessName ? formData.businessName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "BA"}</span>
+                                                        )}
+                                                    </div>
+                                                    {isUploadingLogo && (
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
+                                                            <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={handleLogoUpload}
+                                                        className="hidden"
+                                                        id="logo-upload"
+                                                    />
+                                                    <label htmlFor="logo-upload">
+                                                        <Button
+                                                            type="button"
+                                                            onClick={() => document.getElementById('logo-upload')?.click()}
+                                                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                                                            disabled={isUploadingLogo}
+                                                        >
+                                                            {isUploadingLogo ? 'Uploading...' : 'Upload Logo'}
+                                                        </Button>
+                                                    </label>
+                                                    <p className="text-xs text-gray-500 mt-2">JPG, PNG or GIF. Max size 5MB.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div className="bg-white rounded-xl border-0 shadow-lg p-5 md:p-6">
                                             <div className="mb-6">
                                                 <h2 className="text-lg md:text-xl font-bold text-blue-600">Profile Information</h2>

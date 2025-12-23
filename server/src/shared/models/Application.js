@@ -147,3 +147,4 @@ applicationSchema.index({ state: 1, district: 1, block: 1 });
 applicationSchema.index({ applicationId: 1 });
 
 export default mongoose.model('Application', applicationSchema, 'applications');
+

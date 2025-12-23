@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaSearch, FaBell, FaUser, FaClipboardList, FaCertificate, FaQuestionCircle, FaCalendarAlt, FaSignOutAlt, FaTimes } from 'react-icons/fa';
+import { FaHome, FaSearch, FaBell, FaUser, FaClipboardList, FaCertificate, FaQuestionCircle, FaCalendarAlt, FaSignOutAlt, FaTimes, FaBriefcase, FaCog } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -13,6 +13,10 @@ type Props = {
 export default function MemberSidebar({ isOpen, onClose }: Props) {
     const location = useLocation();
     const [userName, setUserName] = useState("");
+    const [userEmail, setUserEmail] = useState("");
+    const [profilePhoto, setProfilePhoto] = useState("");
+    const [organizationName, setOrganizationName] = useState("");
+    const [paymentStatus, setPaymentStatus] = useState("pending");
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -40,35 +44,109 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                     const result = await response.json();
                     if (result.success && result.data) {
                         setUserName(result.data.fullName || "");
+                        setUserEmail(result.data.email || "");
+                        setProfilePhoto(result.data.profilePhoto || "");
                         // Update localStorage
                         localStorage.setItem("userName", result.data.fullName || "");
+                        localStorage.setItem("userEmail", result.data.email || "");
+                        if (result.data.profilePhoto) {
+                            localStorage.setItem("userProfilePhoto", result.data.profilePhoto);
+                        }
+                    }
+                }
+
+                // Fetch active company to get company name
+                const companyResponse = await fetch("http://localhost:4000/api/companies/active", {
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (companyResponse.ok) {
+                    const companyResult = await companyResponse.json();
+                    if (companyResult.success && companyResult.data && companyResult.data.businessName) {
+                        setOrganizationName(companyResult.data.businessName);
+                        localStorage.setItem("userOrganization", companyResult.data.businessName);
+                    }
+                }
+
+                // Fetch application to get payment status
+                const appResponse = await fetch("http://localhost:4000/api/applications/my-application", {
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (appResponse.ok) {
+                    const appResult = await appResponse.json();
+                    if (appResult.success && appResult.data) {
+                        setPaymentStatus(appResult.data.paymentStatus || "pending");
+                        localStorage.setItem("paymentStatus", appResult.data.paymentStatus || "pending");
                     }
                 } else {
-                    // Fallback to localStorage
-                    const storedUserName = localStorage.getItem("userName");
-                    if (storedUserName) {
-                        setUserName(storedUserName);
+                    const storedStatus = localStorage.getItem("paymentStatus");
+                    if (storedStatus) {
+                        setPaymentStatus(storedStatus);
                     }
                 }
             } catch (error) {
                 console.error("Error fetching user data:", error);
                 // Fallback to localStorage
                 const storedUserName = localStorage.getItem("userName");
-                if (storedUserName) {
-                    setUserName(storedUserName);
-                }
+                const storedUserEmail = localStorage.getItem("userEmail");
+                const storedOrg = localStorage.getItem("userOrganization");
+                const storedStatus = localStorage.getItem("paymentStatus");
+                if (storedUserName) setUserName(storedUserName);
+                if (storedUserEmail) setUserEmail(storedUserEmail);
+                if (storedOrg) setOrganizationName(storedOrg);
+                if (storedStatus) setPaymentStatus(storedStatus);
             }
         };
 
         fetchUserData();
+
+        // Listen for profile updates
+        const handleProfilePhotoUpdate = () => {
+            const photo = localStorage.getItem('userProfilePhoto');
+            if (photo) setProfilePhoto(photo);
+        };
+
+        const handleUserDataUpdate = () => {
+            fetchUserData();
+        };
+
+        const handleCompanyUpdate = () => {
+            fetchUserData();
+        };
+
+        window.addEventListener('profilePhotoUpdated', handleProfilePhotoUpdate);
+        window.addEventListener('userDataUpdated', handleUserDataUpdate);
+        window.addEventListener('companyUpdated', handleCompanyUpdate);
+
+        return () => {
+            window.removeEventListener('profilePhotoUpdated', handleProfilePhotoUpdate);
+            window.removeEventListener('userDataUpdated', handleUserDataUpdate);
+            window.removeEventListener('companyUpdated', handleCompanyUpdate);
+        };
     }, []);
 
     const nav = [
-        { to: '/payment/member-dashboard', label: 'Dashboard', icon: <FaHome /> },
-        { to: '/notifications', label: 'Notifications', icon: <FaBell /> },
-        { to: '/member/profile', label: 'My Profile', icon: <FaUser /> },
-        { to: '/member/help', label: 'Help', icon: <FaQuestionCircle /> }
+        { to: '/member/dashboard', label: 'Dashboard', icon: <FaHome />, requirePayment: false },
+        { to: '/business/dashboard', label: 'Business Account', icon: <FaBriefcase />, requirePayment: true },
+        { to: '/explore', label: 'Explore', icon: <FaSearch />, requirePayment: true },
+        { to: '/notifications', label: 'Notifications', icon: <FaBell />, requirePayment: false },
+        { to: '/member/profile-view', label: 'My Profile', icon: <FaUser />, requirePayment: false },
+        { to: '/member/settings', label: 'Settings', icon: <FaCog />, requirePayment: false },
+        { to: '/member/certificate', label: 'Certificate', icon: <FaCertificate />, requirePayment: true },
+        { to: '/member/help', label: 'Help', icon: <FaQuestionCircle />, requirePayment: false },
+        { to: '/member/events', label: 'Upcoming Events', icon: <FaCalendarAlt />, requirePayment: true },
     ];
+
+    const filteredNav = paymentStatus === 'completed' 
+        ? nav 
+        : nav.filter(item => !item.requirePayment);
 
     const handleLogout = () => {
         // clear session and user info
@@ -92,19 +170,30 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                 </div>
 
                 <div className="flex items-center gap-3 mt-4">
-                    <Avatar className="w-12 h-12 ring-2 ring-blue-100">
-                        <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=96&h=96&fit=crop&crop=face" className="object-cover" />
+                    <Avatar 
+                        className="w-12 h-12 ring-2 ring-blue-100 cursor-pointer hover:ring-4 transition-all"
+                        onClick={() => {
+                            navigate('/member/settings');
+                            onClose();
+                        }}
+                    >
+                        <AvatarImage 
+                            src={profilePhoto || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=96&h=96&fit=crop&crop=face"} 
+                            className="object-cover" 
+                        />
                         <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold">
                             {userName ? userName.split(" ").map(n => n[0]).join("").toUpperCase() : "SD"}
                         </AvatarFallback>
                     </Avatar>
                     <div>
-                        <div className="font-semibold">{userName || "Member"}</div>                    </div>
+                        <div className="font-semibold">{userName || "Member"}</div>
+                        <div className="text-sm text-muted-foreground">{organizationName || "Member Account"}</div>
+                    </div>
                 </div>
             </div>
 
             <nav className="p-2 overflow-y-auto flex-1">
-                {nav.map((item) => {
+                {filteredNav.map((item) => {
                     const active = location.pathname === item.to;
                     return (
                         <Link
