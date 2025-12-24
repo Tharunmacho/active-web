@@ -26,7 +26,7 @@ export default function MobileMenu({ isOpen, onClose }: Props) {
   const nav = [
     { to: '/member/dashboard', label: 'Home', icon: <FaHome /> },
     { to: '/explore', label: 'Explore', icon: <FaSearch /> },
-    { to: '/notifications', label: 'Notifications', icon: <FaBell /> },
+    { to: '/member/notifications', label: 'Notifications', icon: <FaBell /> },
     { to: '/member/profile', label: 'My Profile', icon: <FaUser /> },
     { to: '/member/adf', label: 'ADF Form', icon: <FaClipboardList /> },
     { to: '/member/certificate', label: 'Certificate', icon: <FaCertificate /> },

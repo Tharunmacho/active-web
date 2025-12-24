@@ -20,9 +20,11 @@ const UnpaidDashboard = () => {
 
     // Add a state to track if profile is completed
     const [profileCompleted, setProfileCompleted] = useState(false);
+    const [hasBusinessAccount, setHasBusinessAccount] = useState(false);
 
     useEffect(() => {
         loadApplicationData();
+        checkBusinessAccount();
     }, []);
 
     // Check profile completion (dummy logic, replace with real check)
@@ -84,10 +86,34 @@ const UnpaidDashboard = () => {
         }
     };
 
+    const checkBusinessAccount = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        try {
+            const response = await fetch("http://localhost:4000/api/companies/active", {
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success && result.data) {
+                    setHasBusinessAccount(true);
+                    console.log('✅ Business account found:', result.data.businessName);
+                }
+            }
+        } catch (error) {
+            console.error("Error checking business account:", error);
+        }
+    };
+
     const allFormsCompleted = Object.values(formsCompleted).every(completed => completed);
-    const allApproved = applicationData?.approvals?.personal === 'approved' && 
-                       applicationData?.approvals?.business === 'approved' && 
-                       applicationData?.approvals?.declaration === 'approved';
+    const allApproved = applicationData?.approvals?.personal === 'approved' &&
+        applicationData?.approvals?.business === 'approved' &&
+        applicationData?.approvals?.declaration === 'approved';
 
     const handleCompleteFormsClick = () => {
         // Navigate to first incomplete form
@@ -165,9 +191,20 @@ const UnpaidDashboard = () => {
                                 <Card className="bg-purple-600 text-white shadow-xl" style={{ minHeight: '180px', fontSize: '1.25rem' }}>
                                     <CardContent className="p-10 flex items-center justify-between">
                                         <div>
-                                            <h2 className="text-3xl font-bold mb-3">Your Business Account</h2>
-                                            <p className="text-white/80 mb-6 text-lg">View and manage your business profile and settings</p>
-                                            <Button onClick={() => navigate('/business/create-profile')} className="bg-white text-purple-600 font-semibold text-lg px-8 py-3">Create Account</Button>
+                                            <h2 className="text-3xl font-bold mb-3">
+                                                {hasBusinessAccount ? 'Your Business Account' : 'Create Business Account'}
+                                            </h2>
+                                            <p className="text-white/80 mb-6 text-lg">
+                                                {hasBusinessAccount
+                                                    ? 'View and manage your business profile and settings'
+                                                    : 'Set up your business profile to unlock business features'}
+                                            </p>
+                                            <Button
+                                                onClick={() => navigate(hasBusinessAccount ? '/business/dashboard' : '/business/create-profile')}
+                                                className="bg-white text-purple-600 font-semibold text-lg px-8 py-3"
+                                            >
+                                                {hasBusinessAccount ? 'View Status' : 'Create Account'}
+                                            </Button>
                                         </div>
                                         <Briefcase className="h-24 w-24 opacity-30" />
                                     </CardContent>
@@ -193,7 +230,7 @@ const UnpaidDashboard = () => {
                                             Complete all forms and get admin approval to proceed with payment
                                         </p>
                                         <div className="w-full bg-white/20 rounded-full h-3">
-                                            <div 
+                                            <div
                                                 className="bg-white rounded-full h-3 transition-all duration-500"
                                                 style={{ width: `${(Object.values(formsCompleted).filter(Boolean).length / 4) * 100}%` }}
                                             />
@@ -206,25 +243,25 @@ const UnpaidDashboard = () => {
                                     <CardContent className="p-6">
                                         <h3 className="text-xl font-bold text-gray-800 mb-4">Application Forms</h3>
                                         <div className="space-y-3">
-                                            <FormStatusItem 
+                                            <FormStatusItem
                                                 icon={<User className="h-5 w-5" />}
                                                 title="Personal Information"
                                                 completed={formsCompleted.personal}
                                                 onClick={() => navigate("/member/personal-form")}
                                             />
-                                            <FormStatusItem 
+                                            <FormStatusItem
                                                 icon={<Briefcase className="h-5 w-5" />}
                                                 title="Business Information"
                                                 completed={formsCompleted.business}
                                                 onClick={() => navigate("/member/business-form")}
                                             />
-                                            <FormStatusItem 
+                                            <FormStatusItem
                                                 icon={<DollarSign className="h-5 w-5" />}
                                                 title="Financial Information"
                                                 completed={formsCompleted.financial}
                                                 onClick={() => navigate("/member/financial-form")}
                                             />
-                                            <FormStatusItem 
+                                            <FormStatusItem
                                                 icon={<FileText className="h-5 w-5" />}
                                                 title="Declaration"
                                                 completed={formsCompleted.declaration}
@@ -233,7 +270,7 @@ const UnpaidDashboard = () => {
                                         </div>
 
                                         {!allFormsCompleted && (
-                                            <Button 
+                                            <Button
                                                 onClick={handleCompleteFormsClick}
                                                 className="w-full mt-6 bg-blue-600 hover:bg-blue-700"
                                             >
@@ -250,15 +287,15 @@ const UnpaidDashboard = () => {
                                         <CardContent className="p-6">
                                             <h3 className="text-xl font-bold text-gray-800 mb-4">Approval Status</h3>
                                             <div className="space-y-3">
-                                                <ApprovalStatusItem 
+                                                <ApprovalStatusItem
                                                     title="Personal Form"
                                                     status={applicationData?.approvals?.personal || 'pending'}
                                                 />
-                                                <ApprovalStatusItem 
+                                                <ApprovalStatusItem
                                                     title="Business Form"
                                                     status={applicationData?.approvals?.business || 'pending'}
                                                 />
-                                                <ApprovalStatusItem 
+                                                <ApprovalStatusItem
                                                     title="Declaration Form"
                                                     status={applicationData?.approvals?.declaration || 'pending'}
                                                 />
@@ -273,7 +310,7 @@ const UnpaidDashboard = () => {
                                                     <p className="text-sm text-green-600 mb-3">
                                                         Congratulations! Your application has been approved. Proceed to payment to activate your membership.
                                                     </p>
-                                                    <Button 
+                                                    <Button
                                                         onClick={handlePaymentClick}
                                                         className="w-full bg-green-600 hover:bg-green-700"
                                                     >
@@ -293,7 +330,7 @@ const UnpaidDashboard = () => {
                                                 </div>
                                             )}
 
-                                            <Button 
+                                            <Button
                                                 onClick={() => navigate("/member/application-status")}
                                                 variant="outline"
                                                 className="w-full mt-4"
@@ -313,7 +350,7 @@ const UnpaidDashboard = () => {
 };
 
 const FormStatusItem = ({ icon, title, completed, onClick }: any) => (
-    <div 
+    <div
         onClick={onClick}
         className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
     >

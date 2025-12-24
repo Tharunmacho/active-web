@@ -34,12 +34,12 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
     // Update cart count from context
     useEffect(() => {
         setCartCount(getCartCount());
-        
+
         // Listen for cart updates
         const handleCartUpdate = () => {
             setCartCount(getCartCount());
         };
-        
+
         window.addEventListener('cartUpdated', handleCartUpdate);
         return () => window.removeEventListener('cartUpdated', handleCartUpdate);
     }, [getCartCount]);
@@ -51,7 +51,7 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
         const photo = localStorage.getItem('userProfilePhoto') || '';
         const org = localStorage.getItem('userOrganization') || '';
         const status = localStorage.getItem('paymentStatus') || 'pending';
-        
+
         setUserName(name);
         setUserEmail(email);
         setProfilePhoto(photo);
@@ -76,7 +76,7 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
             const lastFetch = localStorage.getItem('userDataLastFetch');
             const now = Date.now();
             const cacheTime = 2 * 60 * 1000; // 2 minutes
-            
+
             if (lastFetch && (now - parseInt(lastFetch)) < cacheTime) {
                 return; // Use cached data
             }
@@ -186,12 +186,12 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
             const email = localStorage.getItem('userEmail') || '';
             const photo = localStorage.getItem('userProfilePhoto') || '';
             const org = localStorage.getItem('userOrganization') || '';
-            
+
             console.log('👤 Updating name:', name);
             console.log('📧 Updating email:', email);
             console.log('📸 Updating photo:', photo ? 'exists' : 'empty');
             console.log('🏢 Updating organization:', org);
-            
+
             setUserName(name);
             setUserEmail(email);
             setProfilePhoto(photo);
@@ -221,16 +221,16 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
     }, []);
 
     const nav = [
-        { 
-            to: paymentStatus === 'completed' ? '/payment/member-dashboard' : '/member/dashboard', 
-            label: 'Dashboard', 
-            icon: <FaHome />, 
-            requirePayment: false 
+        {
+            to: paymentStatus === 'completed' ? '/payment/member-dashboard' : '/member/dashboard',
+            label: 'Dashboard',
+            icon: <FaHome />,
+            requirePayment: false
         },
         { to: '/business/dashboard', label: 'Business Account', icon: <FaBriefcase />, requirePayment: true },
         { to: '/explore', label: 'Explore', icon: <FaSearch />, requirePayment: true },
         { to: '/member/shopping-cart', label: 'Shopping Cart', icon: <FaShoppingCart />, requirePayment: true, badge: cartCount },
-        { to: '/notifications', label: 'Notifications', icon: <FaBell />, requirePayment: false },
+        { to: '/member/notifications', label: 'Notifications', icon: <FaBell />, requirePayment: false },
         { to: '/member/profile-view', label: 'My Profile', icon: <FaUser />, requirePayment: false, badge: profileCompletion < 100 ? `${profileCompletion}%` : null },
         { to: '/member/settings', label: 'Settings', icon: <FaCog />, requirePayment: false },
         { to: '/member/certificate', label: 'Certificate', icon: <FaCertificate />, requirePayment: true },
@@ -242,7 +242,7 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
     // Unpayed users: only Dashboard, Notifications, Help, Settings (4 items)
     // Payed users: all 10 items
     const filteredNav = paymentStatus === 'completed' ? nav : nav.filter(item => !item.requirePayment);
-    
+
     // Debug: Log nav items
     useEffect(() => {
         console.log('📝 Total nav items:', nav.length);
@@ -262,14 +262,14 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
         localStorage.removeItem("userFirstName");
         localStorage.removeItem("isLoggedIn");
         localStorage.removeItem("cart");
-        
+
         // Clear state
         setUserName("");
         setUserEmail("");
         setProfilePhoto("");
         setOrganizationName("");
         setPaymentStatus("pending");
-        
+
         navigate("/login");
         onClose();
     };
@@ -286,8 +286,8 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                 </div>
 
                 <div className="flex items-center gap-3 mt-4">
-                    <Avatar 
-                        key={profilePhoto || 'no-photo'} 
+                    <Avatar
+                        key={profilePhoto || 'no-photo'}
                         className="w-12 h-12 ring-2 ring-blue-100 cursor-pointer hover:ring-4 transition-all"
                         onClick={() => {
                             navigate('/member/settings');
@@ -295,7 +295,7 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                         }}
                     >
                         {profilePhoto ? (
-                            <img 
+                            <img
                                 src={profilePhoto}
                                 alt="Profile"
                                 className="w-full h-full object-cover rounded-full"
@@ -307,10 +307,10 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                             />
                         ) : (
                             <>
-                                <AvatarImage 
-                                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=96&h=96&fit=crop&crop=face" 
+                                <AvatarImage
+                                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=96&h=96&fit=crop&crop=face"
                                     alt="Profile"
-                                    className="object-cover w-full h-full" 
+                                    className="object-cover w-full h-full"
                                     style={{ display: 'block', opacity: 1 }}
                                 />
                                 <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold">
@@ -334,13 +334,12 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                         <Link
                             key={item.to}
                             to={isLocked ? '#' : item.to}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-lg mb-1 transition-all ${
-                                isLocked 
-                                    ? 'opacity-50 cursor-not-allowed text-gray-400' 
+                            className={`flex items-center gap-3 px-4 py-3 rounded-lg mb-1 transition-all ${isLocked
+                                    ? 'opacity-50 cursor-not-allowed text-gray-400'
                                     : active
                                         ? 'bg-blue-600 text-white shadow-md'
                                         : 'text-gray-700 hover:bg-gray-100'
-                            }`}
+                                }`}
                             onClick={(e) => {
                                 if (isLocked) {
                                     e.preventDefault();
@@ -354,7 +353,7 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                             </span>
                             <span className="font-medium flex-1">{item.label}</span>
                             {item.badge !== undefined && item.badge !== null && (
-                                <Badge 
+                                <Badge
                                     className={`${active ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'} h-5 min-w-5 flex items-center justify-center px-1.5 text-xs font-bold`}
                                 >
                                     {item.badge}

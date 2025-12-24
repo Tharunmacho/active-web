@@ -34,7 +34,7 @@ export const initiatePayment = async (paymentData: {
   totalAmount: number;
 }) => {
   try {
-    const response = await api.post('/api/payment/initiate', paymentData);
+    const response = await api.post('/payment/initiate', paymentData);
     return response.data;
   } catch (error: any) {
     console.error('Error initiating payment:', error);
@@ -54,7 +54,7 @@ export const verifyPayment = async (verificationData: {
   status: string;
 }) => {
   try {
-    const response = await api.post('/api/payment/verify', verificationData);
+    const response = await api.post('/payment/verify', verificationData);
     return response.data;
   } catch (error: any) {
     console.error('Error verifying payment:', error);
@@ -69,7 +69,7 @@ export const verifyPayment = async (verificationData: {
  */
 export const getPaymentHistory = async () => {
   try {
-    const response = await api.get('/api/payment/history');
+    const response = await api.get('/payment/history');
     return response.data;
   } catch (error: any) {
     console.error('Error fetching payment history:', error);
@@ -84,7 +84,7 @@ export const getPaymentHistory = async () => {
  */
 export const getPaymentDetails = async (paymentId: string) => {
   try {
-    const response = await api.get(`/api/payment/${paymentId}`);
+    const response = await api.get(`/payment/${paymentId}`);
     return response.data;
   } catch (error: any) {
     console.error('Error fetching payment details:', error);

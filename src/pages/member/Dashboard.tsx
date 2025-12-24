@@ -91,13 +91,13 @@ const MemberDashboard = () => {
             const fullName = result.data.fullName || "";
             const email = result.data.email || "";
             const photo = result.data.profilePhoto || "";
-            
+
             // Update state and localStorage
             setUserName(fullName);
             localStorage.setItem("userName", fullName);
             localStorage.setItem("userEmail", email);
             localStorage.setItem("userId", result.data.userId || "");
-            
+
             if (photo) {
               setProfilePhoto(photo);
               localStorage.setItem("userProfilePhoto", photo);
@@ -110,7 +110,7 @@ const MemberDashboard = () => {
             setUserName(storedUserName);
           }
         }
-        
+
         // Process company data
         if (companyRes.ok) {
           const companyResult = await companyRes.json();
@@ -190,6 +190,8 @@ const MemberDashboard = () => {
     const handleCompanyUpdate = () => {
       const org = localStorage.getItem('userOrganization') || 'TechCorp Solution';
       setOrganizationName(org);
+      // Also refresh business account status
+      checkBusinessAccount();
     };
 
     window.addEventListener('profilePhotoUpdated', handleProfilePhotoUpdate);
@@ -213,7 +215,7 @@ const MemberDashboard = () => {
       } catch (_) {
         apps = [];
       }
-      
+
       if (apps.length) {
         const sorted = [...apps].sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
         setLatestApplication(sorted[0]);
@@ -304,8 +306,8 @@ const MemberDashboard = () => {
                         Your membership application is currently under review. Track your approval progress.
                       </p>
                       <div className="mt-4">
-                        <Button 
-                          className="bg-white text-green-600 hover:bg-gray-100 font-semibold px-8 py-2" 
+                        <Button
+                          className="bg-white text-green-600 hover:bg-gray-100 font-semibold px-8 py-2"
                           onClick={() => navigate('/member/application-status')}
                         >
                           View Status
@@ -352,17 +354,25 @@ const MemberDashboard = () => {
               <CardContent className="p-5 md:p-8">
                 <div className="flex flex-row items-center gap-4 md:gap-6">
                   <div className="flex-1">
-                    <h3 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 md:mb-3">Your Business Account</h3>
+                    <h3 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 md:mb-3">
+                      {hasBusinessAccount ? 'Your Business Account' : 'Create Business Account'}
+                    </h3>
                     <div className="mb-2 md:mb-3">
-                      <span className="inline-block text-xs md:text-sm font-semibold bg-white bg-opacity-20 rounded-full px-3 md:px-4 py-1.5 md:py-2">Pending</span>
+                      <span className="inline-block text-xs md:text-sm font-semibold bg-white bg-opacity-20 rounded-full px-3 md:px-4 py-1.5 md:py-2">
+                        {hasBusinessAccount ? 'Active' : 'Not Created'}
+                      </span>
                     </div>
-                    <p className="text-sm opacity-90 mb-4">View and manage your business profile and settings</p>
+                    <p className="text-sm opacity-90 mb-4">
+                      {hasBusinessAccount
+                        ? 'View and manage your business profile and settings'
+                        : 'Set up your business profile to unlock business features'}
+                    </p>
                     <div className="mt-4">
-                      <Button 
-                        className="bg-white text-purple-600 hover:bg-gray-100 font-semibold px-8 py-2" 
+                      <Button
+                        className="bg-white text-purple-600 hover:bg-gray-100 font-semibold px-8 py-2"
                         onClick={() => navigate(hasBusinessAccount ? '/business/dashboard' : '/business/create-profile')}
                       >
-                        {hasBusinessAccount ? 'View Account' : 'Create Account'}
+                        {hasBusinessAccount ? 'View Status' : 'Create Account'}
                       </Button>
                     </div>
                   </div>

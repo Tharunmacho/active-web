@@ -361,7 +361,7 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
             icon: <FaHome />,
             requirePayment: false
         },
-        { to: '/business/dashboard', label: 'Business Account', icon: <FaBriefcase />, requirePayment: false, hideIfNoBusiness: true },
+        { to: '/business/dashboard', label: 'Business Account', icon: <FaBriefcase />, requirePayment: true },
         { to: '/explore', label: 'Explore', icon: <FaSearch />, requirePayment: true },
         { to: '/member/shopping-cart', label: 'Shopping Cart', icon: <FaShoppingCart />, requirePayment: true, badge: cartCount },
         { to: '/member/notifications', label: 'Notifications', icon: <FaBell />, requirePayment: false },
@@ -373,28 +373,18 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
     ], [paymentStatus, cartCount, profileCompletion, upcomingEventsCount, unreadHelpMessages]);
 
     // Filter nav items based on payment status and business account
-    // Unpayed users: only Dashboard, Notifications, Help, Settings (4 items)
+    // Unpayed users: only Dashboard, Notifications, Help, Settings, My Profile
     // Payed users: all 10 items
     const filteredNav = useMemo(() => {
-        let items = nav;
-
-        // Filter by payment status
-        if (paymentStatus !== 'completed') {
-            // Show only Dashboard, Notifications, My Profile, Settings, Help for unpaid users
-            const allowedLabels = ['Dashboard', 'Notifications', 'My Profile', 'Settings', 'Help', 'Business Account'];
-            items = items.filter(item => allowedLabels.includes(item.label));
+        if (paymentStatus === 'completed') {
+            // Paid users see ALL items
+            return nav;
+        } else {
+            // Unpaid users see limited items
+            const allowedLabels = ['Dashboard', 'Notifications', 'My Profile', 'Settings', 'Help'];
+            return nav.filter(item => allowedLabels.includes(item.label));
         }
-
-        // Filter Business Account based on hasBusiness flag
-        items = items.filter(item => {
-            if (item.hideIfNoBusiness && !hasBusiness) {
-                return false; // Hide Business Account if user doesn't have business
-            }
-            return true;
-        });
-
-        return items;
-    }, [nav, paymentStatus, hasBusiness]);
+    }, [nav, paymentStatus]);
 
     const handleLogout = () => {
         // Clear all user-related localStorage data

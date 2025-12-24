@@ -138,7 +138,7 @@ const AddEditCompany = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (!formData.businessName.trim()) {
       toast({
@@ -171,10 +171,10 @@ const AddEditCompany = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const url = isEditMode 
+      const url = isEditMode
         ? `http://localhost:4000/api/companies/${id}`
         : 'http://localhost:4000/api/companies';
-      
+
       const method = isEditMode ? 'PUT' : 'POST';
 
       console.log(`${isEditMode ? '📝' : '➕'} ${isEditMode ? 'Updating' : 'Creating'} company:`, formData);
@@ -196,6 +196,16 @@ const AddEditCompany = () => {
           title: 'Success',
           description: isEditMode ? 'Company updated successfully' : 'Company created successfully'
         });
+
+        // Dispatch event to update dashboard and sidebar
+        console.log('📢 Dispatching companyUpdated event');
+        window.dispatchEvent(new CustomEvent('companyUpdated'));
+
+        // Store company name in localStorage for dashboard
+        if (formData.businessName) {
+          localStorage.setItem('userOrganization', formData.businessName);
+        }
+
         navigate('/business/companies');
       } else {
         toast({
@@ -219,7 +229,7 @@ const AddEditCompany = () => {
   return (
     <div className="flex h-screen bg-gray-50">
       <BusinessSidebar />
-      
+
       <div className="flex-1 overflow-auto">
         <div className="container mx-auto px-4 py-6 max-w-4xl">
           {/* Header */}
@@ -232,7 +242,7 @@ const AddEditCompany = () => {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to My Companies
             </Button>
-            
+
             <div className="flex items-center gap-3">
               <div className="p-3 bg-primary/10 rounded-lg">
                 <Building2 className="h-6 w-6 text-primary" />
