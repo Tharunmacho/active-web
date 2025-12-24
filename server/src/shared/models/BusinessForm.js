@@ -21,6 +21,7 @@ const businessFormSchema = new mongoose.Schema({
   },
   businessTypes: [{
     type: String,
+    enum: ['Manufacturing', 'Services', 'Trade'],
     trim: true
   }],
   businessActivities: {
