@@ -1,9 +1,9 @@
 import Application from '../../../shared/models/Application.js';
 import WebUser from '../../../shared/models/WebUser.js';
-import { 
-  createPaymentRequest, 
-  verifyPaymentStatus, 
-  getPaymentDetails as getInstamojoPaymentDetails 
+import {
+  createPaymentRequest,
+  verifyPaymentStatus,
+  getPaymentDetails as getInstamojoPaymentDetails
 } from '../services/instamojoService.js';
 
 /**
@@ -61,11 +61,11 @@ export const initiatePayment = async (req, res) => {
 
     if (useTestMode) {
       console.log('🧪 Using TEST MODE for payment...');
-      
+
       // Create mock payment for testing
       const mockPaymentRequestId = `MOCK_${paymentId}`;
       const mockPaymentUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/payment/mock?payment_request_id=${mockPaymentRequestId}&amount=${totalAmount}`;
-      
+
       // Update application with mock payment initiation
       application.paymentStatus = 'pending';
       application.paymentDetails = {
@@ -116,11 +116,11 @@ export const initiatePayment = async (req, res) => {
     if (!instamojoResult.success) {
       console.error('❌ Instamojo payment request failed:', instamojoResult.error);
       console.log('🔄 Switching to TEST MODE for payment...');
-      
+
       // For testing purposes, create a mock payment if Instamojo is unreachable
       const mockPaymentRequestId = `MOCK_${paymentId}`;
       const mockPaymentUrl = `${process.env.FRONTEND_URL || 'http://localhost:8081'}/payment/mock?payment_request_id=${mockPaymentRequestId}&amount=${totalAmount}`;
-      
+
       // Update application with mock payment initiation
       application.paymentStatus = 'pending';
       application.paymentDetails = {
@@ -210,9 +210,9 @@ export const verifyPayment = async (req, res) => {
     }
 
     // Get user's application
-    const application = await Application.findOne({ 
+    const application = await Application.findOne({
       userId: req.user._id,
-      'paymentDetails.paymentId': paymentId 
+      'paymentDetails.paymentId': paymentId
     });
 
     if (!application) {
@@ -282,7 +282,7 @@ export const verifyPayment = async (req, res) => {
  */
 export const getPaymentHistory = async (req, res) => {
   try {
-    const applications = await Application.find({ 
+    const applications = await Application.find({
       userId: req.user._id,
       paymentStatus: { $in: ['completed', 'pending', 'failed'] }
     })
@@ -450,7 +450,7 @@ export const handlePaymentSuccess = async (req, res) => {
 export const getPaymentStatus = async (req, res) => {
   try {
     console.log('🔍 Checking payment status for user:', req.user._id, req.user.email);
-    
+
     // Find application for current user
     const application = await Application.findOne({ userId: req.user._id });
 
@@ -468,7 +468,7 @@ export const getPaymentStatus = async (req, res) => {
 
     // Check if payment is completed
     const isPaid = application.paymentStatus === 'completed';
-    
+
     console.log('💰 Payment Status:', {
       userEmail: req.user.email,
       applicationId: application.applicationId,
@@ -494,6 +494,89 @@ export const getPaymentStatus = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Error getting payment status',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Complete payment (manual/test completion)
+ * @route   POST /api/payment/complete
+ * @access  Private (Member)
+ */
+export const completePayment = async (req, res) => {
+  try {
+    console.log('💰 Completing payment request:', req.body);
+    const { paymentId, transactionId } = req.body;
+
+    // Validate required fields
+    if (!paymentId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing payment ID'
+      });
+    }
+
+    // Search by either paymentId OR instamojoPaymentRequestId
+    // This handles both internal IDs (PAY...) and Instamojo IDs (MOCK_PAY... or MOJO...)
+    const application = await Application.findOne({
+      userId: req.user._id,
+      $or: [
+        { 'paymentDetails.paymentId': paymentId },
+        { 'paymentDetails.instamojoPaymentRequestId': paymentId }
+      ]
+    });
+
+    if (!application) {
+      console.log('❌ Application not found for payment completion:', {
+        userId: req.user._id,
+        paymentId,
+        searchedFields: ['paymentDetails.paymentId', 'paymentDetails.instamojoPaymentRequestId']
+      });
+      return res.status(404).json({
+        success: false,
+        message: 'Application not found or invalid payment ID'
+      });
+    }
+
+    console.log('✅ Found application for payment completion:', {
+      applicationId: application.applicationId,
+      currentPaymentStatus: application.paymentStatus,
+      storedPaymentId: application.paymentDetails?.paymentId,
+      storedInstamojoId: application.paymentDetails?.instamojoPaymentRequestId
+    });
+
+    // Update payment status
+    application.paymentStatus = 'completed';
+    application.paymentAmount = application.paymentDetails.totalAmount || 0;
+    application.paymentDate = new Date();
+    // Keep existing details but update status and transaction ID
+    application.paymentDetails = {
+      ...application.paymentDetails,
+      transactionId: transactionId || `TXN${Date.now()}`,
+      completedAt: new Date(),
+      status: 'completed'
+    };
+
+    await application.save();
+
+    console.log('✅ Payment manually completed for application:', application.applicationId);
+
+    res.json({
+      success: true,
+      message: 'Payment completed successfully',
+      data: {
+        applicationId: application.applicationId,
+        paymentStatus: application.paymentStatus,
+        paymentAmount: application.paymentAmount,
+        paymentDate: application.paymentDate
+      }
+    });
+  } catch (error) {
+    console.error('Error completing payment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while completing payment',
       error: error.message
     });
   }

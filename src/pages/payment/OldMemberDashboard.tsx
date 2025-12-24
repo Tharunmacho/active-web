@@ -4,11 +4,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { 
-  User, 
-  Calendar, 
-  Headphones, 
-  Settings, 
+import {
+  User,
+  Calendar,
+  Headphones,
+  Settings,
   ShoppingCart,
   Menu,
   Bell,
@@ -36,15 +36,46 @@ export default function MemberDashboard() {
 
   const loadUserData = async () => {
     try {
-      const app = await getUserApplication();
-      const planType = app.paymentDetails?.planType || 
-                      (app.memberType === 'business' ? 'Business Membership' : 'Aspirant Plan');
-      
+      const token = localStorage.getItem('token');
+
+      // Fetch both application data and user profile data in parallel
+      const [app, profileRes] = await Promise.all([
+        getUserApplication(),
+        fetch('http://localhost:4000/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+      ]);
+
+      let profilePhoto = '';
+
+      // Get profile photo from API response
+      if (profileRes.ok) {
+        const profileData = await profileRes.json();
+        if (profileData.success && profileData.data?.profilePhoto) {
+          let photo = profileData.data.profilePhoto;
+
+          // If it's a base64 string without data URI prefix, add it
+          if (photo && !photo.startsWith('data:') && !photo.startsWith('http')) {
+            photo = `data:image/png;base64,${photo}`;
+          }
+
+          profilePhoto = photo;
+          localStorage.setItem('userProfilePhoto', profilePhoto);
+        }
+      }
+
+      const planType = app.paymentDetails?.planType ||
+        (app.memberType === 'business' ? 'Business Membership' : 'Aspirant Plan');
+
       setUserData({
         name: app.memberName || 'Member',
         email: app.memberEmail || 'member@activ.org',
         planType,
-        status: app.paymentStatus === 'completed' ? 'Active' : 'Pending'
+        status: app.paymentStatus === 'completed' ? 'Active' : 'Pending',
+        profilePhoto: profilePhoto
       });
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -52,7 +83,8 @@ export default function MemberDashboard() {
         name: 'Member',
         email: 'member@activ.org',
         planType: 'Intermediate Plan',
-        status: 'Active'
+        status: 'Active',
+        profilePhoto: ''
       });
     } finally {
       setLoading(false);
@@ -85,15 +117,12 @@ export default function MemberDashboard() {
               <h1 className="text-2xl font-bold text-gray-900">Member Dashboard</h1>
             </div>
             <div className="flex items-center gap-4">
-              <button className="p-2 rounded-lg hover:bg-gray-100 relative">
+              <button
+                className="p-2 rounded-lg hover:bg-gray-100 relative"
+                onClick={() => navigate('/member/notifications')}
+              >
                 <Bell className="w-6 h-6 text-gray-600" />
               </button>
-              <Avatar className="w-10 h-10 cursor-pointer" onClick={() => navigate('/member/settings')}>
-                <AvatarImage src="/placeholder.svg" />
-                <AvatarFallback className="bg-teal-600 text-white">
-                  {userData?.name ? userData.name.charAt(0).toUpperCase() : 'M'}
-                </AvatarFallback>
-              </Avatar>
             </div>
           </div>
         </header>
@@ -107,9 +136,17 @@ export default function MemberDashboard() {
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-4">
                     <Avatar className="w-16 h-16 border-4 border-white/30">
-                      <AvatarFallback className="bg-white text-teal-600 text-2xl font-bold">
-                        {userData?.name ? userData.name.charAt(0).toUpperCase() : 'M'}
-                      </AvatarFallback>
+                      {userData?.profilePhoto ? (
+                        <img
+                          src={userData.profilePhoto}
+                          alt="Profile"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <AvatarFallback className="bg-white text-teal-600 text-2xl font-bold">
+                          {userData?.name ? userData.name.charAt(0).toUpperCase() : 'M'}
+                        </AvatarFallback>
+                      )}
                     </Avatar>
                     <div>
                       <h2 className="text-3xl font-bold mb-1">Welcome back, {userData?.name || 'Member'}!</h2>
@@ -138,14 +175,14 @@ export default function MemberDashboard() {
                       Browse products, manage your store, submit B2B inquiries, and much more. Start shopping today!
                     </p>
                     <div className="flex gap-4">
-                      <Button 
+                      <Button
                         className="bg-white text-blue-600 hover:bg-blue-50 font-semibold"
                         onClick={() => navigate('/member/catalog')}
                       >
                         <ShoppingCart className="w-4 h-4 mr-2" />
                         Start Shopping
                       </Button>
-                      <Button 
+                      <Button
                         className="bg-blue-700 text-white hover:bg-blue-800 font-semibold"
                         onClick={() => navigate('/member/seller-dashboard')}
                       >

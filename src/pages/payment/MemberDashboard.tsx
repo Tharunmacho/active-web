@@ -32,7 +32,39 @@ export default function MemberDashboard() {
 
   const loadUserData = async () => {
     try {
-      const app = await getUserApplication();
+      const token = localStorage.getItem('token');
+
+      // Fetch both application data and user profile data in parallel
+      const [app, profileRes] = await Promise.all([
+        getUserApplication(),
+        fetch('http://localhost:4000/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+      ]);
+
+      let profilePhoto = '';
+
+      // Get profile photo from API response
+      if (profileRes.ok) {
+        const profileData = await profileRes.json();
+        if (profileData.success && profileData.data?.profilePhoto) {
+          let photo = profileData.data.profilePhoto;
+
+          // If it's a base64 string without data URI prefix, add it
+          if (photo && !photo.startsWith('data:') && !photo.startsWith('http')) {
+            // Assume it's a PNG base64 string
+            photo = `data:image/png;base64,${photo}`;
+          }
+
+          profilePhoto = photo;
+          // Store in localStorage for other components
+          localStorage.setItem('userProfilePhoto', profilePhoto);
+        }
+      }
+
       let planType = 'Aspirant Plan';
       if (app.paymentDetails?.planType) {
         planType = app.paymentDetails.planType;
@@ -41,6 +73,7 @@ export default function MemberDashboard() {
       } else if (app.memberType === 'aspirant') {
         planType = 'Aspirant Plan';
       }
+
       setUserData({
         name: app.memberName || 'Member',
         company: 'Your Company',
@@ -48,9 +81,11 @@ export default function MemberDashboard() {
         memberSince: new Date().getFullYear(),
         planType: planType,
         status: app.paymentStatus === 'completed' ? 'Active' : 'Pending',
-        membershipId: `ACTIV-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 999999)).padStart(6, '0')}`
+        membershipId: `ACTIV-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 999999)).padStart(6, '0')}`,
+        profilePhoto: profilePhoto
       });
     } catch (error) {
+      console.error('Error loading user data:', error);
       setUserData({
         name: 'Member',
         company: 'Your Company',
@@ -58,7 +93,8 @@ export default function MemberDashboard() {
         memberSince: new Date().getFullYear(),
         planType: 'Aspirant Plan',
         status: 'Active',
-        membershipId: 'ACTIV-2024-000000'
+        membershipId: 'ACTIV-2024-000000',
+        profilePhoto: ''
       });
     } finally {
       setLoading(false);
@@ -117,7 +153,7 @@ export default function MemberDashboard() {
             <Menu className="w-5 h-5 text-gray-700" />
           </Button>
           <h1 className="font-bold text-gray-900">Dashboard</h1>
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/member/notifications')}>
             <Bell className="w-5 h-5 text-gray-700" />
           </Button>
         </div>
@@ -127,12 +163,9 @@ export default function MemberDashboard() {
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold text-gray-900">Member Dashboard</h1>
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" onClick={() => navigate('/member/notifications')}>
                 <Bell className="w-5 h-5 text-gray-600" />
               </Button>
-              <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
-                <User className="w-5 h-5 text-white" />
-              </div>
             </div>
           </div>
         </div>
@@ -141,8 +174,18 @@ export default function MemberDashboard() {
           {/* Welcome Section */}
           <div className="rounded-2xl p-6 md:p-8 mb-6 bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg">
             <div className="flex flex-col md:flex-row md:items-center gap-5">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-white/20">
-                <User className="w-8 h-8 text-white" />
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-white/20 overflow-hidden">
+                {userData?.profilePhoto ? (
+                  <img
+                    src={userData.profilePhoto}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-white font-bold text-2xl">
+                    {userData?.name?.charAt(0)?.toUpperCase() || 'V'}
+                  </span>
+                )}
               </div>
               <div className="flex-1">
                 <h2 className="text-2xl md:text-3xl font-bold text-white mb-1">

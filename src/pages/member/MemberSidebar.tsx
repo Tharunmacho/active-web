@@ -20,7 +20,7 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
     const [userEmail, setUserEmail] = useState(() => localStorage.getItem("userEmail") || "");
     const [profilePhoto, setProfilePhoto] = useState(() => localStorage.getItem("userProfilePhoto") || "");
     // Priority: Business form organization > Active company organization
-    const [organizationName, setOrganizationName] = useState(() => 
+    const [organizationName, setOrganizationName] = useState(() =>
         localStorage.getItem("businessFormOrganization") || localStorage.getItem("userOrganization") || ""
     );
     const [paymentStatus, setPaymentStatus] = useState(() => localStorage.getItem("paymentStatus") || "pending");
@@ -46,19 +46,19 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
         const org = businessFormOrg || activeCompanyOrg;
         const status = localStorage.getItem('paymentStatus') || 'pending';
         const business = localStorage.getItem('hasBusiness') === 'true';
-        
+
         setUserName(name);
         setUserEmail(email);
         setProfilePhoto(photo);
         setOrganizationName(org);
         setPaymentStatus(status);
         setHasBusiness(business);
-        
+
         // Force fetch fresh payment status on every location change
         const fetchPaymentStatus = async () => {
             const token = localStorage.getItem('token');
             if (!token) return;
-            
+
             try {
                 const appRes = await fetch('http://localhost:4000/api/applications/my-application', {
                     headers: {
@@ -66,7 +66,7 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                         'Content-Type': 'application/json'
                     }
                 });
-                
+
                 if (appRes.ok) {
                     const appResult = await appRes.json();
                     if (appResult.success && appResult.data) {
@@ -82,19 +82,19 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                 console.error('Error fetching payment status:', error);
             }
         };
-        
+
         fetchPaymentStatus();
     }, [location.pathname]);
 
     // Update cart count from context
     useEffect(() => {
         setCartCount(getCartCount());
-        
+
         // Listen for cart updates
         const handleCartUpdate = () => {
             setCartCount(getCartCount());
         };
-        
+
         window.addEventListener('cartUpdated', handleCartUpdate);
         return () => window.removeEventListener('cartUpdated', handleCartUpdate);
     }, [getCartCount]);
@@ -111,7 +111,7 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
             const lastFetch = localStorage.getItem('userDataLastFetch');
             const now = Date.now();
             const cacheTime = 2 * 60 * 1000; // 2 minutes
-            
+
             if (lastFetch && (now - parseInt(lastFetch)) < cacheTime) {
                 console.log('✅ Using cached user data');
                 return; // Use cached data
@@ -156,11 +156,16 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                         const fullName = result.data.fullName || "";
                         setUserName(fullName);
                         setUserEmail(result.data.email || "");
-                        
+
                         // Priority: Use localStorage photo if exists (most recent), otherwise API photo
                         const localPhoto = localStorage.getItem("userProfilePhoto");
-                        const apiPhoto = result.data.profilePhoto || "";
-                        
+                        let apiPhoto = result.data.profilePhoto || "";
+
+                        // If API photo is base64 without data URI prefix, add it
+                        if (apiPhoto && !apiPhoto.startsWith('data:') && !apiPhoto.startsWith('http')) {
+                            apiPhoto = `data:image/png;base64,${apiPhoto}`;
+                        }
+
                         // Only update if we have a photo from either source
                         if (apiPhoto) {
                             setProfilePhoto(apiPhoto);
@@ -168,7 +173,7 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                         } else if (localPhoto) {
                             // Photo already set from initial state, don't overwrite
                         }
-                        
+
                         // Update localStorage
                         localStorage.setItem("userName", fullName);
                         localStorage.setItem("userEmail", result.data.email || "");
@@ -178,16 +183,16 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                 // Process business form data FIRST - this is the permanent organization name
                 let businessFormOrganization = "";
                 let hasBusinessAccount = false;
-                
+
                 if (businessFormRes.ok) {
                     const businessFormResult = await businessFormRes.json();
                     if (businessFormResult.success && businessFormResult.data) {
                         hasBusinessAccount = businessFormResult.data.doingBusiness === 'yes';
                         businessFormOrganization = businessFormResult.data.organization || "";
-                        
+
                         setHasBusiness(hasBusinessAccount);
                         localStorage.setItem("hasBusiness", hasBusinessAccount.toString());
-                        
+
                         // PRIORITY 1: Business form organization is permanent
                         if (businessFormOrganization) {
                             setOrganizationName(businessFormOrganization);
@@ -213,10 +218,10 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                     if (appResult.success && appResult.data) {
                         const status = appResult.data.paymentStatus || "pending";
                         const appName = appResult.data.memberName || "";
-                        
+
                         setPaymentStatus(status);
                         localStorage.setItem("paymentStatus", status);
-                        
+
                         // If auth didn't return name, use application name
                         if (!userName && appName) {
                             setUserName(appName);
@@ -270,12 +275,18 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                         console.log('🔄 Refetched user data from API:', fullName);
                         setUserName(fullName);
                         setUserEmail(result.data.email || "");
-                        
+
                         const localPhoto = localStorage.getItem("userProfilePhoto");
-                        const apiPhoto = result.data.profilePhoto || "";
+                        let apiPhoto = result.data.profilePhoto || "";
+
+                        // If API photo is base64 without data URI prefix, add it
+                        if (apiPhoto && !apiPhoto.startsWith('data:') && !apiPhoto.startsWith('http')) {
+                            apiPhoto = `data:image/png;base64,${apiPhoto}`;
+                        }
+
                         const photoToUse = localPhoto || apiPhoto;
                         setProfilePhoto(photoToUse);
-                        
+
                         // Update localStorage
                         localStorage.setItem("userName", fullName);
                         localStorage.setItem("userEmail", result.data.email || "");
@@ -318,7 +329,7 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
             const businessFormOrg = localStorage.getItem('businessFormOrganization') || '';
             const activeCompanyOrg = localStorage.getItem('userOrganization') || '';
             const business = localStorage.getItem('hasBusiness') === 'true';
-            
+
             // Priority 1: Business form organization (permanent)
             if (businessFormOrg) {
                 setOrganizationName(businessFormOrg);
@@ -326,7 +337,7 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                 // Priority 2: Active company (dynamic)
                 setOrganizationName(activeCompanyOrg);
             }
-            
+
             setHasBusiness(business);
         };
 
@@ -344,11 +355,11 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
     }, []);
 
     const nav = useMemo(() => [
-        { 
-            to: paymentStatus === 'completed' ? '/payment/member-dashboard' : '/member/dashboard', 
-            label: 'Dashboard', 
-            icon: <FaHome />, 
-            requirePayment: false 
+        {
+            to: paymentStatus === 'completed' ? '/payment/member-dashboard' : '/member/dashboard',
+            label: 'Dashboard',
+            icon: <FaHome />,
+            requirePayment: false
         },
         { to: '/business/dashboard', label: 'Business Account', icon: <FaBriefcase />, requirePayment: true },
         { to: '/explore', label: 'Explore', icon: <FaSearch />, requirePayment: true },
@@ -373,7 +384,7 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
             return nav.filter(item => allowedLabels.includes(item.label));
         }
     }, [nav, paymentStatus]);
-    
+
     const handleLogout = () => {
         // Clear all user-related localStorage data
         localStorage.removeItem("token");
@@ -387,7 +398,7 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
         localStorage.removeItem("userFirstName");
         localStorage.removeItem("isLoggedIn");
         localStorage.removeItem("cart");
-        
+
         // Clear state
         setUserName("");
         setUserEmail("");
@@ -395,7 +406,7 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
         setOrganizationName("");
         setPaymentStatus("pending");
         setHasBusiness(false);
-        
+
         navigate("/login");
         onClose();
     };
@@ -412,7 +423,7 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                 </div>
 
                 <div className="flex items-center gap-3 mt-4">
-                    <Avatar 
+                    <Avatar
                         key={profilePhoto || 'no-photo'}
                         className="w-12 h-12 ring-2 ring-blue-100 cursor-pointer hover:ring-4 transition-all"
                         onClick={() => {
@@ -421,7 +432,7 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                         }}
                     >
                         {profilePhoto ? (
-                            <img 
+                            <img
                                 src={profilePhoto}
                                 alt="Profile"
                                 className="w-full h-full object-cover rounded-full"
@@ -433,10 +444,10 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                             />
                         ) : (
                             <>
-                                <AvatarImage 
-                                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=96&h=96&fit=crop&crop=face" 
+                                <AvatarImage
+                                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=96&h=96&fit=crop&crop=face"
                                     alt="Profile"
-                                    className="object-cover w-full h-full" 
+                                    className="object-cover w-full h-full"
                                     style={{ display: 'block', opacity: 1 }}
                                 />
                                 <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold">
@@ -462,13 +473,12 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                         <Link
                             key={item.to}
                             to={isLocked ? '#' : item.to}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-lg mb-1 transition-all ${
-                                isLocked 
-                                    ? 'opacity-50 cursor-not-allowed text-gray-400' 
-                                    : active
-                                        ? 'bg-blue-600 text-white shadow-md'
-                                        : 'text-gray-700 hover:bg-gray-100'
-                            }`}
+                            className={`flex items-center gap-3 px-4 py-3 rounded-lg mb-1 transition-all ${isLocked
+                                ? 'opacity-50 cursor-not-allowed text-gray-400'
+                                : active
+                                    ? 'bg-blue-600 text-white shadow-md'
+                                    : 'text-gray-700 hover:bg-gray-100'
+                                }`}
                             onClick={(e) => {
                                 if (isLocked) {
                                     e.preventDefault();
@@ -482,7 +492,7 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
                             </span>
                             <span className="font-medium flex-1">{item.label}</span>
                             {item.badge !== undefined && item.badge !== null && (
-                                <Badge 
+                                <Badge
                                     className={`${active ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'} h-5 min-w-5 flex items-center justify-center px-1.5 text-xs font-bold`}
                                 >
                                     {item.badge}

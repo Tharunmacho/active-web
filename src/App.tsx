@@ -109,127 +109,127 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-          <Route path="/" element={<Navigate to="/login" />} />
-          <Route path="/login" element={<EnhancedLoginPage />} />
-          <Route path="/register" element={<MemberRegister />} />
+              <Route path="/" element={<Navigate to="/login" />} />
+              <Route path="/login" element={<EnhancedLoginPage />} />
+              <Route path="/register" element={<MemberRegister />} />
 
-          {/* Member Routes */}
-          <Route path="/member/dashboard" element={<MemberDashboard />} />
-          <Route path="/member/unpaid-dashboard" element={<UnpaidDashboard />} />
-          <Route path="/explore" element={<Explore />} />
-          <Route path="/notifications" element={<Notifications />} />
-          <Route path="/member/adf" element={<ADFForm />} />
-          <Route path="/member/certificate" element={<MemberCertificate />} />
-          <Route path="/member/profile-view" element={<ProfileView />} />
-          <Route path="/member/profile" element={<MemberProfile />} />
-          <Route path="/member/settings" element={<MemberSettings />} />
-          <Route path="/member/help" element={<MemberHelp />} />
-          <Route path="/member/events" element={<MemberEvents />} />
-          <Route path="/member/forms/personal" element={<PersonalForm />} />
-          <Route path="/member/forms/business" element={<BusinessForm />} />
-          <Route path="/member/forms/financial" element={<FinancialForm />} />
-          <Route path="/member/forms/declaration" element={<DeclarationForm />} />
-          <Route path="/business/create-profile" element={<BusinessProfile />} />
-          <Route path="/member/account" element={<Account />} />
-          <Route path="/member/payment-history" element={<PaymentHistory />} />
-          <Route path="/member/application-submitted" element={<ApplicationSubmitted />} />
-          <Route path="/member/application-status" element={<ApplicationStatus />} />
-          <Route path="/member/payment" element={<PaymentPage />} />
-          <Route path="/member/payment-success" element={<PaymentSuccess />} />
+              {/* Member Routes */}
+              <Route path="/member/dashboard" element={<MemberDashboard />} />
+              <Route path="/member/unpaid-dashboard" element={<UnpaidDashboard />} />
+              <Route path="/explore" element={<Explore />} />
+              <Route path="/member/notifications" element={<Notifications />} />
+              <Route path="/member/adf" element={<ADFForm />} />
+              <Route path="/member/certificate" element={<MemberCertificate />} />
+              <Route path="/member/profile-view" element={<ProfileView />} />
+              <Route path="/member/profile" element={<MemberProfile />} />
+              <Route path="/member/settings" element={<MemberSettings />} />
+              <Route path="/member/help" element={<MemberHelp />} />
+              <Route path="/member/events" element={<MemberEvents />} />
+              <Route path="/member/forms/personal" element={<PersonalForm />} />
+              <Route path="/member/forms/business" element={<BusinessForm />} />
+              <Route path="/member/forms/financial" element={<FinancialForm />} />
+              <Route path="/member/forms/declaration" element={<DeclarationForm />} />
+              <Route path="/business/create-profile" element={<BusinessProfile />} />
+              <Route path="/member/account" element={<Account />} />
+              <Route path="/member/payment-history" element={<PaymentHistory />} />
+              <Route path="/member/application-submitted" element={<ApplicationSubmitted />} />
+              <Route path="/member/application-status" element={<ApplicationStatus />} />
+              <Route path="/member/payment" element={<PaymentPage />} />
+              <Route path="/member/payment-success" element={<PaymentSuccess />} />
 
-          {/* Feature Pages Routes (New UI) */}
-          <Route path="/member/catalog" element={<Catalog />} />
-          <Route path="/member/cart" element={<Cart />} />
-          <Route path="/member/inquiry" element={<Inquiry />} />
-          <Route path="/member/showcase" element={<Showcase />} />
-          <Route path="/member/seller-dashboard" element={<SellerDashboard />} />
-          <Route path="/member/whatsapp-catalog" element={<WhatsAppCatalog />} />
-          <Route path="/member/inventory" element={<Inventory />} />
-          
-          {/* E-commerce Routes */}
-          <Route path="/member/product-catalog" element={<ProductCatalog />} />
-          <Route path="/member/product/:id" element={<ProductDetails />} />
-          <Route path="/member/shopping-cart" element={<ShoppingCart />} />
-          <Route path="/member/checkout" element={<Checkout />} />
-          <Route path="/member/order-success" element={<OrderSuccess />} />
-          <Route path="/member/b2b-inquiry" element={<B2BInquiry />} />
-          <Route path="/member/business-showcase" element={<BusinessShowcase />} />
-          <Route path="/member/inventory-tracking" element={<InventoryTracking />} />
+              {/* Feature Pages Routes (New UI) */}
+              <Route path="/member/catalog" element={<Catalog />} />
+              <Route path="/member/cart" element={<Cart />} />
+              <Route path="/member/inquiry" element={<Inquiry />} />
+              <Route path="/member/showcase" element={<Showcase />} />
+              <Route path="/member/seller-dashboard" element={<SellerDashboard />} />
+              <Route path="/member/whatsapp-catalog" element={<WhatsAppCatalog />} />
+              <Route path="/member/inventory" element={<Inventory />} />
 
-          {/* New Payment Routes */}
-          <Route path="/payment/membership-plan" element={<PaymentRegistration />} />
-          <Route path="/payment/confirmation" element={<PaymentConfirmation />} />
-          <Route path="/payment/mock" element={<MockPayment />} />
-          <Route path="/payment/member-dashboard" element={<PaymentMemberDashboard />} />
-          <Route path="/payment/membership-plans" element={<MembershipPlans />} />
+              {/* E-commerce Routes */}
+              <Route path="/member/product-catalog" element={<ProductCatalog />} />
+              <Route path="/member/product/:id" element={<ProductDetails />} />
+              <Route path="/member/shopping-cart" element={<ShoppingCart />} />
+              <Route path="/member/checkout" element={<Checkout />} />
+              <Route path="/member/order-success" element={<OrderSuccess />} />
+              <Route path="/member/b2b-inquiry" element={<B2BInquiry />} />
+              <Route path="/member/business-showcase" element={<BusinessShowcase />} />
+              <Route path="/member/inventory-tracking" element={<InventoryTracking />} />
 
-          {/* Business Routes */}
-          <Route path="/business/dashboard" element={<BusinessDashboard />} />
-          <Route path="/business/products" element={<Products />} />
-          <Route path="/business/add-product" element={<AddProduct />} />
-          <Route path="/business/edit-product/:id" element={<EditProduct />} />
-          <Route path="/business/discover" element={<Discover />} />
-          <Route path="/business/analytics" element={<Analytics />} />
-          <Route path="/business/settings" element={<BusinessSettings />} />
-          <Route path="/business/companies" element={<MyCompanies />} />
-          <Route path="/business/companies/add" element={<AddEditCompany />} />
-          <Route path="/business/companies/edit/:id" element={<AddEditCompany />} />
-          <Route path="/business/companies/:id" element={<CompanyDetails />} />
+              {/* New Payment Routes */}
+              <Route path="/payment/membership-plan" element={<PaymentRegistration />} />
+              <Route path="/payment/confirmation" element={<PaymentConfirmation />} />
+              <Route path="/payment/mock" element={<MockPayment />} />
+              <Route path="/payment/member-dashboard" element={<PaymentMemberDashboard />} />
+              <Route path="/payment/membership-plans" element={<MembershipPlans />} />
 
-          {/* Block Admin Routes */}
-          <Route path="/block-admin/dashboard" element={<BlockDashboard />} />
-          <Route path="/block-admin/approvals" element={<BlockApprovals />} />
-          <Route path="/block-admin/applications" element={<BlockApprovals />} />
-          <Route path="/block-admin/members" element={<BlockMembers />} />
-          <Route path="/block-admin/settings" element={<BlockSettings />} />
+              {/* Business Routes */}
+              <Route path="/business/dashboard" element={<BusinessDashboard />} />
+              <Route path="/business/products" element={<Products />} />
+              <Route path="/business/add-product" element={<AddProduct />} />
+              <Route path="/business/edit-product/:id" element={<EditProduct />} />
+              <Route path="/business/discover" element={<Discover />} />
+              <Route path="/business/analytics" element={<Analytics />} />
+              <Route path="/business/settings" element={<BusinessSettings />} />
+              <Route path="/business/companies" element={<MyCompanies />} />
+              <Route path="/business/companies/add" element={<AddEditCompany />} />
+              <Route path="/business/companies/edit/:id" element={<AddEditCompany />} />
+              <Route path="/business/companies/:id" element={<CompanyDetails />} />
 
-          {/* District Admin Routes */}
-          <Route path="/district-admin/dashboard" element={<DistrictDashboard />} />
-          <Route path="/district-admin/approvals" element={<DistrictApprovals />} />
-          <Route path="/district-admin/applications" element={<DistrictApprovals />} />
-          <Route path="/district-admin/members" element={<DistrictMembers />} />
-          <Route path="/district-admin/settings" element={<DistrictSettings />} />
+              {/* Block Admin Routes */}
+              <Route path="/block-admin/dashboard" element={<BlockDashboard />} />
+              <Route path="/block-admin/approvals" element={<BlockApprovals />} />
+              <Route path="/block-admin/applications" element={<BlockApprovals />} />
+              <Route path="/block-admin/members" element={<BlockMembers />} />
+              <Route path="/block-admin/settings" element={<BlockSettings />} />
 
-          {/* State Admin Routes */}
-          <Route path="/state-admin/dashboard" element={<StateDashboard />} />
-          <Route path="/state-admin/approvals" element={<StateApprovals />} />
-          <Route path="/state-admin/applications" element={<StateApprovals />} />
-          <Route path="/state-admin/members" element={<StateMembers />} />
-          <Route path="/state-admin/settings" element={<StateSettings />} />
+              {/* District Admin Routes */}
+              <Route path="/district-admin/dashboard" element={<DistrictDashboard />} />
+              <Route path="/district-admin/approvals" element={<DistrictApprovals />} />
+              <Route path="/district-admin/applications" element={<DistrictApprovals />} />
+              <Route path="/district-admin/members" element={<DistrictMembers />} />
+              <Route path="/district-admin/settings" element={<DistrictSettings />} />
 
-          {/* Super Admin Routes */}
-          <Route path="/super-admin/dashboard" element={<SuperDashboard />} />
-          <Route path="/super-admin/approvals" element={<SuperApprovals />} />
-          <Route path="/super-admin/applications" element={<SuperApprovals />} />
-          <Route path="/super-admin/members" element={<SuperMembers />} />
-          <Route path="/super-admin/settings" element={<SuperSettings />} />
+              {/* State Admin Routes */}
+              <Route path="/state-admin/dashboard" element={<StateDashboard />} />
+              <Route path="/state-admin/approvals" element={<StateApprovals />} />
+              <Route path="/state-admin/applications" element={<StateApprovals />} />
+              <Route path="/state-admin/members" element={<StateMembers />} />
+              <Route path="/state-admin/settings" element={<StateSettings />} />
 
-          {/* Legacy Admin Routes - Redirect to Block Admin */}
-          <Route path="/admin/dashboard" element={<BlockDashboard />} />
-          <Route path="/admin/block/dashboard" element={<BlockDashboard />} />
-          <Route path="/admin/applications" element={<BlockApprovals />} />
-          <Route path="/admin/approvals" element={<BlockApprovals />} />
-          <Route path="/admin/members" element={<BlockMembers />} />
-          <Route path="/admin/settings" element={<BlockSettings />} />
+              {/* Super Admin Routes */}
+              <Route path="/super-admin/dashboard" element={<SuperDashboard />} />
+              <Route path="/super-admin/approvals" element={<SuperApprovals />} />
+              <Route path="/super-admin/applications" element={<SuperApprovals />} />
+              <Route path="/super-admin/members" element={<SuperMembers />} />
+              <Route path="/super-admin/settings" element={<SuperSettings />} />
 
-          {/* E-commerce Routes - Using member feature implementations */}
-          <Route path="/ecommerce/catalog" element={<Catalog />} />
-          <Route path="/ecommerce/product/:id" element={<ProductDetails />} />
-          <Route path="/ecommerce/cart" element={<ShoppingCart />} />
-          <Route path="/ecommerce/checkout" element={<Checkout />} />
-          <Route path="/ecommerce/order-success" element={<OrderSuccess />} />
-          <Route path="/ecommerce/b2b-inquiry" element={<B2BInquiry />} />
-          <Route path="/ecommerce/showcase" element={<BusinessShowcase />} />
-          <Route path="/ecommerce/seller-dashboard" element={<SellerDashboard />} />
-          <Route path="/ecommerce/whatsapp-catalog" element={<WhatsAppCatalog />} />
-          <Route path="/ecommerce/inventory" element={<InventoryTracking />} />
+              {/* Legacy Admin Routes - Redirect to Block Admin */}
+              <Route path="/admin/dashboard" element={<BlockDashboard />} />
+              <Route path="/admin/block/dashboard" element={<BlockDashboard />} />
+              <Route path="/admin/applications" element={<BlockApprovals />} />
+              <Route path="/admin/approvals" element={<BlockApprovals />} />
+              <Route path="/admin/members" element={<BlockMembers />} />
+              <Route path="/admin/settings" element={<BlockSettings />} />
+
+              {/* E-commerce Routes - Using member feature implementations */}
+              <Route path="/ecommerce/catalog" element={<Catalog />} />
+              <Route path="/ecommerce/product/:id" element={<ProductDetails />} />
+              <Route path="/ecommerce/cart" element={<ShoppingCart />} />
+              <Route path="/ecommerce/checkout" element={<Checkout />} />
+              <Route path="/ecommerce/order-success" element={<OrderSuccess />} />
+              <Route path="/ecommerce/b2b-inquiry" element={<B2BInquiry />} />
+              <Route path="/ecommerce/showcase" element={<BusinessShowcase />} />
+              <Route path="/ecommerce/seller-dashboard" element={<SellerDashboard />} />
+              <Route path="/ecommerce/whatsapp-catalog" element={<WhatsAppCatalog />} />
+              <Route path="/ecommerce/inventory" element={<InventoryTracking />} />
 
 
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
       </ProfileProvider>
     </CartProvider>
   </QueryClientProvider>

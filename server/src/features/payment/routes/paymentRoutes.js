@@ -6,7 +6,8 @@ import {
   getPaymentDetails,
   handleWebhook,
   handlePaymentSuccess,
-  getPaymentStatus
+  getPaymentStatus,
+  completePayment
 } from '../controllers/paymentController.js';
 import { protect } from '../../../shared/middleware/auth.js';
 
@@ -26,6 +27,9 @@ router.get('/status', getPaymentStatus);
 
 // Initiate payment for approved application
 router.post('/initiate', initiatePayment);
+
+// Complete payment (manual/test)
+router.post('/complete', completePayment);
 
 // Verify payment after completion
 router.post('/verify', verifyPayment);
