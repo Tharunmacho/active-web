@@ -34,7 +34,7 @@ export const initiatePayment = async (paymentData: {
   totalAmount: number;
 }) => {
   try {
-    const response = await api.post('/payment/initiate', paymentData);
+    const response = await api.post('/api/payment/initiate', paymentData);
     return response.data;
   } catch (error: any) {
     console.error('Error initiating payment:', error);

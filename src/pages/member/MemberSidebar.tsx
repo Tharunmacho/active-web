@@ -361,10 +361,10 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
             icon: <FaHome />,
             requirePayment: false
         },
-        { to: '/business/dashboard', label: 'Business Account', icon: <FaBriefcase />, requirePayment: true },
+        { to: '/business/dashboard', label: 'Business Account', icon: <FaBriefcase />, requirePayment: false, hideIfNoBusiness: true },
         { to: '/explore', label: 'Explore', icon: <FaSearch />, requirePayment: true },
         { to: '/member/shopping-cart', label: 'Shopping Cart', icon: <FaShoppingCart />, requirePayment: true, badge: cartCount },
-        { to: '/notifications', label: 'Notifications', icon: <FaBell />, requirePayment: false },
+        { to: '/member/notifications', label: 'Notifications', icon: <FaBell />, requirePayment: false },
         { to: '/member/profile-view', label: 'My Profile', icon: <FaUser />, requirePayment: false, badge: profileCompletion < 100 ? `${profileCompletion}%` : null },
         { to: '/member/settings', label: 'Settings', icon: <FaCog />, requirePayment: false },
         { to: '/member/certificate', label: 'Certificate', icon: <FaCertificate />, requirePayment: true },
@@ -372,18 +372,29 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
         { to: '/member/events', label: 'Upcoming Events', icon: <FaCalendarAlt />, requirePayment: true, badge: upcomingEventsCount || null },
     ], [paymentStatus, cartCount, profileCompletion, upcomingEventsCount, unreadHelpMessages]);
 
-    // Filter nav items based on payment status
+    // Filter nav items based on payment status and business account
     // Unpayed users: only Dashboard, Notifications, Help, Settings (4 items)
     // Payed users: all 10 items
     const filteredNav = useMemo(() => {
-        if (paymentStatus === 'completed') {
-            return nav; // Show all 10 items for paid users
-        } else {
+        let items = nav;
+
+        // Filter by payment status
+        if (paymentStatus !== 'completed') {
             // Show only Dashboard, Notifications, My Profile, Settings, Help for unpaid users
-            const allowedLabels = ['Dashboard', 'Notifications', 'My Profile', 'Settings', 'Help'];
-            return nav.filter(item => allowedLabels.includes(item.label));
+            const allowedLabels = ['Dashboard', 'Notifications', 'My Profile', 'Settings', 'Help', 'Business Account'];
+            items = items.filter(item => allowedLabels.includes(item.label));
         }
-    }, [nav, paymentStatus]);
+
+        // Filter Business Account based on hasBusiness flag
+        items = items.filter(item => {
+            if (item.hideIfNoBusiness && !hasBusiness) {
+                return false; // Hide Business Account if user doesn't have business
+            }
+            return true;
+        });
+
+        return items;
+    }, [nav, paymentStatus, hasBusiness]);
 
     const handleLogout = () => {
         // Clear all user-related localStorage data
