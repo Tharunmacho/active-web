@@ -93,7 +93,7 @@ const Settings = () => {
             const reader = new FileReader();
             reader.onloadend = async () => {
                 const base64String = reader.result as string;
-                
+
                 const token = localStorage.getItem('token');
                 const response = await fetch(`http://localhost:4000/api/companies/${activeCompany._id}`, {
                     method: 'PUT',
@@ -163,9 +163,9 @@ const Settings = () => {
     };
 
     const handleLogout = () => {
-        localStorage.clear();
-        navigate("/");
-        toast.success("Logged out successfully");
+        // Navigate to business dashboard instead of logging out
+        navigate("/business/dashboard");
+        toast.success("Returned to dashboard");
     };
 
     const settingsSections = [
@@ -258,7 +258,7 @@ const Settings = () => {
                                                 <h2 className="text-lg md:text-xl font-bold text-blue-600">Business Logo</h2>
                                                 <p className="text-sm text-gray-500 mt-1">Upload your business logo</p>
                                             </div>
-                                            
+
                                             <div className="flex items-center gap-6">
                                                 <div className="relative">
                                                     <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-200 bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
