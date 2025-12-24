@@ -115,6 +115,7 @@ const App = () => (
 
           {/* Member Routes */}
           <Route path="/member/dashboard" element={<MemberDashboard />} />
+          <Route path="/member/unpaid-dashboard" element={<UnpaidDashboard />} />
           <Route path="/explore" element={<Explore />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/member/adf" element={<ADFForm />} />

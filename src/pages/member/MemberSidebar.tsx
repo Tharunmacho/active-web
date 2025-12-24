@@ -366,10 +366,11 @@ export default function MemberSidebar({ isOpen, onClose }: Props) {
     // Payed users: all 10 items
     const filteredNav = useMemo(() => {
         if (paymentStatus === 'completed') {
-            return nav; // Show all 10 items for payed users
+            return nav; // Show all 10 items for paid users
         } else {
-            // Show only Dashboard, Notifications, Help, Settings for unpayed users
-            return nav.filter(item => !item.requirePayment);
+            // Show only Dashboard, Notifications, My Profile, Settings, Help for unpaid users
+            const allowedLabels = ['Dashboard', 'Notifications', 'My Profile', 'Settings', 'Help'];
+            return nav.filter(item => allowedLabels.includes(item.label));
         }
     }, [nav, paymentStatus]);
     

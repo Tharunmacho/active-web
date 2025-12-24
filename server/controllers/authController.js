@@ -18,16 +18,16 @@ export const register = async (req, res, next) => {
     console.log('📥 Registration request body:', req.body);
     const { fullName, email, phoneNumber, password, confirmPassword, state, district, block, city } = req.body;
 
-    // Validation
-    if (!fullName || !email || !phoneNumber || !password) {
-      console.log('❌ Missing fields:', { fullName, email, phoneNumber, password: password ? '***' : undefined });
+    // Validation - Only email and password are mandatory
+    if (!email || !password) {
+      console.log('❌ Missing required fields:', { email, password: password ? '***' : undefined });
       return res.status(400).json({
         success: false,
-        message: 'Please provide all required fields'
+        message: 'Please provide email and password'
       });
     }
 
-    if (password !== confirmPassword) {
+    if (confirmPassword && password !== confirmPassword) {
       return res.status(400).json({
         success: false,
         message: 'Passwords do not match'
@@ -56,24 +56,24 @@ export const register = async (req, res, next) => {
       password
     });
 
-    // Create user profile in "web users" collection - ALL other user details
+    // Create user profile in "web users" collection - ALL other user details (optional)
     await WebUserProfile.create({
       userId: user._id,
       email,
-      fullName,
-      phoneNumber,
-      state,
-      district,
-      block,
-      city,
+      fullName: fullName || '',
+      phoneNumber: phoneNumber || '',
+      state: state || '',
+      district: district || '',
+      block: block || '',
+      city: city || '',
       role: 'member'
     });
 
-    // Also create personal form entry with registration data
+    // Also create personal form entry with registration data (all optional except userId and email)
     await PersonalForm.create({
       userId: user._id,
-      name: fullName,
-      phoneNumber: phoneNumber,
+      name: fullName || '',
+      phoneNumber: phoneNumber || '',
       email: email,
       state: state || '',
       district: district || '',

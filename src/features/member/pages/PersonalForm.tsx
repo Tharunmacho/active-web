@@ -313,8 +313,8 @@ const PersonalInformationForm = () => {
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="General">General</SelectItem>
-                          <SelectItem value="OBC">OBC</SelectItem>
+                          <SelectItem value="Christian St">Christian St</SelectItem>
+                          <SelectItem value="Christian Sc">Christian Sc</SelectItem>
                           <SelectItem value="SC">SC</SelectItem>
                           <SelectItem value="ST">ST</SelectItem>
                           <SelectItem value="Others">Others</SelectItem>

@@ -20,7 +20,7 @@ const MemberDashboard = () => {
   const { profileCompletion, formsCompleted, totalFormsRequired, memberType, isFullyCompleted } = useProfile();
 
   useEffect(() => {
-    // Check payment status first - redirect paid users to paid dashboard
+    // Check payment status first - redirect users appropriately
     const checkPaymentStatus = async () => {
       const token = localStorage.getItem("token");
       if (!token) return false;
@@ -35,14 +35,23 @@ const MemberDashboard = () => {
 
         if (response.ok) {
           const result = await response.json();
-          if (result.success && result.data && result.data.paymentStatus === 'completed') {
-            // User has paid, redirect to paid dashboard
-            navigate("/payment/member-dashboard", { replace: true });
-            return true;
+          if (result.success && result.data) {
+            if (result.data.paymentStatus === 'completed') {
+              // User has paid, redirect to paid dashboard
+              navigate("/payment/member-dashboard", { replace: true });
+              return true;
+            }
           }
+        } else {
+          // No application found - new user, redirect to unpaid dashboard
+          navigate("/member/unpaid-dashboard", { replace: true });
+          return true;
         }
       } catch (error) {
         console.error("Error checking payment status:", error);
+        // If error, redirect to unpaid dashboard for safety
+        navigate("/member/unpaid-dashboard", { replace: true });
+        return true;
       }
       return false;
     };

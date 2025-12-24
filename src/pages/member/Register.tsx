@@ -30,23 +30,23 @@ const MemberRegister = () => {
   const LOCATION_API_BASE_URL = "http://localhost:4000/api";
 
   type Step1Form = {
-    firstName: string;
-    mobile: string;
+    firstName?: string;
+    mobile?: string;
     email: string;
     password: string;
-    confirmPassword: string;
+    confirmPassword?: string;
   };
 
   type Step2Form = {
-    stateName: string;
-    districtName: string;
-    block: string;
-    city: string;
+    stateName?: string;
+    districtName?: string;
+    block?: string;
+    city?: string;
   };
 
-  const { register: registerStep1, handleSubmit: handleSubmitStep1, formState: { errors: errorsStep1 } } = useForm<Step1Form>({ mode: 'onBlur' });
+  const { register: registerStep1, handleSubmit: handleSubmitStep1, formState: { errors: errorsStep1 } } = useForm<Step1Form>({ mode: 'onSubmit' });
   const { register: registerStep2, handleSubmit: handleSubmitStep2, control: controlStep2, watch: watchStep2, setValue: setValueStep2, formState: { errors: errorsStep2 } } = useForm<Step2Form>({
-    mode: 'onBlur',
+    mode: 'onSubmit',
     defaultValues: { stateName: '', districtName: '', block: '', city: '' },
   });
 
@@ -108,7 +108,8 @@ const MemberRegister = () => {
   }, [selectedState, selectedDistrict, setValueStep2]);
 
   const handleStep1Submit = (data: Step1Form) => {
-    if (data.password !== data.confirmPassword) {
+    console.log('Step 1 form data:', data);
+    if (data.confirmPassword && data.password !== data.confirmPassword) {
       toast.error('Passwords do not match');
       return;
     }
@@ -118,39 +119,58 @@ const MemberRegister = () => {
 
   const handleStep2Submit = async (data: Step2Form) => {
     try {
-      if (partialData.password !== partialData.confirmPassword) {
+      if (partialData.confirmPassword && partialData.password !== partialData.confirmPassword) {
         toast.error('Passwords do not match');
         return;
       }
 
+      // Validate required fields
+      if (!partialData.email || !partialData.password) {
+        toast.error('Email and password are required');
+        return;
+      }
+
       const registrationData = {
-        fullName: partialData.firstName,
+        fullName: partialData.firstName || '',
         email: partialData.email,
-        phoneNumber: partialData.mobile,
+        phoneNumber: partialData.mobile || '',
         password: partialData.password,
-        confirmPassword: partialData.confirmPassword,
-        state: data.stateName,
-        district: data.districtName,
-        block: data.block,
-        city: data.city
+        confirmPassword: partialData.confirmPassword || partialData.password,
+        state: data.stateName || '',
+        district: data.districtName || '',
+        block: data.block || '',
+        city: data.city || ''
       };
+
+      console.log('Sending registration data:', {
+        ...registrationData,
+        password: '***',
+        confirmPassword: '***'
+      });
 
       toast.loading('Registering your account...');
       const response = await registerUser(registrationData);
       toast.dismiss();
 
+      console.log('Registration response:', response);
+
       if (response.success && response.data) {
         toast.success('Registration successful! Welcome to ACTIVian Portal');
 
+        // Store authentication token
+        if (response.data.token) {
+          localStorage.setItem('token', response.data.token);
+        }
+
         const completeUserData = {
-          firstName: partialData.firstName,
+          firstName: partialData.firstName || '',
           email: partialData.email,
-          phone: partialData.mobile,
-          mobile: partialData.mobile,
-          state: data.stateName,
-          district: data.districtName,
-          block: data.block,
-          city: data.city,
+          phone: partialData.mobile || '',
+          mobile: partialData.mobile || '',
+          state: data.stateName || '',
+          district: data.districtName || '',
+          block: data.block || '',
+          city: data.city || '',
           memberId: response.data.user.id,
         };
 
@@ -158,12 +178,23 @@ const MemberRegister = () => {
         localStorage.setItem('registrationData', JSON.stringify(completeUserData));
         localStorage.setItem('memberId', response.data.user.id);
 
-        navigate('/member/dashboard');
+        console.log('Registration successful, navigating to dashboard...');
+        
+        // Navigate to unpaid dashboard
+        setTimeout(() => {
+          navigate('/member/unpaid-dashboard', { replace: true });
+        }, 500);
       } else {
-        toast.error(response.message || 'Registration failed. Please try again.');
+        // Show specific error messages
+        if (response.message?.includes('already registered')) {
+          toast.error('This email is already registered. Please login or use a different email.');
+        } else {
+          toast.error(response.message || 'Registration failed. Please try again.');
+        }
       }
     } catch (error: any) {
       toast.dismiss();
+      console.error('Registration exception:', error);
       toast.error(error.message || 'Something went wrong. Please try again.');
     }
   };
@@ -203,23 +234,26 @@ const MemberRegister = () => {
 
               {/* Registration Steps Indicator */}
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                <h3 className="text-white font-bold mb-4">Registration Steps</h3>
+                <h3 className="text-white font-bold mb-4">Quick Registration</h3>
                 <div className="space-y-3">
                   <div className={`flex items-center gap-3 ${step === 1 ? 'text-white' : 'text-blue-200'}`}>
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${step === 1 ? 'bg-white text-blue-600' : 'bg-white/20'
                       }`}>
                       1
                     </div>
-                    <span className="font-semibold">Personal Information</span>
+                    <span className="font-semibold">Email & Password (Required)</span>
                   </div>
                   <div className={`flex items-center gap-3 ${step === 2 ? 'text-white' : 'text-blue-200'}`}>
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${step === 2 ? 'bg-white text-blue-600' : 'bg-white/20'
                       }`}>
                       2
                     </div>
-                    <span className="font-semibold">Location Details</span>
+                    <span className="font-semibold">Profile Details (Optional)</span>
                   </div>
                 </div>
+                <p className="text-blue-100 text-xs mt-4 italic">
+                  💡 You can skip Step 2 and complete your profile later from the dashboard
+                </p>
               </div>
             </div>
           </div>
@@ -267,35 +301,30 @@ const MemberRegister = () => {
           <Card className="shadow-xl border-0">
             <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-200">
               <CardTitle className="text-xl">
-                {step === 1 ? 'Personal Information' : 'Location Details'}
+                {step === 1 ? 'Account Credentials (Required)' : 'Profile Details'}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               {step === 1 ? (
                 <form onSubmit={handleSubmitStep1(handleStep1Submit)} className="space-y-4">
                   <div>
-                    <Label htmlFor="firstName">Full Name*</Label>
+                    <Label htmlFor="firstName">Full Name</Label>
                     <Input
                       id="firstName"
                       placeholder="Enter your full name"
                       className="h-11"
-                      {...registerStep1('firstName', { required: 'Name is required' })}
+                      {...registerStep1('firstName')}
                     />
-                    {errorsStep1.firstName && <p className="text-xs text-red-600 mt-1">{errorsStep1.firstName.message}</p>}
                   </div>
 
                   <div>
-                    <Label htmlFor="mobile">Phone Number*</Label>
+                    <Label htmlFor="mobile">Phone Number</Label>
                     <Input
                       id="mobile"
                       placeholder="+91 XXXXXXXXXX"
                       className="h-11"
-                      {...registerStep1('mobile', {
-                        required: 'Phone number required',
-                        pattern: { value: /^\+?\d{10,15}$/, message: 'Enter a valid phone number' }
-                      })}
+                      {...registerStep1('mobile')}
                     />
-                    {errorsStep1.mobile && <p className="text-xs text-red-600 mt-1">{errorsStep1.mobile.message}</p>}
                   </div>
 
                   <div>
@@ -329,15 +358,14 @@ const MemberRegister = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="confirmPassword">Confirm Password*</Label>
+                    <Label htmlFor="confirmPassword">Confirm Password</Label>
                     <Input
                       id="confirmPassword"
                       type="password"
                       placeholder="Confirm Password"
                       className="h-11"
-                      {...registerStep1('confirmPassword', { required: 'Please confirm password' })}
+                      {...registerStep1('confirmPassword')}
                     />
-                    {errorsStep1.confirmPassword && <p className="text-xs text-red-600 mt-1">{errorsStep1.confirmPassword.message}</p>}
                   </div>
 
                   <Button type="submit" className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold">
@@ -354,11 +382,10 @@ const MemberRegister = () => {
               ) : (
                 <form onSubmit={handleSubmitStep2(handleStep2Submit)} className="space-y-4">
                   <div>
-                    <Label htmlFor="state">State*</Label>
+                    <Label htmlFor="state">State</Label>
                     <Controller
                       control={controlStep2}
                       name="stateName"
-                      rules={{ required: 'State is required' }}
                       render={({ field }) => (
                         <Select value={field.value || ''} onValueChange={(v: string) => field.onChange(v)}>
                           <SelectTrigger className="h-11">
@@ -372,15 +399,13 @@ const MemberRegister = () => {
                         </Select>
                       )}
                     />
-                    {errorsStep2.stateName && <p className="text-xs text-red-600 mt-1">{errorsStep2.stateName.message}</p>}
                   </div>
 
                   <div>
-                    <Label htmlFor="district">District*</Label>
+                    <Label htmlFor="district">District</Label>
                     <Controller
                       control={controlStep2}
                       name="districtName"
-                      rules={{ required: 'District is required' }}
                       render={({ field }) => (
                         <Select
                           value={field.value || ''}
@@ -398,15 +423,13 @@ const MemberRegister = () => {
                         </Select>
                       )}
                     />
-                    {errorsStep2.districtName && <p className="text-xs text-red-600 mt-1">{errorsStep2.districtName.message}</p>}
                   </div>
 
                   <div>
-                    <Label htmlFor="block">Block*</Label>
+                    <Label htmlFor="block">Block</Label>
                     <Controller
                       control={controlStep2}
                       name="block"
-                      rules={{ required: 'Block is required' }}
                       render={({ field }) => (
                         <Select
                           value={field.value || ''}
@@ -426,32 +449,40 @@ const MemberRegister = () => {
                         </Select>
                       )}
                     />
-                    {errorsStep2.block && <p className="text-xs text-red-600 mt-1">{errorsStep2.block.message}</p>}
                   </div>
 
                   <div>
-                    <Label htmlFor="city">City*</Label>
+                    <Label htmlFor="city">City</Label>
                     <Input
                       id="city"
                       placeholder="Enter city name"
                       className="h-11"
-                      {...registerStep2('city', { required: 'City is required' })}
+                      {...registerStep2('city')}
                     />
-                    {errorsStep2.city && <p className="text-xs text-red-600 mt-1">{errorsStep2.city.message}</p>}
                   </div>
 
-                  <div className="flex gap-3">
+                  <div className="space-y-3">
+                    <div className="flex gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1 h-11"
+                        onClick={() => setStep(1)}
+                      >
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back
+                      </Button>
+                      <Button type="submit" className="flex-1 h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold">
+                        Complete Registration
+                      </Button>
+                    </div>
                     <Button
                       type="button"
-                      variant="outline"
-                      className="flex-1 h-11"
-                      onClick={() => setStep(1)}
+                      variant="ghost"
+                      className="w-full h-11 text-gray-600 hover:text-gray-900"
+                      onClick={() => handleStep2Submit({ stateName: '', districtName: '', block: '', city: '' })}
                     >
-                      <ArrowLeft className="mr-2 h-4 w-4" />
-                      Back
-                    </Button>
-                    <Button type="submit" className="flex-1 h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold">
-                      Complete Registration
+                      Skip & Go to Dashboard
                     </Button>
                   </div>
 

@@ -17,13 +17,13 @@ const webUserProfileSchema = new mongoose.Schema({
   },
   fullName: {
     type: String,
-    required: [true, 'Please provide full name'],
-    trim: true
+    trim: true,
+    default: ''
   },
   phoneNumber: {
     type: String,
-    required: [true, 'Please provide phone number'],
-    trim: true
+    trim: true,
+    default: ''
   },
   state: {
     type: String,

@@ -65,6 +65,12 @@ export interface AuthResponse {
 // Register new user
 export const register = async (userData: RegisterData): Promise<AuthResponse> => {
   try {
+    console.log('Registering user with data:', {
+      ...userData,
+      password: '***',
+      confirmPassword: '***'
+    });
+    
     const response = await api.post<AuthResponse>('/auth/register', userData);
     
     if (response.data.success && response.data.data) {
@@ -82,6 +88,7 @@ export const register = async (userData: RegisterData): Promise<AuthResponse> =>
     
     return response.data;
   } catch (error: any) {
+    console.error('Registration error:', error.response?.data || error.message);
     return {
       success: false,
       message: error.response?.data?.message || 'Registration failed. Please try again.'

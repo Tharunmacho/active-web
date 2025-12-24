@@ -24,6 +24,7 @@ const MemberLogin = () => {
     if (n === 'blockadmin@activ.com') return 'block_admin';
     if (n === 'districtadmin@activ.com') return 'district_admin';
     if (n === 'stateadmin@activ.com') return 'state_admin';
+    if (n === 'stateadmin@activ.com') return 'state_admin';
     if (n === 'superadmin@activ.com') return 'super_admin';
     return 'member';
   };
