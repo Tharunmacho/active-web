@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useCart } from '@/contexts/CartContext';
+import { toast } from 'sonner';
 import {
   Star,
   ShoppingCart,
@@ -93,8 +95,23 @@ const reviews = [
 export default function ProductDetails() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { addItem } = useCart();
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+
+  const handleAddToCart = () => {
+    addItem({
+      id: productData.id,
+      name: productData.name,
+      price: productData.price,
+      originalPrice: productData.originalPrice,
+      quantity: quantity,
+      image: productData.images[0],
+      inStock: productData.inStock,
+      seller: productData.brand,
+    });
+    toast.success(`${productData.name} added to cart!`);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -240,7 +257,7 @@ export default function ProductDetails() {
                   size="lg"
                   variant="outline"
                   className="w-full"
-                  onClick={() => navigate('/ecommerce/cart')}
+                  onClick={handleAddToCart}
                 >
                   <ShoppingCart className="h-5 w-5 mr-2" />
                   Add to Cart
@@ -248,7 +265,10 @@ export default function ProductDetails() {
                 <Button
                   size="lg"
                   className="w-full"
-                  onClick={() => navigate('/ecommerce/checkout')}
+                  onClick={() => {
+                    handleAddToCart();
+                    navigate('/ecommerce/checkout');
+                  }}
                 >
                   Buy Now
                 </Button>

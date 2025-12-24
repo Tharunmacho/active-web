@@ -1,5 +1,5 @@
-import Product from '../models/Product.js';
-import Company from '../models/Company.js';
+import Product from '../src/shared/models/Product.js';
+import Company from '../src/shared/models/Company.js';
 
 // @desc    Get all products for active company
 // @route   GET /api/products

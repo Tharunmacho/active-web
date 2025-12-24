@@ -1,9 +1,9 @@
-import DeclarationForm from '../models/DeclarationForm.js';
-import Application from '../models/Application.js';
-import PersonalForm from '../models/PersonalForm.js';
-import BusinessForm from '../models/BusinessForm.js';
-import FinancialForm from '../models/FinancialForm.js';
-import WebUserProfile from '../models/WebUserProfile.js';
+import DeclarationForm from '../src/shared/models/DeclarationForm.js';
+import Application from '../src/shared/models/Application.js';
+import PersonalForm from '../src/shared/models/PersonalForm.js';
+import BusinessForm from '../src/shared/models/BusinessForm.js';
+import FinancialForm from '../src/shared/models/FinancialForm.js';
+import WebUserProfile from '../src/shared/models/WebUserProfile.js';
 
 export const getDeclarationForm = async (req, res) => {
   try {

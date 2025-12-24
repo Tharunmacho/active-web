@@ -34,14 +34,24 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
       
-      // First, try to get stored admin data
+      // Use stored admin data immediately
       const storedAdmin = getStoredAdminData();
       if (storedAdmin) {
         setAdminInfo(storedAdmin);
       }
 
-      // Fetch real admin info from backend
-      const adminResponse = await getAdminInfo();
+      const token = localStorage.getItem('adminToken');
+      
+      // Fetch all data in parallel for faster loading
+      const [adminResponse, statsResponse, applicationsResponse] = await Promise.all([
+        getAdminInfo(),
+        getDashboardStats(),
+        fetch('http://localhost:4000/api/applications/all', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }).then(res => res.json())
+      ]);
+
+      // Update admin info
       if (adminResponse.success) {
         const admin = adminResponse.data;
         const enrichedAdmin = {
@@ -53,8 +63,7 @@ const AdminDashboard = () => {
         localStorage.setItem('adminData', JSON.stringify(enrichedAdmin));
       }
 
-      // Fetch dashboard statistics
-      const statsResponse = await getDashboardStats();
+      // Update stats
       if (statsResponse.success) {
         setStats({
           totalMembers: statsResponse.data.total || 0,
@@ -64,26 +73,17 @@ const AdminDashboard = () => {
         });
       }
 
-      // Fetch recent applications (district admin sees only block-approved applications)
-      console.log('🔄 District admin fetching applications from backend...');
-      const token = localStorage.getItem('adminToken');
-      const applicationsResponse = await fetch('http://localhost:4000/api/applications/all', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      }).then(res => res.json());
-      console.log('📦 District applications response:', applicationsResponse);
+      // Update applications
       if (applicationsResponse.success && applicationsResponse.data) {
-        // Filter to show only block-approved applications
         const filteredApps = applicationsResponse.data.filter((app: any) => 
           app.status === 'pending_district_approval' || 
           app.status === 'pending_state_approval' ||
           app.status === 'approved' ||
           app.approvals?.district?.status === 'rejected'
         );
-        console.log(`✅ Setting ${filteredApps.length} block-approved applications to state`);
         setRecentApplications(filteredApps.slice(0, 3));
         setApplications(filteredApps);
       } else {
-        console.log('⚠️ No applications found for district admin');
         setRecentApplications([]);
       }
 
@@ -160,8 +160,8 @@ const AdminDashboard = () => {
             </svg>
           </button>
           <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
-          <Avatar className="w-10 h-10 ring-2 ring-blue-100">
-            <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop&crop=face" className="object-cover" />
+          <Avatar className="w-10 h-10 ring-2 ring-blue-100 cursor-pointer hover:ring-4 transition-all" onClick={() => navigate('/district-admin/settings')}>
+            {adminInfo?.avatarUrl && <AvatarImage src={adminInfo.avatarUrl} className="object-cover" />}
             <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold">
               {avatarInitials}
             </AvatarFallback>

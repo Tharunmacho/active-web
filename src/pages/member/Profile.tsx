@@ -434,6 +434,10 @@ export default function Profile() {
       saveCurrentStepData(data);
       toast.success(hasExistingProfile ? "Profile updated successfully!" : "Profile saved successfully!");
 
+      // Dispatch event to refresh profile completion
+      window.dispatchEvent(new CustomEvent('formSubmitted'));
+      window.dispatchEvent(new CustomEvent('profileUpdated'));
+
       return true;
     } catch (error) {
       console.error("Error saving profile:", error);
@@ -524,6 +528,10 @@ export default function Profile() {
         toast.success("Application submitted successfully!");
         saveCurrentStepData(data);
 
+        // Dispatch events to refresh profile completion immediately
+        window.dispatchEvent(new CustomEvent('formSubmitted'));
+        window.dispatchEvent(new CustomEvent('profileUpdated'));
+
         // Generate application ID and redirect to application submitted screen
         const applicationId = `APP-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
         localStorage.setItem('applicationId', applicationId);
@@ -577,6 +585,10 @@ export default function Profile() {
 
             console.log("✅ Business form saved successfully!");
             toast.success("Business information saved!");
+            
+            // Dispatch event to refresh profile completion
+            window.dispatchEvent(new CustomEvent('formSubmitted'));
+            window.dispatchEvent(new CustomEvent('profileUpdated'));
           }
         } catch (error) {
           console.error("Error saving business form:", error);
@@ -625,6 +637,9 @@ export default function Profile() {
           }
 
           toast.success("Financial information saved!");
+          // Dispatch event to refresh profile completion
+          window.dispatchEvent(new CustomEvent('formSubmitted'));
+          window.dispatchEvent(new CustomEvent('profileUpdated'));
         }
       } catch (error) {
         console.error("Error saving financial form:", error);
@@ -672,6 +687,10 @@ export default function Profile() {
     }
 
     toast.success("Application submitted successfully!");
+
+    // Dispatch events to refresh profile completion immediately
+    window.dispatchEvent(new CustomEvent('formSubmitted'));
+    window.dispatchEvent(new CustomEvent('profileUpdated'));
 
     // Generate application ID and store it, then redirect to application submitted screen
     const applicationId = `APP-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;

@@ -1,5 +1,6 @@
-import { BlockAdmin, DistrictAdmin, StateAdmin, SuperAdmin } from '../models/ExistingAdmins.js';
+import { BlockAdmin, DistrictAdmin, StateAdmin, SuperAdmin } from '../src/shared/models/ExistingAdmins.js';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 
 // @desc    Admin login
 // @route   POST /api/admin/login
@@ -168,7 +169,7 @@ const getAdminInfo = async (req, res) => {
 // @access  Private (Admin only)
 const getDashboardStats = async (req, res) => {
   try {
-    const Application = (await import('../models/Application.js')).default;
+    const Application = (await import('../src/shared/models/Application.js')).default;
     const admin = req.user;
 
     console.log('📊 Getting dashboard stats for admin:', {
@@ -296,7 +297,7 @@ const getMembers = async (req, res) => {
     
     // Import WebUserProfile and Application
     const { default: WebUserProfile } = await import('../models/WebUserProfile.js');
-    const { default: Application } = await import('../models/Application.js');
+    const { default: Application } = await import('../src/shared/models/Application.js');
     
     // Build query based on admin jurisdiction with case-insensitive regex
     let query = {};
@@ -427,9 +428,162 @@ const getMembers = async (req, res) => {
   }
 };
 
+// @desc    Update admin profile (name, email, avatar)
+// @route   PUT /api/admin/profile
+// @access  Private (Admin only)
+const updateAdminProfile = async (req, res) => {
+  try {
+    const { fullName, email, avatarUrl } = req.body;
+    const admin = req.user;
+
+    console.log('👤 Admin profile update attempt:', { 
+      email: admin.email, 
+      role: admin.role,
+      updates: { fullName, email, avatarUrl }
+    });
+
+    // Check if email is being changed and if it's already taken
+    if (email && email !== admin.email) {
+      const emailExists = await checkEmailExists(email, admin.role);
+      if (emailExists) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email is already in use by another admin'
+        });
+      }
+      admin.email = email.toLowerCase();
+    }
+
+    // Update other fields
+    if (fullName) admin.fullName = fullName;
+    if (avatarUrl) admin.avatarUrl = avatarUrl;
+
+    await admin.save();
+
+    console.log('✅ Admin profile updated successfully:', admin.email);
+
+    // Return updated admin data
+    const updatedData = {
+      id: admin._id.toString(),
+      adminId: admin.adminId,
+      fullName: admin.fullName,
+      email: admin.email,
+      role: admin.role,
+      avatarUrl: admin.avatarUrl,
+      state: admin.meta?.state,
+      district: admin.meta?.district,
+      block: admin.meta?.block,
+      active: admin.active,
+      lastLoginAt: admin.lastLoginAt
+    };
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: updatedData
+    });
+
+  } catch (error) {
+    console.error('Update admin profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while updating profile',
+      error: error.message
+    });
+  }
+};
+
+// Helper function to check if email exists across all admin collections
+const checkEmailExists = async (email, excludeRole) => {
+  const lowerEmail = email.toLowerCase();
+  
+  try {
+    let exists = false;
+
+    // Check BlockAdmin
+    const blockAdmin = await BlockAdmin.findOne({ email: lowerEmail });
+    if (blockAdmin) exists = true;
+
+    // Check DistrictAdmin
+    if (!exists) {
+      const districtAdmin = await DistrictAdmin.findOne({ email: lowerEmail });
+      if (districtAdmin) exists = true;
+    }
+
+    // Check StateAdmin
+    if (!exists) {
+      const stateAdmin = await StateAdmin.findOne({ email: lowerEmail });
+      if (stateAdmin) exists = true;
+    }
+
+    // Check SuperAdmin
+    if (!exists) {
+      const superAdmin = await SuperAdmin.findOne({ email: lowerEmail });
+      if (superAdmin) exists = true;
+    }
+
+    return exists;
+  } catch (error) {
+    console.error('Error checking email exists:', error);
+    return false;
+  }
+};
+
+// @desc    Update admin password
+// @route   PUT /api/admin/change-password
+// @access  Private (Admin only)
+const changeAdminPassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const admin = req.user;
+
+    console.log('🔐 Admin password change attempt:', { email: admin.email, role: admin.role });
+
+    // Validate input
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide current password and new password'
+      });
+    }
+
+    // Verify current password
+    const isPasswordValid = await admin.comparePassword(currentPassword);
+    
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+
+    // Update password
+    const salt = await bcrypt.genSalt(10);
+    admin.passwordHash = await bcrypt.hash(newPassword, salt);
+    await admin.save();
+
+    console.log('✅ Admin password updated successfully:', admin.email);
+
+    res.status(200).json({
+      success: true,
+      message: 'Password updated successfully'
+    });
+
+  } catch (error) {
+    console.error('Change admin password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while changing password',
+      error: error.message
+    });
+  }
+};
+
 export {
   adminLogin,
   getAdminInfo,
   getDashboardStats,
-  getMembers
+  getMembers,
+  updateAdminProfile,
+  changeAdminPassword
 };

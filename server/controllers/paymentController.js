@@ -1,5 +1,5 @@
-import Application from '../models/Application.js';
-import WebUser from '../models/WebUser.js';
+import Application from '../src/shared/models/Application.js';
+import WebUser from '../src/shared/models/WebUser.js';
 import { 
   createPaymentRequest, 
   verifyPaymentStatus, 
@@ -193,13 +193,79 @@ export const initiatePayment = async (req, res) => {
 };
 
 /**
- * @desc    Verify and complete payment
- * @route   POST /api/payment/verify
+ * @desc    Complete payment (simplified for testing)
+ * @route   POST /api/payment/complete
  * @access  Private (Member)
+ */
+export const completePayment = async (req, res) => {
+  try {
+    console.log('💳 COMPLETE PAYMENT HANDLER STARTED');
+    const { paymentId, paymentMethod, transactionId, status, applicationId } = req.body;
+    console.log('💳 Payment data:', { paymentId, transactionId, status, userId: req.user._id });
+    
+    // Find application by userId
+    const application = await Application.findOne({ userId: req.user._id });
+    
+    if (!application) {
+      console.log('❌ Application not found for user:', req.user._id);
+      return res.status(404).json({ success: false, message: 'Application not found' });
+    }
+
+    console.log('✅ Found application:', application.applicationId);
+
+    // Update payment status
+    application.paymentStatus = 'completed';
+    application.paymentAmount = application.paymentDetails?.totalAmount || 2000;
+    application.paymentDate = new Date();
+    application.paymentDetails = {
+      ...application.paymentDetails,
+      paymentId,
+      paymentMethod,
+      transactionId,
+      completedAt: new Date(),
+      status: 'completed'
+    };
+
+    await application.save();
+    console.log('✅ Payment completed successfully for:', application.applicationId);
+
+    return res.json({
+      success: true,
+      message: 'Payment completed successfully',
+      data: {
+        applicationId: application.applicationId,
+        paymentStatus: application.paymentStatus,
+        paymentAmount: application.paymentAmount,
+        paymentDate: application.paymentDate
+      }
+    });
+  } catch (error) {
+    console.error('❌ Payment completion error:', error);
+    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+/**
+ * @desc    Verify and complete payment
+ * @route   POST /api/payment/verify (authenticated) or /api/payment/verify-mock (unauthenticated for testing)
+ * @access  Private (Member) or Public (for mock payments)
  */
 export const verifyPayment = async (req, res) => {
   try {
-    const { paymentId, paymentMethod, transactionId, status } = req.body;
+    const { paymentId, paymentMethod, transactionId, status, applicationId } = req.body;
+
+    // Check if this is an authenticated request or a mock payment
+    const userId = req.user?._id;
+    const isMockPayment = !userId;
+
+    console.log('🔍 Verifying payment:', { 
+      paymentId, 
+      transactionId, 
+      status, 
+      userId, 
+      applicationId,
+      isMockPayment 
+    });
 
     // Validate required fields
     if (!paymentId || !paymentMethod || !transactionId) {
@@ -209,27 +275,44 @@ export const verifyPayment = async (req, res) => {
       });
     }
 
-    // Get user's application
-    const application = await Application.findOne({ 
-      userId: req.user._id,
-      'paymentDetails.paymentId': paymentId 
-    });
+    // Find application based on whether this is authenticated or mock
+    let application;
+    
+    if (isMockPayment) {
+      // For mock payments, require applicationId
+      if (!applicationId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Application ID required for mock payment verification'
+        });
+      }
+      application = await Application.findOne({ applicationId });
+      console.log('🧪 Mock payment - looking up by applicationId:', applicationId);
+    } else {
+      // For authenticated requests, use userId
+      application = await Application.findOne({ userId });
+      console.log('🔐 Authenticated payment - looking up by userId:', userId);
+    }
 
     if (!application) {
+      console.log('❌ No application found');
       return res.status(404).json({
         success: false,
-        message: 'Application or payment not found'
+        message: 'Application not found'
       });
     }
+
+    console.log('✅ Application found:', application.applicationId);
 
     // In a real application, you would verify with payment gateway here
     // For now, we'll accept the payment if status is 'completed'
     if (status === 'completed') {
       application.paymentStatus = 'completed';
-      application.paymentAmount = application.paymentDetails.totalAmount;
+      application.paymentAmount = application.paymentDetails?.totalAmount || 2000;
       application.paymentDate = new Date();
       application.paymentDetails = {
         ...application.paymentDetails,
+        paymentId,
         paymentMethod,
         transactionId,
         completedAt: new Date(),
@@ -237,6 +320,8 @@ export const verifyPayment = async (req, res) => {
       };
 
       await application.save();
+
+      console.log('✅ Payment status updated to completed for:', application.applicationId);
 
       res.json({
         success: true,

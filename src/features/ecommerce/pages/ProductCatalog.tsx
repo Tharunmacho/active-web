@@ -4,6 +4,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { useCart } from '@/contexts/CartContext';
+import { toast } from 'sonner';
 import {
   Search,
   Filter,
@@ -137,12 +139,27 @@ const categories = [
 
 export default function ProductCatalog() {
   const navigate = useNavigate();
+  const { addItem } = useCart();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedCategory, setSelectedCategory] = useState('All Products');
   const [searchQuery, setSearchQuery] = useState('');
   const [priceRange, setPriceRange] = useState('all');
   const [sortBy, setSortBy] = useState('popularity');
   const [showB2BPrices, setShowB2BPrices] = useState(false);
+
+  const handleAddToCart = (product: typeof dummyProducts[0]) => {
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: showB2BPrices ? product.b2bPrice : product.price,
+      originalPrice: product.originalPrice,
+      quantity: 1,
+      image: product.image,
+      inStock: product.inStock,
+      seller: 'Official Store',
+    });
+    toast.success(`${product.name} added to cart!`);
+  };
 
   const filteredProducts = dummyProducts.filter(product => {
     if (selectedCategory !== 'All Products' && product.category !== selectedCategory) return false;
@@ -212,7 +229,7 @@ export default function ProductCatalog() {
 
         <Button 
           className="w-full"
-          onClick={() => navigate('/ecommerce/cart')}
+          onClick={() => handleAddToCart(product)}
         >
           <ShoppingCart className="h-4 w-4 mr-2" />
           Add to Cart

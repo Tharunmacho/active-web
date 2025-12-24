@@ -1,4 +1,4 @@
-import BusinessProfile from '../models/BusinessProfile.js';
+import BusinessProfile from '../src/shared/models/BusinessProfile.js';
 
 // @desc    Get user's business profile
 // @route   GET /api/business-profile

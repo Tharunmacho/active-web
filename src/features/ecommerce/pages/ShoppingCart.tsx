@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
-  ShoppingCart,
+  ShoppingCart as ShoppingCartIcon,
   Trash2,
   Plus,
   Minus,
@@ -13,60 +13,17 @@ import {
   Shield,
   Truck,
   ArrowRight,
+  ArrowLeft,
   Gift,
   CreditCard
 } from 'lucide-react';
-
-const cartItems = [
-  {
-    id: 1,
-    name: 'Premium Wireless Headphones',
-    price: 5999,
-    originalPrice: 8999,
-    quantity: 1,
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200',
-    inStock: true,
-    seller: 'TechGear Official Store',
-  },
-  {
-    id: 2,
-    name: 'Smart Watch Series 7',
-    price: 12999,
-    originalPrice: 15999,
-    quantity: 2,
-    image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200',
-    inStock: true,
-    seller: 'Smart Devices Co.',
-  },
-  {
-    id: 3,
-    name: 'Mechanical Gaming Keyboard',
-    price: 3499,
-    originalPrice: 4999,
-    quantity: 1,
-    image: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=200',
-    inStock: true,
-    seller: 'Gaming World',
-  },
-];
+import { useCart } from '@/contexts/CartContext';
 
 export default function ShoppingCart() {
   const navigate = useNavigate();
-  const [items, setItems] = useState(cartItems);
+  const { items, updateQuantity, removeItem } = useCart();
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
-
-  const updateQuantity = (id: number, change: number) => {
-    setItems(items.map(item => 
-      item.id === id 
-        ? { ...item, quantity: Math.max(1, Math.min(10, item.quantity + change)) }
-        : item
-    ));
-  };
-
-  const removeItem = (id: number) => {
-    setItems(items.filter(item => item.id !== id));
-  };
 
   const applyCoupon = () => {
     if (couponCode.toUpperCase() === 'SAVE10') {
@@ -84,10 +41,20 @@ export default function ShoppingCart() {
       {/* Header */}
       <div className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center gap-2">
-            <ShoppingCart className="h-6 w-6" />
-            <h1 className="text-2xl font-bold">Shopping Cart</h1>
-            <Badge variant="secondary" className="ml-2">{items.length} items</Badge>
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="hover:bg-gray-100"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="flex items-center gap-2">
+              <ShoppingCartIcon className="h-6 w-6" />
+              <h1 className="text-2xl font-bold">Shopping Cart</h1>
+              <Badge variant="secondary" className="ml-2">{items.length} items</Badge>
+            </div>
           </div>
         </div>
       </div>
@@ -96,7 +63,7 @@ export default function ShoppingCart() {
         {items.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
-              <ShoppingCart className="h-24 w-24 mx-auto text-gray-300 mb-4" />
+              <ShoppingCartIcon className="h-24 w-24 mx-auto text-gray-300 mb-4" />
               <h2 className="text-2xl font-bold mb-2">Your cart is empty</h2>
               <p className="text-gray-500 mb-6">Add items to get started</p>
               <Button onClick={() => navigate('/ecommerce/catalog')}>

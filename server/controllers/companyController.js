@@ -1,4 +1,4 @@
-import Company from '../models/Company.js';
+import Company from '../src/shared/models/Company.js';
 
 // @desc    Get all companies for user
 // @route   GET /api/companies

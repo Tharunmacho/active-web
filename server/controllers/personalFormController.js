@@ -1,4 +1,6 @@
-import PersonalForm from '../models/PersonalForm.js';
+import PersonalForm from '../src/shared/models/PersonalForm.js';
+import WebUserProfile from '../src/shared/models/WebUserProfile.js';
+import Application from '../src/shared/models/Application.js';
 
 export const getPersonalForm = async (req, res) => {
   try {
@@ -35,6 +37,57 @@ export const savePersonalForm = async (req, res) => {
         isLocked: true
       });
       console.log('✅ Personal form created and locked for user:', req.user.id);
+    }
+
+    // Also update WebUserProfile with location changes
+    const profileUpdate = {
+      fullName: formData.name,
+      phoneNumber: formData.phoneNumber,
+      state: formData.state,
+      district: formData.district,
+      block: formData.block,
+      city: formData.city
+    };
+
+    await WebUserProfile.findOneAndUpdate(
+      { userId: req.user.id },
+      profileUpdate,
+      { new: true }
+    );
+    console.log('✅ WebUserProfile location updated:', {
+      state: formData.state,
+      district: formData.district,
+      block: formData.block
+    });
+
+    // Also update any existing Application with the new location and personal info
+    const applicationUpdate = await Application.findOneAndUpdate(
+      { userId: req.user.id },
+      {
+        memberName: formData.name,
+        memberEmail: formData.email,
+        memberPhone: formData.phoneNumber,
+        state: formData.state,
+        district: formData.district,
+        block: formData.block,
+        city: formData.city,
+        lastUpdated: new Date()
+      },
+      { new: true }
+    );
+
+    if (applicationUpdate) {
+      console.log('✅ Application updated with new personal info for:', applicationUpdate.applicationId, {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phoneNumber,
+        state: formData.state,
+        district: formData.district,
+        block: formData.block,
+        city: formData.city
+      });
+    } else {
+      console.log('ℹ️ No application found to update for user:', req.user.id);
     }
 
     res.json({ success: true, data: personalForm });

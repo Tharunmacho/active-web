@@ -1,4 +1,4 @@
-import FinancialForm from '../models/FinancialForm.js';
+import FinancialForm from '../src/shared/models/FinancialForm.js';
 
 // @desc    Get user's financial form data
 // @route   GET /api/financial-form

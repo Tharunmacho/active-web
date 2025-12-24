@@ -6,5 +6,6 @@ const router = express.Router();
 
 router.get('/', protect, getPersonalForm);
 router.post('/', protect, savePersonalForm);
+router.put('/', protect, savePersonalForm); // Add PUT for updates
 
 export default router;

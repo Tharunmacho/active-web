@@ -1,9 +1,9 @@
-import Application from '../models/Application.js';
-import PersonalForm from '../models/PersonalForm.js';
-import BusinessForm from '../models/BusinessForm.js';
-import FinancialForm from '../models/FinancialForm.js';
-import DeclarationForm from '../models/DeclarationForm.js';
-import WebUserProfile from '../models/WebUserProfile.js';
+import Application from '../src/shared/models/Application.js';
+import PersonalForm from '../src/shared/models/PersonalForm.js';
+import BusinessForm from '../src/shared/models/BusinessForm.js';
+import FinancialForm from '../src/shared/models/FinancialForm.js';
+import DeclarationForm from '../src/shared/models/DeclarationForm.js';
+import WebUserProfile from '../src/shared/models/WebUserProfile.js';
 
 // @desc    Get all applications for admin (based on role and location)
 // @route   GET /api/applications
@@ -136,11 +136,6 @@ const getAllApplications = async (req, res) => {
     const admin = req.user;
     let query = {};
 
-    console.log('📋 Getting ALL applications for admin:', {
-      email: admin.email,
-      role: admin.role
-    });
-
     // Extract location from admin.meta
     const adminState = admin.meta?.state;
     const adminDistrict = admin.meta?.district;
@@ -152,43 +147,37 @@ const getAllApplications = async (req, res) => {
         state: new RegExp(`^${adminState}$`, 'i'),
         district: new RegExp(`^${adminDistrict}$`, 'i'),
         block: new RegExp(`^${adminBlock}$`, 'i')
-        // Block admin sees all applications from their block (including rejected)
       };
     } else if (admin.role === 'district_admin') {
       query = {
         state: new RegExp(`^${adminState}$`, 'i'),
         district: new RegExp(`^${adminDistrict}$`, 'i'),
-        // District admin sees only block-approved or district-processed applications
         $or: [
           { status: 'pending_district_approval' },
           { status: 'pending_state_approval' },
           { status: 'approved' },
-          { 'approvals.district.status': 'rejected' } // Only see if THEY rejected it
+          { 'approvals.district.status': 'rejected' }
         ]
       };
     } else if (admin.role === 'state_admin') {
       query = {
         state: new RegExp(`^${adminState}$`, 'i'),
-        // State admin sees only district-approved or state-processed applications
         $or: [
           { status: 'pending_state_approval' },
           { status: 'approved' },
-          { 'approvals.state.status': 'rejected' } // Only see if THEY rejected it
+          { 'approvals.state.status': 'rejected' }
         ]
       };
     } else if (admin.role === 'super_admin') {
       query = {};
     }
 
-    console.log('🔍 Query for ALL applications:', query);
-
     const applications = await Application.find(query)
-      .populate('userId', 'email phone')
-      .populate('personalFormId')
-      .populate('businessFormId')
-      .sort({ submittedAt: -1 });
-
-    console.log(`✅ Found ${applications.length} total applications`);
+      .select('status applicationNumber applicationType submittedAt state district block approvals userId memberName memberEmail memberPhone memberType')
+      .populate('userId', 'email phone fullName')
+      .lean()
+      .sort({ submittedAt: -1 })
+      .limit(100);
 
     res.status(200).json({
       success: true,

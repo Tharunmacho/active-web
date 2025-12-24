@@ -1,4 +1,4 @@
-import AdditionalForm from '../models/AdditionalForm.js';
+import AdditionalForm from '../src/shared/models/AdditionalForm.js';
 
 // @desc    Get user's additional form data
 // @route   GET /api/profile/additional-form
@@ -197,11 +197,11 @@ export const getApplicationById = async (req, res) => {
     console.log('🔐 Admin user:', req.user?.email);
     
     // Import models
-    const Application = (await import('../models/Application.js')).default;
-    const PersonalForm = (await import('../models/PersonalForm.js')).default;
-    const BusinessForm = (await import('../models/BusinessForm.js')).default;
-    const FinancialForm = (await import('../models/FinancialForm.js')).default;
-    const DeclarationForm = (await import('../models/DeclarationForm.js')).default;
+    const Application = (await import('../src/shared/models/Application.js')).default;
+    const PersonalForm = (await import('../src/shared/models/PersonalForm.js')).default;
+    const BusinessForm = (await import('../src/shared/models/BusinessForm.js')).default;
+    const FinancialForm = (await import('../src/shared/models/FinancialForm.js')).default;
+    const DeclarationForm = (await import('../src/shared/models/DeclarationForm.js')).default;
     const mongoose = (await import('mongoose')).default;
     
     // Build query - check if it's a valid ObjectId first

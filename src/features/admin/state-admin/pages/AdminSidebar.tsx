@@ -1,4 +1,4 @@
-﻿import React from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaHome, FaCheckCircle, FaUsers, FaCog, FaSignOutAlt, FaTimes } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
@@ -8,14 +8,25 @@ type Props = {
   className?: string;
   onClose?: () => void;
   isOpen?: boolean;
+  refreshTrigger?: number;
 };
 
-export default function AdminSidebar({ className = '', onClose, isOpen = false }: Props) {
+export default function AdminSidebar({ className = '', onClose, isOpen = false, refreshTrigger = 0 }: Props) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [adminInfo, setAdminInfo] = useState<any>(null);
 
   const role = (typeof window !== 'undefined' ? localStorage.getItem('role') : '') || '';
-  const userName = (typeof window !== 'undefined' ? localStorage.getItem('userName') : '') || 'Admin';
+  
+  // Use useMemo to ensure these update when adminInfo changes
+  const userName = useMemo(() => {
+    return adminInfo?.fullName || (typeof window !== 'undefined' ? localStorage.getItem('userName') : '') || 'Admin';
+  }, [adminInfo]);
+  
+  const avatarUrl = useMemo(() => {
+    return adminInfo?.avatarUrl || '';
+  }, [adminInfo]);
+  
   const roleLabel = role === 'block_admin' ? 'Block Admin' : role === 'district_admin' ? 'District Admin' : role === 'state_admin' ? 'State Admin' : role === 'super_admin' ? 'Super Admin' : 'Admin';
   const initials = role === 'block_admin' ? 'BA' : role === 'district_admin' ? 'DA' : role === 'state_admin' ? 'SA' : role === 'super_admin' ? 'SU' : (userName || 'A').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
 
@@ -25,6 +36,37 @@ export default function AdminSidebar({ className = '', onClose, isOpen = false }
     { to: '/state-admin/members', label: 'Members', icon: <FaUsers /> },
     { to: '/state-admin/settings', label: 'Settings', icon: <FaCog /> },
   ];
+
+  // Fetch admin info
+  const fetchAdminInfo = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      if (!token) return;
+
+      const response = await fetch('http://localhost:4000/api/admin/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('🔄 Sidebar: Fetched admin info:', data.data);
+        setAdminInfo(data.data);
+        if (data.data) {
+          localStorage.setItem('userName', data.data.fullName);
+          localStorage.setItem('userEmail', data.data.email);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Sidebar: Error fetching admin info:', error);
+    }
+  };
+
+  useEffect(() => {
+    console.log('🔄 Sidebar: useEffect triggered, refreshTrigger =', refreshTrigger);
+    fetchAdminInfo();
+  }, [refreshTrigger]);
 
   const handleLogout = () => {
     // Clear all local storage items related to login
@@ -67,10 +109,17 @@ export default function AdminSidebar({ className = '', onClose, isOpen = false }
       </div>
 
       {/* User Profile Section */}
-      <div className="p-4 md:p-6 border-b border-white/20">
+      <div 
+        className="p-4 md:p-6 border-b border-white/20 cursor-pointer hover:bg-white/10 transition-colors"
+        onClick={() => {
+          navigate('/state-admin/settings');
+          onClose?.();
+        }}
+        title="Click to edit profile"
+      >
         <div className="flex items-center gap-3">
           <Avatar className="w-12 h-12 ring-2 ring-white/30 shadow-lg flex-shrink-0">
-            <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop&crop=face" className="object-cover" />
+            {avatarUrl && <AvatarImage src={avatarUrl} className="object-cover" />}
             <AvatarFallback className="bg-white/20 backdrop-blur-sm text-white font-bold">
               {initials}
             </AvatarFallback>

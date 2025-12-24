@@ -270,21 +270,66 @@ export const checkUserExists = async (req, res) => {
 // @access  Private
 export const getMe = async (req, res, next) => {
   try {
-    // Get user profile from "web users" collection
-    const userProfile = await WebUserProfile.findOne({ userId: req.user.id });
-
-    if (!userProfile) {
+    console.log('👤 getMe called for user:', req.user.id);
+    
+    // Get user from WebUser collection (has fullName, email)
+    const user = await WebUser.findById(req.user.id);
+    
+    if (!user) {
+      console.log('❌ User not found in WebUser collection');
       return res.status(404).json({
         success: false,
-        message: 'User profile not found'
+        message: 'User not found'
       });
     }
 
+    console.log('📋 WebUser data:', { fullName: user.fullName, email: user.email });
+
+    // Get user profile from WebUserProfile collection (has profilePhoto and fallback fullName)
+    const userProfile = await WebUserProfile.findOne({ userId: req.user.id });
+    
+    console.log('📋 WebUserProfile data:', userProfile ? { 
+      hasPhoto: !!userProfile.profilePhoto, 
+      photoLength: userProfile.profilePhoto?.length || 0,
+      fullName: userProfile.fullName 
+    } : 'Not found');
+    
+    // Use WebUserProfile.fullName as fallback if WebUser.fullName is not set
+    console.log('🔍 Fallback check:', {
+      'user.fullName': user.fullName,
+      'userProfile?.fullName': userProfile?.fullName,
+      'user.fullName type': typeof user.fullName,
+      'userProfile type': typeof userProfile,
+      'hasUserProfile': !!userProfile
+    });
+    
+    const fullName = user.fullName || userProfile?.fullName || '';
+    console.log('✅ Final fullName after fallback:', fullName);
+    
+    // Combine data from both models
+    const userData = {
+      id: user._id,
+      fullName: fullName,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      role: user.role,
+      profilePhoto: userProfile?.profilePhoto || '',
+      createdAt: user.createdAt
+    };
+
+    console.log('✅ Returning user data:', { 
+      fullName: userData.fullName, 
+      email: userData.email, 
+      hasPhoto: !!userData.profilePhoto,
+      photoLength: userData.profilePhoto.length 
+    });
+
     res.status(200).json({
       success: true,
-      data: userProfile
+      data: userData
     });
   } catch (error) {
+    console.error('❌ Error in getMe:', error);
     next(error);
   }
 };
@@ -373,3 +418,114 @@ export const changePassword = async (req, res, next) => {
   }
 };
 
+// @desc    Update user profile (fullName and email)
+// @route   PUT /api/auth/update-profile
+// @access  Private
+export const updateUserProfile = async (req, res, next) => {
+  try {
+    console.log('🔄 updateUserProfile called');
+    console.log('📝 Update data:', req.body);
+    
+    const { fullName, email } = req.body;
+
+    // Update WebUser model
+    const user = await WebUser.findById(req.user.id);
+    if (!user) {
+      console.log('❌ User not found in WebUser collection');
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    if (fullName) {
+      console.log('📝 Updating fullName:', fullName);
+      user.fullName = fullName;
+    }
+    if (email) {
+      console.log('📧 Updating email:', email);
+      user.email = email;
+    }
+    
+    await user.save();
+    console.log('✅ WebUser updated');
+
+    // Also update in WebUserProfile if exists
+    const userProfile = await WebUserProfile.findOne({ userId: req.user.id });
+    if (userProfile && fullName) {
+      userProfile.fullName = fullName;
+      await userProfile.save();
+      console.log('✅ WebUserProfile fullName updated');
+    }
+
+    // Also update in PersonalForm if exists
+    const personalForm = await PersonalForm.findOne({ userId: req.user.id });
+    if (personalForm) {
+      if (fullName) {
+        personalForm.name = fullName;
+        console.log('✅ PersonalForm name updated');
+      }
+      if (email) {
+        personalForm.email = email;
+        console.log('✅ PersonalForm email updated');
+      }
+      await personalForm.save();
+    }
+
+    console.log('✅ All profile updates completed successfully');
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: user
+    });
+  } catch (error) {
+    console.error('❌ Error in updateUserProfile:', error);
+    next(error);
+  }
+};
+
+// @desc    Update user profile photo
+// @route   PUT /api/auth/update-profile-photo
+// @access  Private
+export const updateProfilePhoto = async (req, res, next) => {
+  try {
+    console.log('🖼️ updateProfilePhoto called');
+    console.log('📸 Request body:', req.body ? 'Body exists' : 'No body');
+    console.log('👤 User:', req.user ? req.user.email : 'No user');
+    
+    const { profilePhoto } = req.body;
+
+    if (!profilePhoto) {
+      console.log('❌ No profile photo in request');
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide profile photo'
+      });
+    }
+
+    console.log('🔍 Looking for user profile:', req.user.id);
+    const userProfile = await WebUserProfile.findOne({ userId: req.user.id });
+
+    if (!userProfile) {
+      console.log('❌ User profile not found');
+      return res.status(404).json({
+        success: false,
+        message: 'User profile not found'
+      });
+    }
+
+    console.log('✅ Found user profile, updating photo');
+    userProfile.profilePhoto = profilePhoto;
+    await userProfile.save();
+
+    console.log('✅ Profile photo updated successfully');
+    res.status(200).json({
+      success: true,
+      message: 'Profile photo updated successfully',
+      data: userProfile
+    });
+  } catch (error) {
+    console.error('❌ Error in updateProfilePhoto:', error);
+    next(error);
+  }
+};

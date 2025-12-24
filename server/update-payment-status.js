@@ -11,7 +11,7 @@ async function updatePaymentStatus() {
     console.log('✅ Connected to MongoDB');
     
     // Update the user's application to mark payment as completed
-    const email = 'tharun1234@gmail.com';
+    const email = 'aathif@gmail.com';
     
     // First find the user by email
     const user = await WebUser.findOne({ email });

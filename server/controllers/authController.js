@@ -1,6 +1,6 @@
-import WebUser from '../models/WebUser.js';
-import WebUserProfile from '../models/WebUserProfile.js';
-import PersonalForm from '../models/PersonalForm.js';
+import WebUser from '../src/shared/models/WebUser.js';
+import WebUserProfile from '../src/shared/models/WebUserProfile.js';
+import PersonalForm from '../src/shared/models/PersonalForm.js';
 import jwt from 'jsonwebtoken';
 
 // Generate JWT Token
@@ -378,33 +378,43 @@ export const changePassword = async (req, res, next) => {
 // @access  Private
 export const updateProfilePhoto = async (req, res, next) => {
   try {
+    console.log('🖼️ updateProfilePhoto called');
+    console.log('📸 Request body:', req.body ? 'Body exists' : 'No body');
+    console.log('👤 User:', req.user ? req.user.email : 'No user');
+    
     const { profilePhoto } = req.body;
 
     if (!profilePhoto) {
+      console.log('❌ No profile photo in request');
       return res.status(400).json({
         success: false,
         message: 'Please provide profile photo'
       });
     }
 
+    console.log('🔍 Looking for user profile:', req.user.id);
     const userProfile = await WebUserProfile.findOne({ userId: req.user.id });
 
     if (!userProfile) {
+      console.log('❌ User profile not found');
       return res.status(404).json({
         success: false,
         message: 'User profile not found'
       });
     }
 
+    console.log('✅ Found user profile, updating photo');
     userProfile.profilePhoto = profilePhoto;
     await userProfile.save();
 
+    console.log('✅ Profile photo updated successfully');
     res.status(200).json({
       success: true,
       message: 'Profile photo updated successfully',
       data: userProfile
     });
   } catch (error) {
+    console.error('❌ Error in updateProfilePhoto:', error);
     next(error);
   }
 };

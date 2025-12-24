@@ -11,6 +11,19 @@ const webUserSchema = new mongoose.Schema({
     trim: true,
     match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
   },
+  fullName: {
+    type: String,
+    trim: true
+  },
+  phoneNumber: {
+    type: String,
+    trim: true
+  },
+  role: {
+    type: String,
+    enum: ['member', 'admin'],
+    default: 'member'
+  },
   password: {
     type: String,
     required: [true, 'Please provide password'],

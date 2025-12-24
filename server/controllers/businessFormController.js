@@ -1,4 +1,4 @@
-import BusinessForm from '../models/BusinessForm.js';
+import BusinessForm from '../src/shared/models/BusinessForm.js';
 
 // @desc    Get user's business form data
 // @route   GET /api/business-form

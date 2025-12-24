@@ -74,11 +74,26 @@ const MemberSettings = () => {
                 return;
             }
 
-            // Fetch user data
-            const userRes = await fetch('http://localhost:4000/api/auth/me', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            // Parallel fetch all data at once for faster loading
+            const [userRes, personalRes, businessRes, declarationRes, financialRes] = await Promise.all([
+                fetch('http://localhost:4000/api/auth/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }),
+                fetch('http://localhost:4000/api/personal-form', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }),
+                fetch('http://localhost:4000/api/business-form', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }),
+                fetch('http://localhost:4000/api/declaration-form', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }),
+                fetch('http://localhost:4000/api/financial-form', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+            ]);
 
+            // Process user data
             if (userRes.ok) {
                 const userResult = await userRes.json();
                 if (userResult.success && userResult.data) {
@@ -86,34 +101,29 @@ const MemberSettings = () => {
                 }
             }
 
-            // Fetch personal form data
-            const personalRes = await fetch('http://localhost:4000/api/personal-form', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
+            // Process personal form data
             if (personalRes.ok) {
                 const personalResult = await personalRes.json();
+                console.log('📋 Personal form loaded:', personalResult);
                 if (personalResult.success && personalResult.data) {
+                    const data = personalResult.data;
+                    console.log('✅ Setting personal data:', data);
                     setFormData(prev => ({
                         ...prev,
-                        name: personalResult.data.name || "",
-                        email: personalResult.data.email || "",
-                        phoneNumber: personalResult.data.phoneNumber || "",
-                        city: personalResult.data.city || "",
-                        state: personalResult.data.state || "",
-                        district: personalResult.data.district || "",
-                        block: personalResult.data.block || "",
-                        religion: personalResult.data.religion || "",
-                        socialCategory: personalResult.data.socialCategory || ""
+                        name: data.name || "",
+                        email: data.email || "",
+                        phoneNumber: data.phoneNumber || "",
+                        city: data.city || "",
+                        state: data.state || "",
+                        district: data.district || "",
+                        block: data.block || "",
+                        religion: data.religion || "",
+                        socialCategory: data.socialCategory || ""
                     }));
                 }
             }
 
-            // Fetch business form data
-            const businessRes = await fetch('http://localhost:4000/api/business-form', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
+            // Process business form data
             if (businessRes.ok) {
                 const businessResult = await businessRes.json();
                 if (businessResult.success && businessResult.data) {
@@ -133,11 +143,7 @@ const MemberSettings = () => {
                 }
             }
 
-            // Fetch declaration form data
-            const declarationRes = await fetch('http://localhost:4000/api/declaration-form', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
+            // Process declaration form data
             if (declarationRes.ok) {
                 const declarationResult = await declarationRes.json();
                 if (declarationResult.success && declarationResult.data) {
@@ -150,11 +156,7 @@ const MemberSettings = () => {
                 }
             }
 
-            // Fetch financial form data
-            const financialRes = await fetch('http://localhost:4000/api/financial-form', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
+            // Process financial form data
             if (financialRes.ok) {
                 const financialResult = await financialRes.json();
                 if (financialResult.success && financialResult.data) {
@@ -176,9 +178,10 @@ const MemberSettings = () => {
                     }));
                 }
             }
+
         } catch (error) {
             console.error('Error loading user data:', error);
-            toast.error('Failed to load profile data');
+            toast.error('Failed to load settings data');
         } finally {
             setLoading(false);
         }
@@ -215,11 +218,14 @@ const MemberSettings = () => {
                 });
 
                 if (response.ok) {
+                    console.log('✅ Profile photo uploaded successfully');
                     setProfilePhoto(base64String);
                     localStorage.setItem('userProfilePhoto', base64String);
+                    console.log('📢 Dispatching profilePhotoUpdated event');
                     toast.success('Profile photo updated successfully!');
                     window.dispatchEvent(new CustomEvent('profilePhotoUpdated'));
                 } else {
+                    console.error('❌ Profile photo upload failed');
                     toast.error('Failed to update profile photo');
                 }
                 setIsUploadingPhoto(false);
@@ -237,7 +243,7 @@ const MemberSettings = () => {
         try {
             const token = localStorage.getItem('token');
 
-            // Update personal form
+            // Update personal form - POST works, PUT has issues
             const personalResponse = await fetch('http://localhost:4000/api/personal-form', {
                 method: 'POST',
                 headers: {
@@ -257,7 +263,7 @@ const MemberSettings = () => {
                 })
             });
 
-            // Update business form
+            // Update business form - POST works
             const businessResponse = await fetch('http://localhost:4000/api/business-form', {
                 method: 'POST',
                 headers: {
@@ -272,13 +278,13 @@ const MemberSettings = () => {
                     businessActivities: formData.businessActivities,
                     businessYear: formData.businessYear,
                     employees: formData.employees,
-                    chamber: formData.chamber,
+                    chamber: formData.chamber || undefined, // Send undefined instead of empty string
                     chamberDetails: formData.chamberDetails,
                     govtOrgs: formData.govtOrgs
                 })
             });
 
-            // Update declaration form
+            // Update declaration form - POST works
             const declarationResponse = await fetch('http://localhost:4000/api/declaration-form', {
                 method: 'POST',
                 headers: {
@@ -292,7 +298,7 @@ const MemberSettings = () => {
                 })
             });
 
-            // Update financial form
+            // Update financial form - POST works
             const financialResponse = await fetch('http://localhost:4000/api/financial-form', {
                 method: 'POST',
                 headers: {
@@ -303,13 +309,13 @@ const MemberSettings = () => {
                     pan: formData.pan,
                     gst: formData.gst,
                     udyam: formData.udyam,
-                    filedITR: formData.filedITR,
+                    filedITR: formData.filedITR || undefined, // Send undefined instead of empty string
                     itrYears: formData.itrYears,
                     turnoverRange: formData.turnoverRange,
                     turnover1: formData.turnover1,
                     turnover2: formData.turnover2,
                     turnover3: formData.turnover3,
-                    govtSchemes: formData.govtSchemes,
+                    govtSchemes: formData.govtSchemes || undefined, // Send undefined instead of empty string
                     scheme1: formData.scheme1,
                     scheme2: formData.scheme2,
                     scheme3: formData.scheme3
@@ -317,17 +323,58 @@ const MemberSettings = () => {
             });
 
             if (personalResponse.ok) {
-                toast.success("Profile updated successfully!");
-                // Update localStorage
-                localStorage.setItem('userName', formData.name);
-                localStorage.setItem('userEmail', formData.email);
-                if (formData.organization) {
-                    localStorage.setItem('userOrganization', formData.organization);
+                // Also update the user profile (fullName) in the User model
+                const updateRes = await fetch('http://localhost:4000/api/auth/update-profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        fullName: formData.name,
+                        email: formData.email
+                    })
+                });
+
+                if (updateRes.ok) {
+                    console.log('✅ Profile update successful, dispatching events...');
+                    toast.success("Profile updated successfully!");
+                    // Update localStorage
+                    localStorage.setItem('userName', formData.name);
+                    localStorage.setItem('userEmail', formData.email);
+                    if (formData.organization) {
+                        console.log('💼 Updating organization in localStorage:', formData.organization);
+                        localStorage.setItem('userOrganization', formData.organization);
+                    }
+                    // Dispatch events to update sidebar immediately
+                    console.log('📢 Dispatching userDataUpdated event');
+                    window.dispatchEvent(new CustomEvent('userDataUpdated'));
+                    console.log('📢 Dispatching profileDataUpdated event');
+                    window.dispatchEvent(new CustomEvent('profileDataUpdated'));
+                    if (formData.organization) {
+                        console.log('📢 Dispatching companyUpdated event');
+                        window.dispatchEvent(new CustomEvent('companyUpdated'));
+                    }
+                    
+                    // No need to reload - sidebar will update via events
+                    loadUserData();
+                } else {
+                    console.log('⚠️ Profile update API failed, but updating localStorage anyway');
+                    toast.success("Profile forms updated!");
+                    // Update localStorage even if user profile API fails
+                    localStorage.setItem('userName', formData.name);
+                    localStorage.setItem('userEmail', formData.email);
+                    if (formData.organization) {
+                        localStorage.setItem('userOrganization', formData.organization);
+                    }
+                    console.log('📢 Dispatching events after partial update');
+                    window.dispatchEvent(new CustomEvent('userDataUpdated'));
+                    window.dispatchEvent(new CustomEvent('profileDataUpdated'));
+                    if (formData.organization) {
+                        window.dispatchEvent(new CustomEvent('companyUpdated'));
+                    }
+                    loadUserData();
                 }
-                // Dispatch event to update sidebar
-                window.dispatchEvent(new CustomEvent('userDataUpdated'));
-                window.dispatchEvent(new CustomEvent('profileDataUpdated'));
-                loadUserData();
             } else {
                 toast.error("Failed to update profile");
             }

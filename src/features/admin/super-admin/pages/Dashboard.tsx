@@ -88,8 +88,8 @@ const AdminDashboard = () => {
             </svg>
           </button>
           <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
-          <Avatar className="w-10 h-10 ring-2 ring-blue-100">
-            <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop&crop=face" className="object-cover" />
+          <Avatar className="w-10 h-10 ring-2 ring-blue-100 cursor-pointer hover:ring-4 transition-all" onClick={() => navigate('/super-admin/settings')}>
+            {adminInfo?.avatarUrl && <AvatarImage src={adminInfo.avatarUrl} className="object-cover" />}
             <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold">
               {avatarInitials}
             </AvatarFallback>

@@ -1,4 +1,4 @@
-import Location from '../models/Location.js';
+import Location from '../src/shared/models/Location.js';
 
 // @desc    Get all states
 // @route   GET /api/locations/states
@@ -58,6 +58,8 @@ export const getBlocks = async (req, res) => {
   try {
     const { state, district } = req.params;
     
+    console.log('🔍 getBlocks called with:', { state, district });
+    
     if (!state || !district) {
       return res.status(400).json({
         success: false,
@@ -65,9 +67,28 @@ export const getBlocks = async (req, res) => {
       });
     }
 
+    // Query the locations collection
+    console.log('📍 Querying Location.findOne with:', { state, district });
     const location = await Location.findOne({ state, district });
     
+    console.log('📦 Location found:', location ? `Yes - ${location.blocks?.length || 0} blocks` : 'No');
+    
     if (!location) {
+      // Try case-insensitive search
+      console.log('🔄 Trying case-insensitive search...');
+      const locationCaseInsensitive = await Location.findOne({ 
+        state: { $regex: new RegExp(`^${state}$`, 'i') }, 
+        district: { $regex: new RegExp(`^${district}$`, 'i') } 
+      });
+      
+      if (locationCaseInsensitive) {
+        console.log('✅ Found with case-insensitive search:', locationCaseInsensitive.blocks?.length || 0, 'blocks');
+        return res.status(200).json({
+          success: true,
+          data: locationCaseInsensitive.blocks.sort()
+        });
+      }
+      
       return res.status(404).json({
         success: false,
         message: `No blocks found for ${district}, ${state}`,
@@ -75,12 +96,13 @@ export const getBlocks = async (req, res) => {
       });
     }
 
+    console.log('✅ Returning blocks:', location.blocks);
     res.status(200).json({
       success: true,
       data: location.blocks.sort()
     });
   } catch (error) {
-    console.error('Error in getBlocks:', error);
+    console.error('❌ Error in getBlocks:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching blocks',

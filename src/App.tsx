@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/shared/components/ui/sonner";
 import { TooltipProvider } from "@/shared/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { CartProvider } from "@/contexts/CartContext";
+import { ProfileProvider } from "@/contexts/ProfileContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import EnhancedLoginPage from "./shared/components/EnhancedLoginPage";
@@ -24,6 +26,9 @@ import ApplicationStatus from "./pages/member/ApplicationStatus";
 import PaymentPage from "./pages/member/Payment";
 import PaymentSuccess from "./pages/member/PaymentSuccess";
 import UnpaidDashboard from "./features/member/pages/UnpaidDashboard";
+import MemberHelp from "./features/member/pages/Help";
+import MemberEvents from "./features/member/pages/Events";
+import Explore from "./features/member/pages/Explore";
 import Account from "./pages/member/Account";
 import PaymentHistory from "./pages/member/PaymentHistory";
 import MemberSettings from "./pages/member/Settings";
@@ -42,7 +47,7 @@ import PaymentRegistration from "./pages/payment/PaymentRegistration";
 import PaymentGateway from "./pages/payment/PaymentGateway";
 import PaymentConfirmation from "./pages/payment/PaymentConfirmation";
 import MockPayment from "./pages/payment/MockPayment";
-import PaymentMemberDashboard from "./pages/payment/MemberDashboard";
+import PaymentMemberDashboard from "./pages/payment/OldMemberDashboard";
 import MembershipPlans from "./pages/payment/MembershipPlans";
 
 // Business Feature Imports
@@ -97,23 +102,28 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
+    <CartProvider>
+      <ProfileProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
           <Route path="/" element={<Navigate to="/login" />} />
           <Route path="/login" element={<EnhancedLoginPage />} />
           <Route path="/register" element={<MemberRegister />} />
 
           {/* Member Routes */}
-          <Route path="/member/dashboard" element={<UnpaidDashboard />} />
+          <Route path="/member/dashboard" element={<MemberDashboard />} />
+          <Route path="/explore" element={<Explore />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/member/adf" element={<ADFForm />} />
           <Route path="/member/certificate" element={<MemberCertificate />} />
           <Route path="/member/profile-view" element={<ProfileView />} />
           <Route path="/member/profile" element={<MemberProfile />} />
           <Route path="/member/settings" element={<MemberSettings />} />
+          <Route path="/member/help" element={<MemberHelp />} />
+          <Route path="/member/events" element={<MemberEvents />} />
           <Route path="/member/forms/personal" element={<PersonalForm />} />
           <Route path="/member/forms/business" element={<BusinessForm />} />
           <Route path="/member/forms/financial" element={<FinancialForm />} />
@@ -134,6 +144,16 @@ const App = () => (
           <Route path="/member/seller-dashboard" element={<SellerDashboard />} />
           <Route path="/member/whatsapp-catalog" element={<WhatsAppCatalog />} />
           <Route path="/member/inventory" element={<Inventory />} />
+          
+          {/* E-commerce Routes */}
+          <Route path="/member/product-catalog" element={<ProductCatalog />} />
+          <Route path="/member/product/:id" element={<ProductDetails />} />
+          <Route path="/member/shopping-cart" element={<ShoppingCart />} />
+          <Route path="/member/checkout" element={<Checkout />} />
+          <Route path="/member/order-success" element={<OrderSuccess />} />
+          <Route path="/member/b2b-inquiry" element={<B2BInquiry />} />
+          <Route path="/member/business-showcase" element={<BusinessShowcase />} />
+          <Route path="/member/inventory-tracking" element={<InventoryTracking />} />
 
           {/* New Payment Routes */}
           <Route path="/payment/membership-plan" element={<PaymentRegistration />} />
@@ -209,6 +229,8 @@ const App = () => (
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
+      </ProfileProvider>
+    </CartProvider>
   </QueryClientProvider>
 );
 

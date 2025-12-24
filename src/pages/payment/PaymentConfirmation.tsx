@@ -31,6 +31,54 @@ export default function PaymentConfirmation() {
         // Fetch latest application data
         const app = await getUserApplication();
 
+        // Update payment status in backend
+        const token = localStorage.getItem('token');
+        if (app.applicationId) {
+          try {
+            console.log('✅ Updating payment status for application:', app.applicationId);
+            
+            // Use the new complete endpoint
+            const verifyEndpoint = 'http://localhost:4000/api/payment/complete';
+            
+            const headers: HeadersInit = {
+              'Content-Type': 'application/json'
+            };
+            
+            // Always add auth token
+            if (token) {
+              headers['Authorization'] = `Bearer ${token}`;
+            }
+            
+            const updateResponse = await fetch(verifyEndpoint, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({
+                paymentId: paymentId || transactionId || app.paymentDetails?.paymentId || 'PAYMENT_' + Date.now(),
+                paymentMethod: 'card',
+                transactionId: transactionId || paymentId || app.paymentDetails?.transactionId || 'TXN_' + Date.now(),
+                status: 'completed',
+                applicationId: app.applicationId
+              })
+            });
+
+            if (updateResponse.ok) {
+              const result = await updateResponse.json();
+              console.log('✅ Payment status updated successfully:', result);
+              
+              // Update localStorage
+              localStorage.setItem('paymentStatus', 'completed');
+              
+              // Dispatch event to refresh application data
+              window.dispatchEvent(new CustomEvent('paymentCompleted'));
+            } else {
+              const errorText = await updateResponse.text();
+              console.error('⚠️ Failed to update payment status:', errorText);
+            }
+          } catch (updateError) {
+            console.error('❌ Error updating payment status:', updateError);
+          }
+        }
+
         // Determine plan type based on memberType and payment details
         let planType = 'Aspirant Plan';
         let planAmount = 2000;

@@ -20,10 +20,14 @@ import {
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
+import { toast } from "sonner";
+import ProfileEditModal from "../components/ProfileEditModal";
 
 const Settings = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [activeStatus, setActiveStatus] = useState(true);
+    const [profileModalOpen, setProfileModalOpen] = useState(false);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
     const navigate = useNavigate();
 
     // State for admin info
@@ -68,47 +72,78 @@ const Settings = () => {
         navigate('/login');
     };
 
+    // Fetch real stats from backend
+    const [stats, setStats] = useState({
+        totalMembers: 0,
+        pendingApprovals: 0,
+        approved: 0,
+        rejected: 0
+    });
+
+    const fetchAdminData = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem('adminToken');
+            
+            if (!token) {
+                setLoading(false);
+                return;
+            }
+
+            // Fetch admin info
+            const adminResponse = await fetch('http://localhost:4000/api/admin/me', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (adminResponse.ok) {
+                const adminData = await adminResponse.json();
+                console.log('👤 Admin info:', adminData);
+                setAdminInfo(adminData.data);
+                
+                // Update localStorage with fresh data
+                if (adminData.data) {
+                    localStorage.setItem('userName', adminData.data.fullName);
+                    localStorage.setItem('userEmail', adminData.data.email);
+                }
+            }
+
+            // Fetch stats
+            const statsResponse = await fetch('http://localhost:4000/api/admin/dashboard/stats', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (statsResponse.ok) {
+                const statsData = await statsResponse.json();
+                console.log('📊 Super Admin Settings stats:', statsData);
+                setStats({
+                    totalMembers: statsData.data.total || 0,
+                    pendingApprovals: statsData.data.pending || 0,
+                    approved: statsData.data.approved || 0,
+                    rejected: statsData.data.rejected || 0
+                });
+            }
+        } catch (error) {
+            console.error('❌ Error fetching admin data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleProfileUpdate = async () => {
+        console.log('♻️ Settings: handleProfileUpdate called');
+        await fetchAdminData();
+        console.log('♻️ Settings: Incrementing refreshTrigger from', refreshTrigger, 'to', refreshTrigger + 1);
+        setRefreshTrigger(prev => prev + 1);
+    };
+
     // Fetch admin info
     useEffect(() => {
-        const fetchAdminData = async () => {
-            try {
-                setLoading(true);
-                const token = localStorage.getItem('adminToken');
-                
-                if (!token) {
-                    setLoading(false);
-                    return;
-                }
-
-                // Fetch admin info
-                const adminResponse = await fetch('http://localhost:4000/api/admin/me', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    },
-                });
-
-                if (adminResponse.ok) {
-                    const adminData = await adminResponse.json();
-                    console.log('👤 Admin info:', adminData);
-                    setAdminInfo(adminData.data);
-                }
-            } catch (error) {
-                console.error('Error fetching admin data:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchAdminData();
     }, []);
-
-    // Admin stats (these would come from API in real app)
-    const stats = {
-        totalMembers: 15,
-        pendingApprovals: 5,
-        approved: 5,
-        rejected: 5
-    };
 
     return (
         <div className="min-h-screen flex bg-gradient-to-br from-gray-100 to-gray-50">
@@ -121,7 +156,7 @@ const Settings = () => {
             )}
 
             {/* Sidebar - Responsive */}
-            <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+            <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} refreshTrigger={refreshTrigger} />
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col">
@@ -136,8 +171,8 @@ const Settings = () => {
                         </svg>
                     </button>
                     <h1 className="text-xl font-bold text-gray-900">Settings</h1>
-                    <Avatar className="w-10 h-10 ring-2 ring-blue-100">
-                        <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop&crop=face" className="object-cover" />
+                    <Avatar className="w-10 h-10 ring-2 ring-blue-100 cursor-pointer hover:ring-4 transition-all" onClick={() => setProfileModalOpen(true)}>
+                        {adminInfo?.avatarUrl && <AvatarImage src={adminInfo.avatarUrl} className="object-cover" />}
                         <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold">
                             {avatarInitials}
                         </AvatarFallback>
@@ -152,8 +187,8 @@ const Settings = () => {
                             {/* Header Section */}
                             <div className="mb-8">
                                 <div className="flex flex-col md:flex-row items-center md:items-start gap-4 text-center md:text-left">
-                                    <Avatar className="w-20 h-20 ring-4 ring-blue-100">
-                                        <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop&crop=face" className="object-cover" />
+                                    <Avatar className="w-20 h-20 ring-4 ring-blue-100 cursor-pointer hover:ring-6 hover:ring-blue-200 transition-all" onClick={() => setProfileModalOpen(true)}>
+                                        {adminInfo?.avatarUrl && <AvatarImage src={adminInfo.avatarUrl} className="object-cover" />}
                                         <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold text-2xl">
                                             {avatarInitials}
                                         </AvatarFallback>
@@ -240,7 +275,10 @@ const Settings = () => {
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="pt-4 space-y-2">
-                                        <button className="w-full flex items-center justify-between p-4 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 rounded-xl transition-all duration-200 group border border-transparent hover:border-blue-200">
+                                        <button 
+                                            onClick={() => setProfileModalOpen(true)}
+                                            className="w-full flex items-center justify-between p-4 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 rounded-xl transition-all duration-200 group border border-transparent hover:border-blue-200"
+                                        >
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
                                                     <User className="w-5 h-5 text-blue-600" />
@@ -316,6 +354,14 @@ const Settings = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Profile Edit Modal */}
+            <ProfileEditModal 
+                open={profileModalOpen}
+                onClose={() => setProfileModalOpen(false)}
+                adminData={adminInfo}
+                onProfileUpdate={handleProfileUpdate}
+            />
         </div>
     );
 };

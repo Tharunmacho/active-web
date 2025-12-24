@@ -153,12 +153,12 @@ const Explore = () => {
                           <Avatar className="w-16 h-16 border-4 border-white shadow-lg">
                             <AvatarImage src={member.profilePicture || "/placeholder.svg"} />
                             <AvatarFallback className="bg-white text-blue-600 text-xl font-bold">
-                              {member.fullName.charAt(0).toUpperCase()}
+                              {member.fullName ? member.fullName.charAt(0).toUpperCase() : 'M'}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
-                            <h3 className="font-bold text-lg">{member.fullName}</h3>
-                            <p className="text-sm text-blue-100">{member.email}</p>
+                            <h3 className="font-bold text-lg">{member.fullName || 'Member'}</h3>
+                            <p className="text-sm text-blue-100">{member.email || ''}</p>
                           </div>
                         </div>
                         <Button

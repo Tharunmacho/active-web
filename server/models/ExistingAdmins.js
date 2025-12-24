@@ -19,6 +19,10 @@ const blockAdminSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  avatarUrl: {
+    type: String,
+    default: ''
+  },
   role: {
     type: String,
     default: 'BlockAdmin'
@@ -66,6 +70,10 @@ const districtAdminSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  avatarUrl: {
+    type: String,
+    default: ''
+  },
   role: {
     type: String,
     default: 'DistrictAdmin'
@@ -110,6 +118,10 @@ const stateAdminSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  avatarUrl: {
+    type: String,
+    default: ''
+  },
   role: {
     type: String,
     default: 'StateAdmin'
@@ -151,6 +163,10 @@ const superAdminSchema = new mongoose.Schema({
   fullName: {
     type: String,
     required: true
+  },
+  avatarUrl: {
+    type: String,
+    default: ''
   },
   role: {
     type: String,

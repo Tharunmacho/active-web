@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Menu, User, Briefcase } from "lucide-react";
+import { Menu, User, Briefcase, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import MemberSidebar from "./MemberSidebar";
 import { useNavigate } from "react-router-dom";
@@ -12,6 +12,9 @@ const MemberDashboard = () => {
   const [userName, setUserName] = useState("");
   const [isFirstVisit, setIsFirstVisit] = useState(true);
   const [latestApplication, setLatestApplication] = useState<any | null>(null);
+  const [profileCardDismissed, setProfileCardDismissed] = useState(() => {
+    return localStorage.getItem('profileCardDismissed') === 'true';
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -407,8 +410,19 @@ const MemberDashboard = () => {
                   </div>
                 </CardContent>
               </Card>
-            ) : (
-              <Card className="shadow-lg border-0 w-full mb-6 bg-blue-600 text-white">
+            ) : !profileCardDismissed && (
+              <Card className="shadow-lg border-0 w-full mb-6 bg-blue-600 text-white relative">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2 hover:bg-white/20 text-white"
+                  onClick={() => {
+                    setProfileCardDismissed(true);
+                    localStorage.setItem('profileCardDismissed', 'true');
+                  }}
+                >
+                  <X className="h-5 w-5" />
+                </Button>
                 <CardContent className="p-6 md:p-8">
                   <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
                     <div className="flex-1">

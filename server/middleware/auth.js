@@ -50,6 +50,28 @@ export const protect = async (req, res, next) => {
   }
 };
 
+// Optional authentication - adds user to request if token exists, but doesn't require it
+export const optionalAuth = async (req, res, next) => {
+  let token;
+
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    try {
+      token = req.headers.authorization.split(' ')[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-here-change-in-production');
+      const userId = decoded.id || decoded.userId;
+      req.user = await WebUser.findById(userId).select('-password');
+      console.log('✅ Optional auth - user authenticated:', req.user?.email || 'none');
+    } catch (error) {
+      console.log('⚠️ Optional auth - invalid token, proceeding without user');
+    }
+  } else {
+    console.log('✅ Optional auth - no token, proceeding without user');
+  }
+  
+  // Always proceed to next middleware/controller
+  next();
+};
+
 export const authorize = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {

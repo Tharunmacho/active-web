@@ -162,8 +162,8 @@ const AdminDashboard = () => {
             </svg>
           </button>
           <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
-          <Avatar className="w-10 h-10 ring-2 ring-blue-100">
-            <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop&crop=face" className="object-cover" />
+          <Avatar className="w-10 h-10 ring-2 ring-blue-100 cursor-pointer hover:ring-4 transition-all" onClick={() => navigate('/block-admin/settings')}>
+            {adminInfo?.avatarUrl && <AvatarImage src={adminInfo.avatarUrl} className="object-cover" />}
             <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold">
               {avatarInitials}
             </AvatarFallback>
@@ -188,7 +188,8 @@ const AdminDashboard = () => {
                   {/* Header Section */}
                   <div className="mb-8">
                     <div className="flex flex-col md:flex-row items-center md:items-start gap-4 text-center md:text-left">
-                      <Avatar className="w-16 h-16 ring-4 ring-blue-100">
+                      <Avatar className="w-16 h-16 ring-4 ring-blue-100 cursor-pointer hover:ring-6 hover:ring-blue-200 transition-all" onClick={() => navigate('/block-admin/settings')}>
+                        {adminInfo?.avatarUrl && <AvatarImage src={adminInfo.avatarUrl} className="object-cover" />}
                         <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold text-2xl">
                           {avatarInitials}
                         </AvatarFallback>
@@ -261,12 +262,12 @@ const AdminDashboard = () => {
                         <div className="flex items-center gap-3">
                           <Avatar className="w-10 h-10 ring-2 ring-blue-200">
                             <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold text-sm">
-                              {app.memberName.split(' ').map((n: string) => n[0]).join('')}
+                              {app.memberName ? app.memberName.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'N/A'}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-semibold text-gray-900 text-sm">{app.memberName}</p>
-                            <p className="text-xs text-gray-600">{app.applicationId}</p>
+                            <p className="font-semibold text-gray-900 text-sm">{app.memberName || 'Unknown'}</p>
+                            <p className="text-xs text-gray-600">{app.applicationId || app.applicationNumber || 'N/A'}</p>
                           </div>
                         </div>
                         <div>

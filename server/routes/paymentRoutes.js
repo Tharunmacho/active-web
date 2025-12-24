@@ -2,12 +2,13 @@ import express from 'express';
 import {
   initiatePayment,
   verifyPayment,
+  completePayment,
   getPaymentHistory,
   getPaymentDetails,
   handleWebhook,
   handlePaymentSuccess
 } from '../controllers/paymentController.js';
-import { protect } from '../middleware/auth.js';
+import { protect, optionalAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -17,19 +18,22 @@ router.post('/webhook', handleWebhook);
 // Payment success callback (no authentication needed)
 router.get('/success', handlePaymentSuccess);
 
-// All other payment routes require authentication
-router.use(protect);
+// Complete payment endpoint
+router.post('/complete', protect, completePayment);
 
-// Initiate payment for approved application
-router.post('/initiate', initiatePayment);
+// Mock/Test payment verification (NO authentication for testing)
+router.post('/verify-mock', verifyPayment);
 
-// Verify payment after completion
-router.post('/verify', verifyPayment);
+// Initiate payment (requires authentication)
+router.post('/initiate', protect, initiatePayment);
 
-// Get payment history for current user
-router.get('/history', getPaymentHistory);
+// Verify payment after completion (requires authentication)
+router.post('/verify', protect, verifyPayment);
 
-// Get specific payment details
-router.get('/:paymentId', getPaymentDetails);
+// Get payment history for current user (requires authentication)
+router.get('/history', protect, getPaymentHistory);
+
+// Get specific payment details (requires authentication)
+router.get('/:paymentId', protect, getPaymentDetails);
 
 export default router;

@@ -97,6 +97,14 @@ export default function EnhancedLoginPage() {
           const found = json.data?.user || json.user;
           localStorage.setItem('userName', found.fullName || found.firstName || found.email || found.memberId);
           localStorage.setItem('memberId', found.id || found._id || found.memberId);
+          // Clear old user data before setting new login
+          localStorage.removeItem('userName');
+          localStorage.removeItem('userEmail');
+          localStorage.removeItem('userProfilePhoto');
+          localStorage.removeItem('userOrganization');
+          localStorage.removeItem('paymentStatus');
+          localStorage.removeItem('cart');
+          
           localStorage.setItem('token', json.data?.token || json.token);
           const role = (typeof found.role === 'string' && found.role) || 'member';
           localStorage.setItem('role', role);

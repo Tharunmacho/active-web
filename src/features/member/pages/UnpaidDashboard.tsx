@@ -77,13 +77,13 @@ const UnpaidDashboard = () => {
     const handleCompleteFormsClick = () => {
         // Navigate to first incomplete form
         if (!formsCompleted.personal) {
-            navigate("/member/personal-form");
+            navigate("/member/forms/personal");
         } else if (!formsCompleted.business) {
-            navigate("/member/business-form");
+            navigate("/member/forms/business");
         } else if (!formsCompleted.financial) {
-            navigate("/member/financial-form");
+            navigate("/member/forms/financial");
         } else if (!formsCompleted.declaration) {
-            navigate("/member/declaration-form");
+            navigate("/member/forms/declaration");
         } else {
             navigate("/member/application-status");
         }

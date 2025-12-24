@@ -6,22 +6,27 @@ import { Menu, User, Briefcase } from "lucide-react";
 import { useState, useEffect } from "react";
 import MemberSidebar from "./MemberSidebar";
 import { useNavigate } from "react-router-dom";
+import { useProfile } from "@/contexts/ProfileContext";
 
 const MemberDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [userName, setUserName] = useState("");
+  const [userName, setUserName] = useState(() => localStorage.getItem("userName") || "");
+  const [profilePhoto, setProfilePhoto] = useState(() => localStorage.getItem("userProfilePhoto") || "");
+  const [organizationName, setOrganizationName] = useState(() => localStorage.getItem("userOrganization") || "TechCorp Solution");
   const [isFirstVisit, setIsFirstVisit] = useState(true);
   const [latestApplication, setLatestApplication] = useState<any | null>(null);
+  const [hasBusinessAccount, setHasBusinessAccount] = useState(false);
   const navigate = useNavigate();
+  const { profileCompletion, formsCompleted, totalFormsRequired, memberType, isFullyCompleted } = useProfile();
 
   useEffect(() => {
     // Check payment status first - redirect paid users to paid dashboard
     const checkPaymentStatus = async () => {
       const token = localStorage.getItem("token");
-      if (!token) return;
+      if (!token) return false;
 
       try {
-        const response = await fetch("http://localhost:4000/api/payment/status", {
+        const response = await fetch("http://localhost:4000/api/applications/my-application", {
           headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json"
@@ -30,7 +35,7 @@ const MemberDashboard = () => {
 
         if (response.ok) {
           const result = await response.json();
-          if (result.success && result.data && result.data.isPaid) {
+          if (result.success && result.data && result.data.paymentStatus === 'completed') {
             // User has paid, redirect to paid dashboard
             navigate("/payment/member-dashboard", { replace: true });
             return true;
@@ -55,28 +60,55 @@ const MemberDashboard = () => {
       }
 
       try {
-        const response = await fetch("http://localhost:4000/api/auth/me", {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-          }
-        });
+        // Parallel fetch for better performance
+        const [authRes, companyRes] = await Promise.all([
+          fetch("http://localhost:4000/api/auth/me", {
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            }
+          }),
+          fetch("http://localhost:4000/api/companies/active", {
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            }
+          })
+        ]);
 
-        if (response.ok) {
-          const result = await response.json();
+        if (authRes.ok) {
+          const result = await authRes.json();
           if (result.success && result.data) {
-            // Update localStorage with fresh data
-            localStorage.setItem("userName", result.data.fullName || "");
-            localStorage.setItem("userEmail", result.data.email || "");
+            const fullName = result.data.fullName || "";
+            const email = result.data.email || "";
+            const photo = result.data.profilePhoto || "";
+            
+            // Update state and localStorage
+            setUserName(fullName);
+            localStorage.setItem("userName", fullName);
+            localStorage.setItem("userEmail", email);
             localStorage.setItem("userId", result.data.userId || "");
             
-            setUserName(result.data.fullName || "");
+            if (photo) {
+              setProfilePhoto(photo);
+              localStorage.setItem("userProfilePhoto", photo);
+            }
           }
         } else {
           // Fallback to localStorage if API fails
           const storedUserName = localStorage.getItem("userName");
           if (storedUserName) {
             setUserName(storedUserName);
+          }
+        }
+        
+        // Process company data
+        if (companyRes.ok) {
+          const companyResult = await companyRes.json();
+          if (companyResult.success && companyResult.data && companyResult.data.businessName) {
+            const orgName = companyResult.data.businessName;
+            setOrganizationName(orgName);
+            localStorage.setItem("userOrganization", orgName);
           }
         }
       } catch (error) {
@@ -89,13 +121,40 @@ const MemberDashboard = () => {
       }
     };
 
+    const checkBusinessAccount = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const response = await fetch("http://localhost:4000/api/companies/active", {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            setHasBusinessAccount(true);
+          }
+        }
+      } catch (error) {
+        console.error("Error checking business account:", error);
+      }
+    };
+
     const initDashboard = async () => {
       // Check payment status first
       const isPaid = await checkPaymentStatus();
-      if (isPaid) return; // Stop if user is redirected
+      if (isPaid) {
+        console.log("User is paid, redirecting to paid dashboard...");
+        return; // Stop if user is redirected
+      }
 
       // Continue with normal dashboard loading
       await fetchUserData();
+      await checkBusinessAccount();
 
       const hasVisitedBefore = localStorage.getItem("hasVisitedDashboard");
       if (hasVisitedBefore) {
@@ -107,7 +166,33 @@ const MemberDashboard = () => {
     };
 
     initDashboard();
-  }, []);
+
+    // Listen for profile updates
+    const handleProfilePhotoUpdate = () => {
+      const photo = localStorage.getItem('userProfilePhoto') || '';
+      setProfilePhoto(photo);
+    };
+
+    const handleUserDataUpdate = () => {
+      const name = localStorage.getItem('userName') || '';
+      setUserName(name);
+    };
+
+    const handleCompanyUpdate = () => {
+      const org = localStorage.getItem('userOrganization') || 'TechCorp Solution';
+      setOrganizationName(org);
+    };
+
+    window.addEventListener('profilePhotoUpdated', handleProfilePhotoUpdate);
+    window.addEventListener('userDataUpdated', handleUserDataUpdate);
+    window.addEventListener('companyUpdated', handleCompanyUpdate);
+
+    return () => {
+      window.removeEventListener('profilePhotoUpdated', handleProfilePhotoUpdate);
+      window.removeEventListener('userDataUpdated', handleUserDataUpdate);
+      window.removeEventListener('companyUpdated', handleCompanyUpdate);
+    };
+  }, [navigate]);
 
   // Load latest application from backend (fallback to localStorage)
   useEffect(() => {
@@ -130,173 +215,7 @@ const MemberDashboard = () => {
     loadApplications();
   }, []);
 
-  const [completionPercentage, setCompletionPercentage] = useState(0);
-  const [formsCompleted, setFormsCompleted] = useState<string[]>([]);
-  const [isFullyCompleted, setIsFullyCompleted] = useState(false);
-  const [totalFormsRequired, setTotalFormsRequired] = useState(4);
-  const [memberType, setMemberType] = useState<'business' | 'aspirant'>('business');
-
-  // Load profile completion from backend
-  useEffect(() => {
-    const loadProfileCompletion = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      try {
-        const completed: string[] = [];
-        let isDoingBusiness = true;
-        let totalForms = 4; // Default: Personal, Business, Financial, Declaration
-
-        // Check Personal Form
-        const personalRes = await fetch("http://localhost:4000/api/personal-form", {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        if (personalRes.ok) {
-          const data = await personalRes.json();
-          console.log("📋 Personal Form Data:", data.data);
-          console.log("🔒 isLocked:", data.data?.isLocked);
-          if (data.data && data.data.isLocked) {
-            completed.push("Personal Details");
-            console.log("✅ Personal Details marked as complete");
-          } else if (data.data) {
-            console.log("⚠️ Personal form exists but not locked");
-          } else {
-            console.log("❌ No personal form data found");
-          }
-        } else {
-          console.log("⚠️ Personal form API error:", personalRes.status);
-        }
-
-        // Check Business Form
-        const businessRes = await fetch("http://localhost:4000/api/business-form", {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        if (businessRes.ok) {
-          const data = await businessRes.json();
-          console.log("📊 Business Form Data:", data.data);
-          if (data.data) {
-            console.log("🔍 doingBusiness value:", data.data.doingBusiness);
-            
-            // Check if user said "no" to doing business (aspirant)
-            if (data.data.doingBusiness === "no") {
-              console.log("✅ User is an ASPIRANT - totalForms = 3");
-              isDoingBusiness = false;
-              totalForms = 3; // Personal, Business (No), Declaration only
-            } else {
-              console.log("💼 User is DOING BUSINESS - totalForms = 4");
-            }
-            
-            // Count as complete if doingBusiness field is set
-            if (data.data.doingBusiness) {
-              completed.push("Business Information");
-              console.log("✓ Business Information marked as complete");
-            }
-          }
-        } else {
-          console.log("⚠️ Business form not found or error:", businessRes.status);
-        }
-
-        // Check Financial Form (only if doing business)
-        if (isDoingBusiness) {
-          const financialRes = await fetch("http://localhost:4000/api/financial-form", {
-            headers: { "Authorization": `Bearer ${token}` }
-          });
-          if (financialRes.ok) {
-            const data = await financialRes.json();
-            if (data.data && data.data.pan) {
-              completed.push("Financial Details");
-            }
-          }
-        }
-
-        // Check Declaration Form
-        const declarationRes = await fetch("http://localhost:4000/api/declaration-form", {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        if (declarationRes.ok) {
-          const data = await declarationRes.json();
-          if (data.data && data.data.declarationAccepted) {
-            completed.push("Declaration");
-          }
-        }
-
-        const percentage = Math.round((completed.length / totalForms) * 100);
-        
-        console.log("📈 Dashboard Calculation:");
-        console.log("  - Completed forms:", completed);
-        console.log("  - Total forms required:", totalForms);
-        console.log("  - Member type:", isDoingBusiness ? 'business' : 'aspirant');
-        console.log("  - Percentage:", percentage + "%");
-        
-        setCompletionPercentage(percentage);
-        setFormsCompleted(completed);
-        setTotalFormsRequired(totalForms);
-        setMemberType(isDoingBusiness ? 'business' : 'aspirant');
-        
-        const fullyCompleted = percentage === 100;
-        setIsFullyCompleted(fullyCompleted);
-
-        // If 100% and not yet submitted, create submission record
-        if (fullyCompleted && !localStorage.getItem("applicationSubmission")) {
-          const userName = localStorage.getItem("userName") || "Member";
-          const applicationId = `APP-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-          
-          // Get location from personal form data if available
-          let state = "Tamil Nadu";
-          let district = "Tiruvannamalai";
-          let block = "Thandrampet";
-          
-          try {
-            const personalFormRes = await fetch("http://localhost:4000/api/personal-form", {
-              headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (personalFormRes.ok) {
-              const personalData = await personalFormRes.json();
-              if (personalData.data) {
-                state = personalData.data.state || state;
-                district = personalData.data.district || district;
-                block = personalData.data.block || block;
-              }
-            }
-          } catch (error) {
-            console.log("Could not fetch location from personal form");
-          }
-          
-          const submissionData = {
-            applicationId,
-            userName,
-            submittedAt: new Date().toISOString(),
-            status: "under_review",
-            formsCompleted: completed,
-            memberType: isDoingBusiness ? "business" : "aspirant",
-            state,
-            district,
-            block
-          };
-          
-          localStorage.setItem("applicationSubmission", JSON.stringify(submissionData));
-        }
-      } catch (error) {
-        console.error("Error loading profile completion:", error);
-      }
-    };
-
-    loadProfileCompletion();
-
-    // Listen for form submissions to update percentage dynamically
-    const handleFormUpdate = () => {
-      console.log("🔄 Form updated, reloading profile completion...");
-      loadProfileCompletion();
-    };
-
-    window.addEventListener('formSubmitted', handleFormUpdate);
-    window.addEventListener('profileUpdated', handleFormUpdate);
-
-    return () => {
-      window.removeEventListener('formSubmitted', handleFormUpdate);
-      window.removeEventListener('profileUpdated', handleFormUpdate);
-    };
-  }, []);
+  // Profile completion data comes from ProfileContext - no need to fetch again
 
   let business: any = {};
   try {
@@ -325,10 +244,16 @@ const MemberDashboard = () => {
           </Button>
           <h1 className="text-xl font-bold">Dashboard</h1>
           <Avatar className="w-10 h-10">
-            <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face" className="object-cover" />
-            <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold">
-              {userName ? userName.split(" ").map(n => n[0]).join("").toUpperCase() : "SD"}
-            </AvatarFallback>
+            {profilePhoto ? (
+              <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover rounded-full" />
+            ) : (
+              <>
+                <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face" className="object-cover" />
+                <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold">
+                  {userName ? userName.split(" ").map(n => n[0]).join("").toUpperCase() : "SD"}
+                </AvatarFallback>
+              </>
+            )}
           </Avatar>
         </div>
 
@@ -339,16 +264,22 @@ const MemberDashboard = () => {
 
               <div className="flex items-center gap-4 mt-4">
                 <Avatar className="w-16 h-16 ring-4 ring-blue-100">
-                  <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=128&h=128&fit=crop&crop=face" className="object-cover" />
-                  <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white text-2xl font-bold">
-                    {userName ? userName.split(" ").map(n => n[0]).join("").toUpperCase() : "SD"}
-                  </AvatarFallback>
+                  {profilePhoto ? (
+                    <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover rounded-full" />
+                  ) : (
+                    <>
+                      <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=128&h=128&fit=crop&crop=face" className="object-cover" />
+                      <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white text-2xl font-bold">
+                        {userName ? userName.split(" ").map(n => n[0]).join("").toUpperCase() : "SD"}
+                      </AvatarFallback>
+                    </>
+                  )}
                 </Avatar>
                 <div>
                   <h2 className="text-xl font-bold md:text-2xl text-gray-800">
                     {isFirstVisit ? "Welcome" : "Welcome back"}, {userName || "Member"}
                   </h2>
-                  <p className="text-gray-500">TechCorp Solution</p>
+                  <p className="text-gray-500">{organizationName}</p>
                 </div>
               </div>
             </div>
@@ -387,7 +318,7 @@ const MemberDashboard = () => {
                     <div className="flex-1">
                       <h3 className="text-2xl md:text-3xl font-bold mb-3">Complete Your Profile</h3>
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="text-4xl font-bold">{completionPercentage}%</div>
+                        <div className="text-4xl font-bold">{profileCompletion}%</div>
                         <span className="text-sm opacity-90">completed</span>
                       </div>
                       <p className="text-sm opacity-90 mb-4">Unlock all features by completing your profile.</p>
@@ -418,8 +349,11 @@ const MemberDashboard = () => {
                     </div>
                     <p className="text-sm opacity-90 mb-4">View and manage your business profile and settings</p>
                     <div className="mt-4">
-                      <Button className="bg-white text-purple-600 hover:bg-gray-100 font-semibold px-8 py-2" onClick={() => navigate('/business/create-profile')}>
-                        Create Account
+                      <Button 
+                        className="bg-white text-purple-600 hover:bg-gray-100 font-semibold px-8 py-2" 
+                        onClick={() => navigate(hasBusinessAccount ? '/business/dashboard' : '/business/create-profile')}
+                      >
+                        {hasBusinessAccount ? 'View Account' : 'Create Account'}
                       </Button>
                     </div>
                   </div>
