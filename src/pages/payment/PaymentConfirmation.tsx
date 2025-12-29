@@ -36,28 +36,26 @@ export default function PaymentConfirmation() {
         if (app.applicationId) {
           try {
             console.log('✅ Updating payment status for application:', app.applicationId);
-
+            
             // Use the new complete endpoint
             const verifyEndpoint = 'http://localhost:4000/api/payment/complete';
-
+            
             const headers: HeadersInit = {
               'Content-Type': 'application/json'
             };
-
+            
             // Always add auth token
             if (token) {
               headers['Authorization'] = `Bearer ${token}`;
             }
-
+            
             const updateResponse = await fetch(verifyEndpoint, {
               method: 'POST',
               headers,
               body: JSON.stringify({
-                // Use the Instamojo payment request ID from the application data
-                // This is what's stored in the database when payment is initiated
-                paymentId: app.paymentDetails?.instamojoPaymentRequestId || paymentId || 'PAYMENT_' + Date.now(),
+                paymentId: paymentId || transactionId || app.paymentDetails?.paymentId || 'PAYMENT_' + Date.now(),
                 paymentMethod: 'card',
-                transactionId: transactionId || 'TXN_' + Date.now(),
+                transactionId: transactionId || paymentId || app.paymentDetails?.transactionId || 'TXN_' + Date.now(),
                 status: 'completed',
                 applicationId: app.applicationId
               })
@@ -66,10 +64,10 @@ export default function PaymentConfirmation() {
             if (updateResponse.ok) {
               const result = await updateResponse.json();
               console.log('✅ Payment status updated successfully:', result);
-
+              
               // Update localStorage
               localStorage.setItem('paymentStatus', 'completed');
-
+              
               // Dispatch event to refresh application data
               window.dispatchEvent(new CustomEvent('paymentCompleted'));
             } else {

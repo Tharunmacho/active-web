@@ -48,6 +48,23 @@ const protect = async (req, res, next) => {
       next();
     } catch (error) {
       console.error('Admin auth error:', error);
+      
+      // Handle specific JWT errors
+      if (error.name === 'TokenExpiredError') {
+        return res.status(401).json({
+          success: false,
+          message: 'Token expired, please login again',
+          expiredAt: error.expiredAt
+        });
+      }
+      
+      if (error.name === 'JsonWebTokenError') {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid token'
+        });
+      }
+      
       return res.status(401).json({
         success: false,
         message: 'Not authorized, token failed'

@@ -88,7 +88,7 @@ const getApplications = async (req, res) => {
       .sort({ submittedAt: -1 });
 
     console.log(`✅ Found ${applications.length} applications matching query`);
-
+    
     // Debug: Show all applications in the database for comparison
     const allApps = await Application.find({}).limit(10);
     console.log(`📊 Total applications in database: ${allApps.length}`);
@@ -98,7 +98,7 @@ const getApplications = async (req, res) => {
         console.log(`  - ${app.applicationId}: state="${app.state}", district="${app.district}", block="${app.block}", status="${app.status}"`);
       });
     }
-
+    
     // Debug: Log approval status for block admin
     if (admin.role === 'block_admin' && applications.length > 0) {
       console.log('📋 Block Admin - Application Approval Status:');
@@ -149,27 +149,23 @@ const getAllApplications = async (req, res) => {
         block: new RegExp(`^${adminBlock}$`, 'i')
       };
     } else if (admin.role === 'district_admin') {
-      // District admin should ONLY see applications that have been approved by block admin
       query = {
         state: new RegExp(`^${adminState}$`, 'i'),
         district: new RegExp(`^${adminDistrict}$`, 'i'),
-        blockApproval: 'approved', // MUST be approved by block first
         $or: [
-          { districtApproval: 'pending' },
-          { districtApproval: 'approved' },
-          { districtApproval: 'rejected' }
+          { status: 'pending_district_approval' },
+          { status: 'pending_state_approval' },
+          { status: 'approved' },
+          { 'approvals.district.status': 'rejected' }
         ]
       };
     } else if (admin.role === 'state_admin') {
-      // State admin should ONLY see applications that have been approved by district admin
       query = {
         state: new RegExp(`^${adminState}$`, 'i'),
-        blockApproval: 'approved', // MUST be approved by block
-        districtApproval: 'approved', // MUST be approved by district
         $or: [
-          { stateApproval: 'pending' },
-          { stateApproval: 'approved' },
-          { stateApproval: 'rejected' }
+          { status: 'pending_state_approval' },
+          { status: 'approved' },
+          { 'approvals.state.status': 'rejected' }
         ]
       };
     } else if (admin.role === 'super_admin') {
@@ -392,28 +388,28 @@ const rejectApplication = async (req, res) => {
 // Helper function to check if admin has authority over application
 function checkAdminAuthority(admin, application) {
   if (admin.role === 'super_admin') return true;
-
+  
   const adminState = admin.meta?.state;
   const adminDistrict = admin.meta?.district;
   const adminBlock = admin.meta?.block;
-
+  
   // Use case-insensitive comparison for location matching
   const stateMatch = adminState?.toLowerCase() === application.state?.toLowerCase();
   const districtMatch = adminDistrict?.toLowerCase() === application.district?.toLowerCase();
   const blockMatch = adminBlock?.toLowerCase() === application.block?.toLowerCase();
-
+  
   if (admin.role === 'state_admin') {
     return stateMatch;
   }
-
+  
   if (admin.role === 'district_admin') {
     return stateMatch && districtMatch;
   }
-
+  
   if (admin.role === 'block_admin') {
     return stateMatch && districtMatch && blockMatch;
   }
-
+  
   return false;
 }
 
@@ -433,21 +429,21 @@ const getApplicationStats = async (req, res) => {
     // Filter by admin location using case-insensitive regex
     // District and State admins should only see stats for their approval level
     if (admin.role === 'block_admin') {
-      baseQuery = {
+      baseQuery = { 
         state: new RegExp(`^${adminState}$`, 'i'),
         district: new RegExp(`^${adminDistrict}$`, 'i'),
         block: new RegExp(`^${adminBlock}$`, 'i')
       };
     } else if (admin.role === 'district_admin') {
       // District admin stats: only applications at district level
-      baseQuery = {
+      baseQuery = { 
         state: new RegExp(`^${adminState}$`, 'i'),
         district: new RegExp(`^${adminDistrict}$`, 'i'),
         status: 'pending_district_approval'
       };
     } else if (admin.role === 'state_admin') {
       // State admin stats: only applications at state level
-      baseQuery = {
+      baseQuery = { 
         state: new RegExp(`^${adminState}$`, 'i'),
         status: 'pending_state_approval'
       };
@@ -467,14 +463,14 @@ const getApplicationStats = async (req, res) => {
           { 'approvals.district.status': 'rejected' }
         ]
       });
-
+      
       console.log('📊 District Admin Stats Query:', {
         state: adminState,
         district: adminDistrict,
         foundApps: allDistrictApps.length,
         appIds: allDistrictApps.map(app => app.applicationId)
       });
-
+      
       stats = {
         total: allDistrictApps.length,
         pending: allDistrictApps.filter(app => app.approvals?.district?.status !== 'approved' && app.approvals?.district?.status !== 'rejected').length,
@@ -483,7 +479,7 @@ const getApplicationStats = async (req, res) => {
         aspirants: allDistrictApps.filter(app => app.memberType === 'aspirant').length,
         business: allDistrictApps.filter(app => app.memberType === 'business').length
       };
-
+      
       console.log('📊 District Admin Stats Result:', stats);
     } else if (admin.role === 'state_admin') {
       // State admin stats: ALL applications approved by district (pending_state_approval, approved, or state rejected)
@@ -495,7 +491,7 @@ const getApplicationStats = async (req, res) => {
           { 'approvals.state.status': 'rejected' }
         ]
       };
-
+      
       console.log('📊 State Admin Stats Query:', JSON.stringify(query, null, 2));
       const allStateApps = await Application.find(query);
       console.log('📊 State Admin Found Apps:', allStateApps.length);
@@ -505,13 +501,13 @@ const getApplicationStats = async (req, res) => {
         stateApprovalStatus: app.approvals?.state?.status,
         districtApprovalStatus: app.approvals?.district?.status
       })));
-
+      
       console.log('📊 State Admin Stats Query:', {
         state: adminState,
         foundApps: allStateApps.length,
         statuses: allStateApps.map(app => ({ id: app.applicationId, status: app.status, stateApproval: app.approvals?.state?.status }))
       });
-
+      
       stats = {
         total: allStateApps.length,
         pending: allStateApps.filter(app => app.approvals?.state?.status !== 'approved' && app.approvals?.state?.status !== 'rejected').length,
@@ -520,7 +516,7 @@ const getApplicationStats = async (req, res) => {
         aspirants: allStateApps.filter(app => app.memberType === 'aspirant').length,
         business: allStateApps.filter(app => app.memberType === 'business').length
       };
-
+      
       console.log('📊 State Admin Stats Result:', stats);
     } else {
       // Block admin and super admin: count all applications
@@ -555,7 +551,7 @@ const getApplicationStats = async (req, res) => {
 const submitApplication = async (req, res) => {
   try {
     const { applicationId, userName, memberType, state, district, block } = req.body;
-
+    
     console.log('📝 Creating new application:', {
       applicationId,
       userName,
@@ -609,7 +605,7 @@ const submitApplication = async (req, res) => {
     });
 
     await newApplication.save();
-
+    
     console.log('✅ Application created successfully:', {
       applicationId,
       state,
@@ -643,14 +639,14 @@ const getMyApplication = async (req, res) => {
       userId: req.user._id,
       userEmail: req.user.email
     });
-
+    
     // Find the application for this user
     const application = await Application.findOne({ userId: req.user._id })
       .sort({ submittedAt: -1 }); // Get the most recent application
 
     if (!application) {
       console.log('⚠️ No application found for user:', req.user._id);
-
+      
       // Also check with any field that might contain userId
       const allAppsForDebugging = await Application.find({}).limit(5);
       console.log('📊 Sample applications in DB:', allAppsForDebugging.map(app => ({
@@ -658,7 +654,7 @@ const getMyApplication = async (req, res) => {
         userId: app.userId,
         status: app.status
       })));
-
+      
       return res.status(404).json({
         success: false,
         message: 'No application found'
