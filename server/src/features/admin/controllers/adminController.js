@@ -94,7 +94,7 @@ const adminLogin = async (req, res) => {
     const token = jwt.sign(
       tokenPayload,
       process.env.JWT_SECRET || 'your-secret-key-here-change-in-production',
-      { expiresIn: '24h' }
+      { expiresIn: '30d' }
     );
 
     // Return admin data (without password)
