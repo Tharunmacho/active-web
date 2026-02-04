@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, Shield, UserPlus } from "lucide-react";
+import { Users, Shield, UserPlus, Code } from "lucide-react";
 
 const Index = () => {
   return (
@@ -12,7 +12,7 @@ const Index = () => {
           <p className="text-xl text-muted-foreground">Member & Admin Management System</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Member Portal */}
           <Card className="shadow-strong gradient-card border-0 hover:scale-105 transition-smooth">
             <CardContent className="pt-8 pb-8 text-center space-y-6">
@@ -61,6 +61,31 @@ const Index = () => {
                 </Link>
                 <p className="text-xs text-muted-foreground">
                   Block / District / State / Super Admin
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* EDA Playground */}
+          <Card className="shadow-strong gradient-card border-0 hover:scale-105 transition-smooth">
+            <CardContent className="pt-8 pb-8 text-center space-y-6">
+              <div className="mx-auto w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                <Code className="w-12 h-12 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold mb-2">EDA Playground</h2>
+                <p className="text-muted-foreground mb-6">
+                  Online HDL editor and simulator
+                </p>
+              </div>
+              <div className="space-y-3">
+                <Link to="/eda" className="block">
+                  <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" size="lg">
+                    Launch Playground
+                  </Button>
+                </Link>
+                <p className="text-xs text-muted-foreground">
+                  Verilog / VHDL / SystemVerilog
                 </p>
               </div>
             </CardContent>
