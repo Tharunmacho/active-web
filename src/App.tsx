@@ -97,6 +97,10 @@ import B2BInquiry from "./features/ecommerce/pages/B2BInquiry";
 import BusinessShowcase from "./features/ecommerce/pages/BusinessShowcase";
 import InventoryTracking from "./features/ecommerce/pages/InventoryTracking";
 
+// EDA Playground Feature Imports
+import EdaPlayground from "./pages/eda/EdaPlayground";
+import CodeLibrary from "./pages/eda/CodeLibrary";
+
 
 const queryClient = new QueryClient();
 
@@ -109,7 +113,8 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Navigate to="/login" />} />
+              {/* Public landing page showing portal cards (Member, Admin, EDA Playground) */}
+              <Route path="/" element={<Index />} />
               <Route path="/login" element={<EnhancedLoginPage />} />
               <Route path="/register" element={<MemberRegister />} />
 
@@ -223,6 +228,11 @@ const App = () => (
               <Route path="/ecommerce/seller-dashboard" element={<SellerDashboard />} />
               <Route path="/ecommerce/whatsapp-catalog" element={<WhatsAppCatalog />} />
               <Route path="/ecommerce/inventory" element={<InventoryTracking />} />
+
+              {/* EDA Playground Routes */}
+              <Route path="/eda" element={<EdaPlayground />} />
+              <Route path="/eda/playground" element={<EdaPlayground />} />
+              <Route path="/eda/library" element={<CodeLibrary />} />
 
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
