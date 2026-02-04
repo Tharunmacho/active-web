@@ -1,11 +1,13 @@
 import { useState, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Play, Save, Upload, Download, Share2, FileText, Settings } from 'lucide-react';
+import { Play, Save, Upload, Download, Share2, FileText, Settings, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
+import WaveformViewer from '@/components/WaveformViewer';
 
 // Default code templates
 const DEFAULT_VERILOG = `// Simple AND Gate Example
@@ -159,6 +161,12 @@ Simulation finished at time 40
             </div>
             
             <div className="flex items-center gap-2">
+              <Link to="/eda/library">
+                <Button variant="outline" size="sm">
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  Code Library
+                </Button>
+              </Link>
               <Button variant="outline" size="sm" onClick={() => document.getElementById('file-upload')?.click()}>
                 <Upload className="w-4 h-4 mr-2" />
                 Load
@@ -311,15 +319,8 @@ Simulation finished at time 40
                 </TabsContent>
 
                 <TabsContent value="waveform" className="m-0">
-                  <div className="h-[600px] bg-white p-4 flex items-center justify-center">
-                    <div className="text-center text-gray-500">
-                      <svg className="w-24 h-24 mx-auto mb-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
-                      <p className="text-lg font-medium">Waveform Viewer</p>
-                      <p className="text-sm mt-2">Run simulation to generate and view waveforms</p>
-                      <p className="text-xs mt-1 text-gray-400">VCD file will be visualized here</p>
-                    </div>
+                  <div className="h-[600px]">
+                    <WaveformViewer />
                   </div>
                 </TabsContent>
               </Tabs>

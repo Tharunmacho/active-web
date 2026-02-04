@@ -99,6 +99,7 @@ import InventoryTracking from "./features/ecommerce/pages/InventoryTracking";
 
 // EDA Playground Feature Imports
 import EdaPlayground from "./pages/eda/EdaPlayground";
+import CodeLibrary from "./pages/eda/CodeLibrary";
 
 
 const queryClient = new QueryClient();
@@ -230,6 +231,7 @@ const App = () => (
               {/* EDA Playground Routes */}
               <Route path="/eda" element={<EdaPlayground />} />
               <Route path="/eda/playground" element={<EdaPlayground />} />
+              <Route path="/eda/library" element={<CodeLibrary />} />
 
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
