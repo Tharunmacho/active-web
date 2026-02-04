@@ -128,7 +128,7 @@ Simulation finished at time 40
 
   const handleShare = () => {
     // Generate a shareable link (in a real implementation, this would save to a database)
-    const shareId = Math.random().toString(36).substr(2, 9);
+    const shareId = crypto.randomUUID().slice(0, 12);
     const shareUrl = `${window.location.origin}/eda/share/${shareId}`;
     navigator.clipboard.writeText(shareUrl);
     toast.success('Share link copied to clipboard!');

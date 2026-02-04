@@ -113,6 +113,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              {/* Public landing page showing portal cards (Member, Admin, EDA Playground) */}
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<EnhancedLoginPage />} />
               <Route path="/register" element={<MemberRegister />} />
